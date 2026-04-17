@@ -5,6 +5,9 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 permissions:
   contents: read
   pages: write
@@ -21,8 +24,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # Normal case: Pages is already enabled in repository settings and the
+      # publishing source is set to GitHub Actions.
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        if: ${{ secrets.PAGES_ENABLEMENT_TOKEN == '' }}
+        uses: actions/configure-pages@v6
+
+      # Optional bootstrap path: if an admin-level token is provided, the
+      # action can enable Pages automatically for repositories where the site
+      # has not been created yet.
+      - name: Setup and enable Pages
+        if: ${{ secrets.PAGES_ENABLEMENT_TOKEN != '' }}
+        uses: actions/configure-pages@v6
+        with:
+          token: ${{ secrets.PAGES_ENABLEMENT_TOKEN }}
+          enablement: true
 
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
@@ -31,7 +47,7 @@ jobs:
           destination: ./_site
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./_site
 
