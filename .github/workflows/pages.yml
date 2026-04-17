@@ -20,6 +20,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PAGES_ENABLEMENT_TOKEN: ${{ secrets.PAGES_ENABLEMENT_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -27,17 +29,17 @@ jobs:
       # Normal case: Pages is already enabled in repository settings and the
       # publishing source is set to GitHub Actions.
       - name: Setup Pages
-        if: ${{ secrets.PAGES_ENABLEMENT_TOKEN == '' }}
+        if: ${{ env.PAGES_ENABLEMENT_TOKEN == '' }}
         uses: actions/configure-pages@v6
 
       # Optional bootstrap path: if an admin-level token is provided, the
       # action can enable Pages automatically for repositories where the site
       # has not been created yet.
       - name: Setup and enable Pages
-        if: ${{ secrets.PAGES_ENABLEMENT_TOKEN != '' }}
+        if: ${{ env.PAGES_ENABLEMENT_TOKEN != '' }}
         uses: actions/configure-pages@v6
         with:
-          token: ${{ secrets.PAGES_ENABLEMENT_TOKEN }}
+          token: ${{ env.PAGES_ENABLEMENT_TOKEN }}
           enablement: true
 
       - name: Build with Jekyll
