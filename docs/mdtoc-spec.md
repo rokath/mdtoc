@@ -176,19 +176,19 @@ _Explanation:_
 Examples of valid managed headings:
 
 ```md
-# Titel
-## 1. Einführung
-## <a id="einfuehrung"></a>Einführung
+# Title
+## 1. Introduction
+## <a id="introduction"></a>Introduction
 ### 2.1. <a id="api-overview"></a>API Overview
 ```
 
 Examples that `mdtoc` does not treat as a managed structure:
 
 ```md
- # Titel
-##  1. Einführung
-### 1.2 Einführung
-### <a id="x"></a> Einführung
+ # Title
+##  1. Introduction
+### 1.2 Introduction
+### <a id="x"></a> Introduction
 ```
 
 ### 5.3 Meaning of the syntax
@@ -229,10 +229,10 @@ Internally, this model is sufficient for a managed heading:
 ManagedHeading
 - line_index
 - level
-- title_markup  // Titelbereich wie im Dokument, aber ohne verwaltete Nummer und ohne verwalteten Inline-Anker
-- title_text    // Plain-Text-Interpretation von title_markup; Quelle für ToC-Linktext und Anchor-ID
-- number        // abgeleitet oder leer
-- anchor_id     // abgeleitet oder leer
+- title_markup  // Title area as it appears in the document, but without managed numbering and without the managed inline anchor
+- title_text    // Plain-text interpretation of title_markup; source for ToC link text and anchor ID
+- number        // derived or empty
+- anchor_id     // derived or empty
 ```
 
 Semantically important are only:
@@ -511,7 +511,7 @@ Render rules:
 Example:
 
 ```md
-* [1. Einleitung](#einleitung)
+* [1. Introduction](#introduction)
   * [1.1. API](#api)
 ```
 

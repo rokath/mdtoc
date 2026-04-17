@@ -26,7 +26,7 @@ Deterministic Table of Contents (ToC) with Numbering and stabile Anchors includi
 
 This repository contains a Go reference implementation of the `mdtoc` specification (see [the specification](./docs/mdtoc-spec.md)
 
-Alternatives: [replacement tools comparison](./docs/mdtoc-replacement-tools-comparison_(german).md)).
+Alternatives: [replacement tools comparison](./docs/mdtoc-replacement-tools-comparison.md).
 
 ## 2. <a id="highlights"></a>Highlights
 
