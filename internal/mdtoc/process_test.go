@@ -1,6 +1,7 @@
 package mdtoc
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -119,4 +120,66 @@ func TestCheckMatchesAndDetectsMismatch(t *testing.T) {
 	if ok {
 		t.Fatalf("Check did not detect mismatch")
 	}
+}
+
+func TestGenerateAndCheckPreserveRelocatedContainerPosition(t *testing.T) {
+	source := "# Title\n\nIntro paragraph.\n\n## Intro\n"
+	generated, _, err := Generate(source, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	relocated, err := relocateContainerAfterParagraph(generated, "Intro paragraph.")
+	if err != nil {
+		t.Fatalf("relocateContainerAfterParagraph error: %v", err)
+	}
+
+	regenerated, _, err := Generate(relocated, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate on relocated document error: %v", err)
+	}
+	if strings.Index(regenerated, startMarker) < strings.Index(regenerated, "Intro paragraph.") {
+		t.Fatalf("container moved before relocated position:\n%s", regenerated)
+	}
+	if strings.Index(regenerated, startMarker) > strings.Index(regenerated, "## 1. <a id=\"intro\"></a>Intro") {
+		t.Fatalf("container moved after the managed heading:\n%s", regenerated)
+	}
+
+	ok, _, err := Check(relocated)
+	if err != nil {
+		t.Fatalf("Check error: %v", err)
+	}
+	if !ok {
+		t.Fatalf("Check rejected a document with a valid relocated container:\n%s", relocated)
+	}
+}
+
+func relocateContainerAfterParagraph(input, marker string) (string, error) {
+	parsed, err := ParseDocument(input)
+	if err != nil {
+		return "", err
+	}
+	if parsed.Container == nil {
+		return "", fmt.Errorf("document does not contain an mdtoc container")
+	}
+
+	containerLines := append([]string(nil), parsed.Lines[parsed.Container.StartLine:parsed.Container.EndLine+1]...)
+	bodyLines := append(append([]string{}, parsed.Lines[:parsed.Container.StartLine]...), parsed.Lines[parsed.Container.EndLine+1:]...)
+
+	insertAt := -1
+	for i, line := range bodyLines {
+		if line == marker {
+			insertAt = i + 1
+			break
+		}
+	}
+	if insertAt == -1 {
+		return "", fmt.Errorf("marker %q not found", marker)
+	}
+
+	relocated := append([]string{}, bodyLines[:insertAt]...)
+	relocated = append(relocated, "")
+	relocated = append(relocated, containerLines...)
+	relocated = append(relocated, "")
+	relocated = append(relocated, bodyLines[insertAt:]...)
+	return joinLines(relocated), nil
 }

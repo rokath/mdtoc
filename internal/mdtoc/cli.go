@@ -29,21 +29,8 @@ func (r *Runner) Run(args []string) (int, error) {
 		fmt.Fprint(r.stdout, shortHelp())
 		return 0, nil
 	}
-	if args[0] == "--version" {
-		if hasFlag(args, "--verbose") {
-			fmt.Fprintf(r.stdout, "mdtoc %s\nGo-based Markdown ToC manager\n", version)
-		} else {
-			fmt.Fprintf(r.stdout, "mdtoc %s\n", version)
-		}
-		return 0, nil
-	}
-	if args[0] == "--help" {
-		if hasFlag(args, "--verbose") {
-			fmt.Fprint(r.stdout, longHelp())
-		} else {
-			fmt.Fprint(r.stdout, shortHelp())
-		}
-		return 0, nil
+	if !isSubcommand(args[0]) {
+		return r.runRoot(args)
 	}
 	switch args[0] {
 	case "generate":
@@ -55,6 +42,43 @@ func (r *Runner) Run(args []string) (int, error) {
 	default:
 		return 1, fmt.Errorf("unknown command %q", args[0])
 	}
+}
+
+func (r *Runner) runRoot(args []string) (int, error) {
+	fs := flag.NewFlagSet("mdtoc", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	help := fs.Bool("help", false, "")
+	helpShort := fs.Bool("h", false, "")
+	showVersion := fs.Bool("version", false, "")
+	verbose := fs.Bool("verbose", false, "")
+	verboseShort := fs.Bool("v", false, "")
+	if err := fs.Parse(args); err != nil {
+		return 1, err
+	}
+	if *verboseShort {
+		*verbose = true
+	}
+	if fs.NArg() > 0 {
+		return 1, fmt.Errorf("unknown command %q", fs.Arg(0))
+	}
+	if *help || *helpShort {
+		if *verbose {
+			fmt.Fprint(r.stdout, longHelp())
+		} else {
+			fmt.Fprint(r.stdout, shortHelp())
+		}
+		return 0, nil
+	}
+	if *showVersion {
+		if *verbose {
+			fmt.Fprintf(r.stdout, "mdtoc %s\nGo-based Markdown ToC manager\n", version)
+		} else {
+			fmt.Fprintf(r.stdout, "mdtoc %s\n", version)
+		}
+		return 0, nil
+	}
+	fmt.Fprint(r.stdout, shortHelp())
+	return 0, nil
 }
 
 func (r *Runner) runGenerate(args []string) (int, error) {
@@ -76,8 +100,11 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if err := fs.Parse(args); err != nil {
 		return 1, err
 	}
+	if *verboseS {
+		*verbose = true
+	}
 	if *help || *helpS {
-		fmt.Fprint(r.stdout, generateHelp())
+		fmt.Fprint(r.stdout, generateHelp(*verbose))
 		return 0, nil
 	}
 	if *numberingS != "" {
@@ -88,9 +115,6 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	}
 	if *fileS != "" {
 		*file = *fileS
-	}
-	if *verboseS {
-		*verbose = true
 	}
 	numberingB, err := parseOnOff(*numbering)
 	if err != nil {
@@ -132,15 +156,15 @@ func (r *Runner) runStrip(args []string) (int, error) {
 	if err := fs.Parse(args); err != nil {
 		return 1, err
 	}
+	if *verboseS {
+		*verbose = true
+	}
 	if *help || *helpS {
-		fmt.Fprint(r.stdout, stripHelp())
+		fmt.Fprint(r.stdout, stripHelp(*verbose))
 		return 0, nil
 	}
 	if *fileS != "" {
 		*file = *fileS
-	}
-	if *verboseS {
-		*verbose = true
 	}
 	input, err := r.readInput(*file)
 	if err != nil {
@@ -175,15 +199,15 @@ func (r *Runner) runCheck(args []string) (int, error) {
 	if err := fs.Parse(args); err != nil {
 		return 1, err
 	}
+	if *verboseS {
+		*verbose = true
+	}
 	if *help || *helpS {
-		fmt.Fprint(r.stdout, checkHelp())
+		fmt.Fprint(r.stdout, checkHelp(*verbose))
 		return 0, nil
 	}
 	if *fileS != "" {
 		*file = *fileS
-	}
-	if *verboseS {
-		*verbose = true
 	}
 	input, err := r.readInput(*file)
 	if err != nil {
@@ -235,6 +259,15 @@ func hasFlag(args []string, flag string) bool {
 	return false
 }
 
+func isSubcommand(arg string) bool {
+	switch arg {
+	case "generate", "strip", "check":
+		return true
+	default:
+		return false
+	}
+}
+
 func shortHelp() string {
 	return strings.TrimSpace(`mdtoc - deterministic Markdown ToC manager
 
@@ -251,7 +284,23 @@ func longHelp() string {
 	return shortHelp() + "\nCommands:\n  generate   generate or update ToC, numbers, and anchors\n  strip      remove managed artifacts and keep the container\n  check      validate that the document matches its persisted state\n"
 }
 
-func generateHelp() string {
+func generateHelp(verbose bool) string {
+	if verbose {
+		return strings.TrimSpace(`mdtoc generate
+
+Generate or update ToC, heading numbers, and anchors.
+
+Options:
+  --numbering, -n <on|off>
+  --min-level <N>
+  --max-level <N>
+  --anchors, -a <on|off>
+  --toc <on|off>
+  --file, -f <name>
+  --verbose, -v
+  --help, -h
+`) + "\n"
+	}
 	return strings.TrimSpace(`mdtoc generate
 
 Options:
@@ -266,7 +315,19 @@ Options:
 `) + "\n"
 }
 
-func stripHelp() string {
+func stripHelp(verbose bool) string {
+	if verbose {
+		return strings.TrimSpace(`mdtoc strip
+
+Remove managed artifacts and optionally the entire managed container.
+
+Options:
+  --raw
+  --file, -f <name>
+  --verbose, -v
+  --help, -h
+`) + "\n"
+	}
 	return strings.TrimSpace(`mdtoc strip
 
 Options:
@@ -277,7 +338,18 @@ Options:
 `) + "\n"
 }
 
-func checkHelp() string {
+func checkHelp(verbose bool) string {
+	if verbose {
+		return strings.TrimSpace(`mdtoc check
+
+Reconstruct the target document state and compare it byte-for-byte.
+
+Options:
+  --file, -f <name>
+  --verbose, -v
+  --help, -h
+`) + "\n"
+	}
 	return strings.TrimSpace(`mdtoc check
 
 Options:

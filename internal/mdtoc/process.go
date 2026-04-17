@@ -23,7 +23,7 @@ func Generate(input string, opts Options) (string, []string, error) {
 	}
 	containerLines := renderContainer(cfg, preserveForeignTOC(parsed.Container), tocLines)
 	bodyLines = rewriteHeadings(bodyLines, headings, cfg)
-	return joinLines(prependContainer(bodyLines, containerLines)), parsed.Warnings, nil
+	return joinLines(placeContainer(bodyLines, containerLines, parsed.Container)), parsed.Warnings, nil
 }
 
 // Strip removes managed artifacts but keeps the outer container and config.
@@ -40,7 +40,7 @@ func Strip(input string) (string, []string, error) {
 	bodyLines, headings := removeContainerAndNormalizeHeadings(parsed)
 	bodyLines = rewriteHeadings(bodyLines, headings, Config{MinLevel: 1, MaxLevel: 0})
 	containerLines := renderContainer(cfg, nil, nil)
-	return joinLines(prependContainer(bodyLines, containerLines)), parsed.Warnings, nil
+	return joinLines(placeContainer(bodyLines, containerLines, parsed.Container)), parsed.Warnings, nil
 }
 
 // StripRaw removes the entire container, managed numbering, and managed anchors.
@@ -274,6 +274,23 @@ func prependContainer(body, container []string) []string {
 		out = append(out, "")
 	}
 	out = append(out, body...)
+	return out
+}
+
+func placeContainer(body, container []string, existing *Container) []string {
+	if existing == nil {
+		return prependContainer(body, container)
+	}
+	insertAt := existing.StartLine
+	if insertAt < 0 {
+		insertAt = 0
+	}
+	if insertAt > len(body) {
+		insertAt = len(body)
+	}
+	out := append([]string{}, body[:insertAt]...)
+	out = append(out, container...)
+	out = append(out, body[insertAt:]...)
 	return out
 }
 
