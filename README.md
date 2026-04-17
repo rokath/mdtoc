@@ -10,6 +10,7 @@
 * [7. Why not just use an existing tool?](#why-not-just-use-an-existing-tool)
 * [8. Project goal](#project-goal)
 * [9. In one sentence](#in-one-sentence)
+* [10. State](#state)
 <!-- mdtoc-config
 numbering=on
 min-level=2
@@ -143,3 +144,9 @@ It is not meant to be a full Markdown processor or site generator.
 ## 9. <a id="in-one-sentence"></a>In one sentence
 
 `mdtoc` exists because technical Markdown needs more than a ToC generator: it needs a deterministic structure manager.
+
+## 10. <a id="state"></a>State
+
+```diff
++ READY TO USE +
+```
