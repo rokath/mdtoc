@@ -12,6 +12,9 @@ on:
   #   tags:
   #     - 'v*'          # e.g. v0.1.0, v1.2.3
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 permissions:
   contents: write
 
@@ -31,11 +34,14 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           # Use the Go version declared in go.mod.
           # This keeps local development and CI in sync automatically.
           go-version-file: go.mod
+          # This repository currently has no go.sum, so the built-in cache
+          # would only emit a warning and provide no benefit.
+          cache: false
           # Alternatively you could hard-code a version:
           # go-version: '1.22'
 
@@ -44,9 +50,9 @@ jobs:
         with:
           # Use the standard GoReleaser distribution.
           distribution: goreleaser
-          # Install the latest GoReleaser release.
-          # For fully reproducible builds you can pin a specific version here.
-          version: latest
+          # Use the current GoReleaser major line explicitly to avoid
+          # ambiguous "latest" resolution warnings in CI logs.
+          version: "~> v2"
           # "release --clean" is the modern equivalent of "--rm-dist":
           # it removes the dist/ directory before building, so you never
           # accidentally ship stale artifacts from a previous run.
