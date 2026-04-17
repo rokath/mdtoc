@@ -1,0 +1,107 @@
+version: 2
+
+project_name: mdtoc
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: mdtoc-64bit
+    main: ./cmd/mdtoc
+    binary: mdtoc
+    dir: .
+    goos:
+      - windows
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - >-
+        -s -w
+        -X main.version={{ .Version }}
+        -X main.commit={{ .Commit }}
+        -X main.date={{ .Date }}
+
+  - id: mdtoc-32bit
+    main: ./cmd/mdtoc
+    binary: mdtoc
+    dir: .
+    goos:
+      - windows
+      - linux
+    goarch:
+      - 386
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - >-
+        -s -w
+        -X main.version={{ .Version }}
+        -X main.commit={{ .Commit }}
+        -X main.date={{ .Date }}
+
+  - id: mdtoc-arm32
+    main: ./cmd/mdtoc
+    binary: mdtoc
+    dir: .
+    goos:
+      - linux
+    goarch:
+      - arm
+    goarm:
+      - 6
+      - 7
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - >-
+        -s -w
+        -X main.version={{ .Version }}
+        -X main.commit={{ .Commit }}
+        -X main.date={{ .Date }}
+
+checksum:
+snapshot:
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^typo$'
+      - '^minor$'
+      - '^update$'
+      - '^wip$'
+
+archives:
+  - id: mdtoc
+    name_template: "mdtoc_{{ .Os }}_{{ .Arch }}{{ .Arm }}"
+    wrap_in_directory: true
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
+    files:
+      - "none*"
+
+release:
+  footer: |
+    ### macOS
+
+    If Gatekeeper blocks the downloaded tool, remove the quarantine flag from
+    the unpacked binary path, for example:
+
+    `xattr -d com.apple.quarantine path/to/mdtoc`
+
+    ### Windows
+
+    If SmartScreen or the file block flag gets in the way, unblock the unpacked
+    binary path, for example:
+
+    `Unblock-File path\to\mdtoc.exe`
+
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json

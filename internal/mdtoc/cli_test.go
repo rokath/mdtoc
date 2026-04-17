@@ -22,7 +22,11 @@ func TestRunnerRootHelpShortFlagWithoutCommand(t *testing.T) {
 
 func TestRunnerRootVersionWithoutCommand(t *testing.T) {
 	var stdout, stderr strings.Builder
-	runner := NewRunner(strings.NewReader(""), &stdout, &stderr)
+	runner := NewRunnerWithBuildInfo(strings.NewReader(""), &stdout, &stderr, BuildInfo{
+		Version: "v1.2.3",
+		Commit:  "abcdef0",
+		Date:    "2026-04-17T12:34:56Z",
+	})
 	exitCode, err := runner.Run([]string{"--version"})
 	if err != nil {
 		t.Fatalf("Run error: %v", err)
@@ -30,7 +34,29 @@ func TestRunnerRootVersionWithoutCommand(t *testing.T) {
 	if exitCode != 0 {
 		t.Fatalf("exit code = %d, want 0", exitCode)
 	}
-	if got := stdout.String(); !strings.Contains(got, "mdtoc "+version) {
+	got := stdout.String()
+	for _, want := range []string{"mdtoc v1.2.3", "commit: abcdef0", "date: 2026-04-17T12:34:56Z"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("stdout does not contain %q:\n%s", want, got)
+		}
+	}
+}
+
+func TestRunnerRootVersionVerboseWithoutCommand(t *testing.T) {
+	var stdout, stderr strings.Builder
+	runner := NewRunnerWithBuildInfo(strings.NewReader(""), &stdout, &stderr, BuildInfo{
+		Version: "v1.2.3",
+		Commit:  "abcdef0",
+		Date:    "2026-04-17T12:34:56Z",
+	})
+	exitCode, err := runner.Run([]string{"--version", "--verbose"})
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+	if got := stdout.String(); !strings.Contains(got, "Go-based Markdown ToC manager") {
 		t.Fatalf("stdout does not contain version output:\n%s", got)
 	}
 }

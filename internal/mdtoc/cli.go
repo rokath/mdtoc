@@ -9,18 +9,42 @@ import (
 	"strings"
 )
 
-const version = "v0.1.0"
+// BuildInfo contains release metadata injected by the build system.
+type BuildInfo struct {
+	Version string
+	Commit  string
+	Date    string
+}
+
+func (b BuildInfo) normalized() BuildInfo {
+	if b.Version == "" {
+		b.Version = "dev"
+	}
+	if b.Commit == "" {
+		b.Commit = "unknown"
+	}
+	if b.Date == "" {
+		b.Date = "unknown"
+	}
+	return b
+}
 
 // Runner owns the CLI I/O streams. This makes command behavior easy to test.
 type Runner struct {
-	stdin  io.Reader
-	stdout io.Writer
-	stderr io.Writer
+	stdin     io.Reader
+	stdout    io.Writer
+	stderr    io.Writer
+	buildInfo BuildInfo
 }
 
 // NewRunner creates a testable CLI runner.
 func NewRunner(stdin io.Reader, stdout, stderr io.Writer) *Runner {
-	return &Runner{stdin: stdin, stdout: stdout, stderr: stderr}
+	return NewRunnerWithBuildInfo(stdin, stdout, stderr, BuildInfo{})
+}
+
+// NewRunnerWithBuildInfo creates a testable CLI runner with injected build metadata.
+func NewRunnerWithBuildInfo(stdin io.Reader, stdout, stderr io.Writer, buildInfo BuildInfo) *Runner {
+	return &Runner{stdin: stdin, stdout: stdout, stderr: stderr, buildInfo: buildInfo.normalized()}
 }
 
 // Run executes the CLI and returns the intended process exit code.
@@ -71,9 +95,9 @@ func (r *Runner) runRoot(args []string) (int, error) {
 	}
 	if *showVersion {
 		if *verbose {
-			fmt.Fprintf(r.stdout, "mdtoc %s\nGo-based Markdown ToC manager\n", version)
+			fmt.Fprintf(r.stdout, "mdtoc %s\ncommit: %s\ndate: %s\nGo-based Markdown ToC manager\n", r.buildInfo.Version, r.buildInfo.Commit, r.buildInfo.Date)
 		} else {
-			fmt.Fprintf(r.stdout, "mdtoc %s\n", version)
+			fmt.Fprintf(r.stdout, "mdtoc %s\ncommit: %s\ndate: %s\n", r.buildInfo.Version, r.buildInfo.Commit, r.buildInfo.Date)
 		}
 		return 0, nil
 	}
