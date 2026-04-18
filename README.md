@@ -25,7 +25,7 @@ state=generated
 
 Deterministic Table of Contents (ToC) with Numbering and stabile Anchors including heading management for Markdown documents
 
-This repository contains a Go reference implementation of the `mdtoc` specification (see [the specification](./docs/mdtoc-spec.md)
+This repository contains a Go reference implementation of the `mdtoc` [8(specification](./docs/mdtoc-spec.md).
 
 Alternatives: [replacement tools comparison](./docs/mdtoc-replacement-tools-comparison.md).
 
@@ -49,7 +49,6 @@ go build ./cmd/mdtoc
 ```bash
 go test ./...
 ```
-
 
 ## 5. <a id="why-this-tool-exists"></a>Why this tool exists
 
@@ -144,6 +143,17 @@ It is not meant to be a full Markdown processor or site generator.
 ## 9. <a id="in-one-sentence"></a>In one sentence
 
 `mdtoc` exists because technical Markdown needs more than a ToC generator: it needs a deterministic structure manager.
+
+### Try it out with this README.md
+
+```bash
+mdtoc --version
+mdtoc --help
+mdtoc generate -f README.md -a off -toc off
+cat README.md | mdtoc strip > README.md
+mdtoc generate -f README.md
+mdtoc check -f README.md
+```
 
 ## 10. <a id="state"></a>State
 
