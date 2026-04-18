@@ -117,7 +117,7 @@ The heading title stays the source of truth. Numbers, anchors, and ToC entries a
 
 ### 6.2. <a id="comparison"></a>Comparison
 
-* [Replacement tools comparison](./docs/mdtoc-replacement-tools-comparison.md)
+* [mdtoc tools comparison](./docs/mdtoc-tools-comparison.md)
 
 ## 7. <a id="status"></a>Status
 
