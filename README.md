@@ -44,11 +44,11 @@ Deterministic Markdown ToC manager for single files.
 
 ## 1. <a id="why-mdtoc"></a>Why mdtoc?
 
-- one small CLI for ToC, numbering, anchors, stripping, and CI checks
-- deterministic and idempotent output
-- anchors are derived from the semantic heading title, not from generated numbers
-- fenced code blocks are ignored safely while parsing headings and markers
-- generated content stays clearly separated from authored content
+* one small CLI for ToC, numbering, anchors, stripping, and CI checks
+* deterministic and idempotent output
+* anchors are derived from the semantic heading title, not from generated numbers
+* fenced code blocks are ignored safely while parsing headings and markers
+* generated content stays clearly separated from authored content
 
 ## 2. <a id="install"></a>Install
 
@@ -104,20 +104,20 @@ The heading title stays the source of truth. Numbers, anchors, and ToC entries a
 
 `mdtoc` is intentionally small:
 
-- processes one Markdown file at a time
-- supports file input and Unix pipes
-- supports ATX headings (`#` to `######`)
-- is not a site generator and not a full Markdown formatter
+* processes one Markdown file at a time
+* supports file input and Unix pipes
+* supports ATX headings (`#` to `######`)
+* is not a site generator and not a full Markdown formatter
 
 ## 6. <a id="documentation"></a>Documentation
 
 ### 6.1. <a id="specification"></a>Specification
 
-- [mdtoc spec](./docs/mdtoc-spec.md)
+* [mdtoc spec](./docs/mdtoc-spec.md)
 
 ### 6.2. <a id="comparison"></a>Comparison
 
-- [Replacement tools comparison](./docs/mdtoc-replacement-tools-comparison.md)
+* [Replacement tools comparison](./docs/mdtoc-replacement-tools-comparison.md)
 
 ## 7. <a id="status"></a>Status
 
