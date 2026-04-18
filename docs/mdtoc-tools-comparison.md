@@ -152,7 +152,7 @@ Tools that are very similar, with a focus on:
 > 
 > Switch to slugs – that is the professional setup.
 
-# Open-source alternatives to `mdtoc` for the Trice project
+# Open-source alternatives to `mdtoc`
 
 ## Scope
 

@@ -152,7 +152,7 @@ Tools, die sehr ähnlich sind – mit Fokus auf:
 > 
 > Wechsle zu slug – das ist das professionelle Setup.
 
-# Open-Source-Alternativen zu `mdtoc` für das Trice-Projekt
+# Open-Source-Alternativen zu `mdtoc`
 
 ## Geltungsbereich
 
