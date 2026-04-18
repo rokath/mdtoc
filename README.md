@@ -68,8 +68,8 @@ mdtoc --help    # show CLI usage and commands
 ```bash
 mdtoc generate -f README.md -a off -toc off # rewrite headings only, keep anchors and ToC disabled
 cat README.md | mdtoc strip > README.md     # remove managed artifacts via Unix pipe and write clean Markdown back
-mdtoc generate -f README.md                  # generate the managed container, numbering, anchors, and ToC
-mdtoc check -f README.md                     # fail in CI when README.md differs from the reconstructed target state
+mdtoc generate -f README.md                 # generate the managed container, numbering, anchors, and ToC
+mdtoc check -f README.md                    # fail in CI when README.md differs from the reconstructed target state
 ```
 
 ## 4. <a id="managed-structure"></a>Managed Structure
