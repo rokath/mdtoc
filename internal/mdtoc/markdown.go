@@ -10,6 +10,7 @@ func ExtractPlainText(titleMarkup string) (string, error) {
 	return strings.TrimSpace(extractInlineText(titleMarkup)), nil
 }
 
+// extractInlineText removes supported inline Markdown markup while keeping text.
 func extractInlineText(s string) string {
 	var b strings.Builder
 	for i := 0; i < len(s); {
@@ -49,6 +50,7 @@ func extractInlineText(s string) string {
 	return collapseWhitespace(b.String())
 }
 
+// parseBracketLinkLike parses a Markdown link or image-like construct at s[0].
 func parseBracketLinkLike(s string) (label string, consumed int, ok bool) {
 	if len(s) == 0 || s[0] != '[' {
 		return "", 0, false
@@ -66,6 +68,7 @@ func parseBracketLinkLike(s string) (label string, consumed int, ok bool) {
 	return label, consumed, true
 }
 
+// isFormattingMarker reports whether the rune is stripped as inline formatting.
 func isFormattingMarker(r rune) bool {
 	switch r {
 	case '*', '_', '~':
@@ -75,6 +78,7 @@ func isFormattingMarker(r rune) bool {
 	}
 }
 
+// collapseWhitespace folds runs of whitespace into single spaces.
 func collapseWhitespace(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }

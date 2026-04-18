@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// TestGenerateCreatesContainerAndDerivedArtifacts verifies the default generated container output.
 func TestGenerateCreatesContainerAndDerivedArtifacts(t *testing.T) {
 	input := "# Title\n\n## Intro\n\n### API\n"
 	got, warnings, err := Generate(input, DefaultOptions())
@@ -23,6 +24,7 @@ func TestGenerateCreatesContainerAndDerivedArtifacts(t *testing.T) {
 	}
 }
 
+// TestGenerateIsIdempotent verifies that repeated generation does not change the document again.
 func TestGenerateIsIdempotent(t *testing.T) {
 	input := "# Title\n\n## Intro\n"
 	first, _, err := Generate(input, DefaultOptions())
@@ -38,6 +40,7 @@ func TestGenerateIsIdempotent(t *testing.T) {
 	}
 }
 
+// TestGeneratePreservesForeignTOCContentAsComment verifies preservation of handwritten managed-area content.
 func TestGeneratePreservesForeignTOCContentAsComment(t *testing.T) {
 	input := strings.Join([]string{startMarker, "Some handwritten note", configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n"
 	got, _, err := Generate(input, DefaultOptions())
@@ -49,6 +52,7 @@ func TestGeneratePreservesForeignTOCContentAsComment(t *testing.T) {
 	}
 }
 
+// TestGenerateIgnoresHeadingsInsideFencesAndComments verifies ignored-region parsing behavior.
 func TestGenerateIgnoresHeadingsInsideFencesAndComments(t *testing.T) {
 	input := strings.Join([]string{"# Title", "", "```md", "## Code heading", "```", "", "<!--", "## Comment heading", "-->", "", "## Real heading"}, "\n") + "\n"
 	got, _, err := Generate(input, DefaultOptions())
@@ -63,6 +67,7 @@ func TestGenerateIgnoresHeadingsInsideFencesAndComments(t *testing.T) {
 	}
 }
 
+// TestStripKeepsContainerAndMarksStateStripped verifies stripped-state rendering with the container retained.
 func TestStripKeepsContainerAndMarksStateStripped(t *testing.T) {
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
 	if err != nil {
@@ -83,6 +88,7 @@ func TestStripKeepsContainerAndMarksStateStripped(t *testing.T) {
 	}
 }
 
+// TestStripRawRemovesContainerAndManagedArtifacts verifies full raw stripping behavior.
 func TestStripRawRemovesContainerAndManagedArtifacts(t *testing.T) {
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
 	if err != nil {
@@ -100,6 +106,7 @@ func TestStripRawRemovesContainerAndManagedArtifacts(t *testing.T) {
 	}
 }
 
+// TestCheckMatchesAndDetectsMismatch verifies both matching and mismatching check outcomes.
 func TestCheckMatchesAndDetectsMismatch(t *testing.T) {
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
 	if err != nil {
@@ -122,6 +129,7 @@ func TestCheckMatchesAndDetectsMismatch(t *testing.T) {
 	}
 }
 
+// TestGenerateAndCheckPreserveRelocatedContainerPosition verifies stable behavior for moved containers.
 func TestGenerateAndCheckPreserveRelocatedContainerPosition(t *testing.T) {
 	source := "# Title\n\nIntro paragraph.\n\n## Intro\n"
 	generated, _, err := Generate(source, DefaultOptions())

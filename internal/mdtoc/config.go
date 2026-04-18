@@ -64,6 +64,7 @@ func parseConfig(lines []string) (Config, error) {
 	return cfg, nil
 }
 
+// parseOnOff converts the persisted on/off syntax into a boolean.
 func parseOnOff(s string) (bool, error) {
 	switch s {
 	case "on":
@@ -89,6 +90,7 @@ func RenderConfig(cfg Config) []string {
 	}
 }
 
+// onOff converts a boolean back to the persisted on/off syntax.
 func onOff(v bool) string {
 	if v {
 		return "on"

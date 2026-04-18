@@ -65,6 +65,7 @@ func slugifyBase(title string) string {
 	return b.String()
 }
 
+// isInWordPunctuation reports whether the rune may stay inside a slugged word.
 func isInWordPunctuation(r rune) bool {
 	switch r {
 	case '\'', '’', '"', '“', '”':

@@ -91,6 +91,7 @@ func ParseDocument(input string) (*ParsedDocument, error) {
 	return parsed, nil
 }
 
+// splitLines normalizes an input string into logical lines without the final LF.
 func splitLines(input string) []string {
 	if input == "" {
 		return []string{}
@@ -102,6 +103,7 @@ func splitLines(input string) []string {
 	return strings.Split(input, "\n")
 }
 
+// startsGenericHTMLComment reports whether a line opens a non-mdtoc HTML comment.
 func startsGenericHTMLComment(trimmed string) bool {
 	if !strings.HasPrefix(trimmed, "<!--") {
 		return false
@@ -109,6 +111,7 @@ func startsGenericHTMLComment(trimmed string) bool {
 	return trimmed != startMarker && trimmed != endMarker && trimmed != configStart
 }
 
+// fenceOpen reports the supported fence marker that starts on the given line.
 func fenceOpen(trimmed string) string {
 	if strings.HasPrefix(trimmed, "```") {
 		return "```"
@@ -119,10 +122,12 @@ func fenceOpen(trimmed string) string {
 	return ""
 }
 
+// isFenceClose reports whether the line closes the active fence type.
 func isFenceClose(trimmed, marker string) bool {
 	return marker != "" && strings.HasPrefix(trimmed, marker)
 }
 
+// findConfigEnd searches for the terminating line of the config block.
 func findConfigEnd(lines []string, start int) int {
 	for i := start; i < len(lines); i++ {
 		if strings.TrimSpace(lines[i]) == configEnd {
@@ -132,6 +137,7 @@ func findConfigEnd(lines []string, start int) int {
 	return -1
 }
 
+// buildContainer validates and materializes the parsed managed container metadata.
 func buildContainer(lines []string, startLine, endLine, configStartLine, configEndLine int) (*Container, error) {
 	if startLine == -1 && endLine == -1 && configStartLine == -1 {
 		return nil, nil
@@ -165,6 +171,7 @@ func buildContainer(lines []string, startLine, endLine, configStartLine, configE
 	}, nil
 }
 
+// parseHeadings scans the document for managed heading candidates and warnings.
 func parseHeadings(lines []string) ([]Heading, []string, error) {
 	headings := []Heading{}
 	warnings := []string{}
@@ -209,6 +216,7 @@ func parseHeadings(lines []string) ([]Heading, []string, error) {
 	return headings, warnings, nil
 }
 
+// parseHeadingLine parses one heading line into its managed and semantic parts.
 func parseHeadingLine(line string, lineIndex int) (Heading, string, bool, error) {
 	m := headingStartRE.FindStringSubmatch(line)
 	if m == nil {

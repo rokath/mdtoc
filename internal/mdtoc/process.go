@@ -79,6 +79,7 @@ func Check(input string) (bool, []string, error) {
 	return expected == normalizeInput(input), parsed.Warnings, nil
 }
 
+// normalizeInput canonicalizes line endings and ensures a trailing newline.
 func normalizeInput(input string) string {
 	input = strings.ReplaceAll(input, "\r\n", "\n")
 	if input == "" {
@@ -90,6 +91,7 @@ func normalizeInput(input string) string {
 	return input
 }
 
+// removeContainerAndNormalizeHeadings returns body lines without the managed container.
 func removeContainerAndNormalizeHeadings(parsed *ParsedDocument) ([]string, []Heading) {
 	lines := append([]string(nil), parsed.Lines...)
 	if parsed.Container != nil {
@@ -110,6 +112,7 @@ func removeContainerAndNormalizeHeadings(parsed *ParsedDocument) ([]string, []He
 	return lines, headings
 }
 
+// assignDerivedArtifacts computes managed numbers and anchors for eligible headings.
 func assignDerivedArtifacts(headings []Heading, cfg Config) {
 	slugger := NewSlugger()
 	counters := make([]int, 7)
@@ -140,6 +143,7 @@ func assignDerivedArtifacts(headings []Heading, cfg Config) {
 	}
 }
 
+// rewriteHeadings renders the managed heading state back into the document lines.
 func rewriteHeadings(lines []string, headings []Heading, cfg Config) []string {
 	out := append([]string(nil), lines...)
 	for _, h := range headings {
@@ -159,6 +163,7 @@ func rewriteHeadings(lines []string, headings []Heading, cfg Config) []string {
 	return out
 }
 
+// renderTOC converts managed headings into Markdown list entries.
 func renderTOC(headings []Heading, cfg Config) []string {
 	lines := []string{}
 	for _, h := range headings {
@@ -175,6 +180,7 @@ func renderTOC(headings []Heading, cfg Config) []string {
 	return lines
 }
 
+// renderContainer renders the normalized managed container for the current config.
 func renderContainer(cfg Config, preserved, toc []string) []string {
 	lines := []string{startMarker}
 	if len(preserved) > 0 {
@@ -191,6 +197,7 @@ func renderContainer(cfg Config, preserved, toc []string) []string {
 	return lines
 }
 
+// preserveForeignTOC keeps handwritten content from the managed ToC area as comments.
 func preserveForeignTOC(container *Container) []string {
 	if container == nil || len(container.TOCArea) == 0 {
 		return nil
@@ -234,6 +241,7 @@ func preserveForeignTOC(container *Container) []string {
 	return trimBlankEdges(preserved)
 }
 
+// isGeneratedTOCLine reports whether the line matches the generated ToC shape.
 func isGeneratedTOCLine(line string) bool {
 	trimmed := strings.TrimSpace(line)
 	if trimmed == "" {
@@ -242,6 +250,7 @@ func isGeneratedTOCLine(line string) bool {
 	return strings.HasPrefix(trimmed, "* [") && strings.Contains(trimmed, "](#") && strings.HasSuffix(trimmed, ")")
 }
 
+// wrapPreservedComment wraps preserved foreign lines in a generated HTML comment.
 func wrapPreservedComment(lines []string) []string {
 	chunk := trimBlankEdges(lines)
 	if len(chunk) == 0 {
@@ -253,6 +262,7 @@ func wrapPreservedComment(lines []string) []string {
 	return out
 }
 
+// trimBlankEdges removes leading and trailing blank lines from a slice.
 func trimBlankEdges(lines []string) []string {
 	start := 0
 	for start < len(lines) && strings.TrimSpace(lines[start]) == "" {
@@ -265,6 +275,7 @@ func trimBlankEdges(lines []string) []string {
 	return append([]string(nil), lines[start:end]...)
 }
 
+// prependContainer places a new container at the top of the document body.
 func prependContainer(body, container []string) []string {
 	if len(body) == 0 {
 		return container
@@ -277,6 +288,7 @@ func prependContainer(body, container []string) []string {
 	return out
 }
 
+// placeContainer reinserts the managed container at its existing document position.
 func placeContainer(body, container []string, existing *Container) []string {
 	if existing == nil {
 		return prependContainer(body, container)
@@ -294,6 +306,7 @@ func placeContainer(body, container []string, existing *Container) []string {
 	return out
 }
 
+// joinLines joins logical lines into normalized document text.
 func joinLines(lines []string) string {
 	if len(lines) == 0 {
 		return ""

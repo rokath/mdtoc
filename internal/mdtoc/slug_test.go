@@ -2,6 +2,7 @@ package mdtoc
 
 import "testing"
 
+// TestSluggerExamplesFromSpec verifies the documented slugging examples and collision handling.
 func TestSluggerExamplesFromSpec(t *testing.T) {
 	slugger := NewSlugger()
 	cases := []struct{ input, want string }{
@@ -20,6 +21,7 @@ func TestSluggerExamplesFromSpec(t *testing.T) {
 	}
 }
 
+// TestExtractPlainText verifies inline Markdown text extraction for headings.
 func TestExtractPlainText(t *testing.T) {
 	got, err := ExtractPlainText("This'll be a _Helpful_ [Section](#x) about `Go`")
 	if err != nil {
