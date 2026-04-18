@@ -1,17 +1,20 @@
 # mdtoc
 
 <!-- mdtoc -->
-* [1. About](#about)
-* [2. Highlights](#highlights)
-* [3. Build](#build)
-* [4. Test](#test)
-* [5. Why this tool exists](#why-this-tool-exists)
-* [6. What makes mdtoc different](#what-makes-mdtoc-different)
-* [7. Why not just use an existing tool?](#why-not-just-use-an-existing-tool)
-* [8. Project goal](#project-goal)
-* [9. In one sentence](#in-one-sentence)
-  * [9.1. Try it out with this README.md](#try-it-out-with-this-readme-md)
-* [10. State](#state)
+* [1. Why mdtoc?](#why-mdtoc)
+* [2. What it does](#what-it-does)
+* [3. Install](#install)
+  * [3.1. Releases](#releases)
+  * [3.2. Build from source](#build-from-source)
+* [4. Quickstart](#quickstart)
+  * [4.1. Inspect the CLI](#inspect-the-cli)
+  * [4.2. Use this README as example](#use-this-readme-as-example)
+* [5. Managed Structure](#managed-structure)
+* [6. Scope](#scope)
+* [7. Documentation](#documentation)
+  * [7.1. Specification](#specification)
+  * [7.2. Comparison](#comparison)
+* [8. Status](#status)
 <!-- mdtoc-config
 numbering=on
 min-level=2
@@ -22,141 +25,104 @@ state=generated
 -->
 <!-- /mdtoc -->
 
-## 1. <a id="about"></a>About
+[![Release](https://img.shields.io/github/v/release/rokath/mdtoc)](https://github.com/rokath/mdtoc/releases)
+[![License](https://img.shields.io/github/license/rokath/mdtoc)](https://github.com/rokath/mdtoc)
+[![Downloads](https://img.shields.io/github/downloads/rokath/mdtoc/total)](https://github.com/rokath/mdtoc/releases)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go)](https://go.dev/)
+[![Pages](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://rokath.github.io/mdtoc/)
 
-Deterministic Table of Contents (ToC) with Numbering and stabile Anchors including heading management for Markdown documents
+Deterministic Markdown ToC manager for single files.
 
-This repository contains a Go reference implementation of the `mdtoc` [8(specification](./docs/mdtoc-spec.md).
+`mdtoc` generates and validates a managed table of contents, heading numbering, and stable anchors without turning your Markdown into a moving target.
 
-Alternatives: [replacement tools comparison](./docs/mdtoc-replacement-tools-comparison.md).
+## 1. <a id="why-mdtoc"></a>Why mdtoc?
 
-## 2. <a id="highlights"></a>Highlights
+- one small CLI for ToC, numbering, anchors, stripping, and CI checks
+- deterministic and idempotent output
+- anchors are derived from the semantic heading title, not from generated numbers
+- fenced code blocks are ignored safely while parsing headings and markers
+- generated content stays clearly separated from authored content
 
-* deterministic container parsing
-* stable heading numbering
-* stable anchor IDs derived from unnumbered heading text
-* `generate`, `strip`, `strip --raw`, and `check`
-* unit tests for slug generation, parsing behavior, rendering, and CLI exit codes
-* extensive comments in English throughout the source code
+## 2. <a id="what-it-does"></a>What it does
 
-## 3. <a id="build"></a>Build
+`mdtoc` manages this as one coherent workflow:
+
+- `generate` updates the managed container, heading numbers, and anchors
+- `strip` removes generated numbering, anchors, and the managed container
+- `strip --raw` removes only generated heading artifacts
+- `check` verifies that a document already matches the reconstructed target state
+
+This makes it useful for technical Markdown that should stay reproducible in Git and trustworthy in CI.
+
+## 3. <a id="install"></a>Install
+
+### 3.1. <a id="releases"></a>Releases
+
+Download a prebuilt binary from [GitHub Releases](https://github.com/rokath/mdtoc/releases).
+
+### 3.2. <a id="build-from-source"></a>Build from source
 
 ```bash
 go build ./cmd/mdtoc
 ```
 
-## 4. <a id="test"></a>Test
+## 4. <a id="quickstart"></a>Quickstart
+
+### 4.1. <a id="inspect-the-cli"></a>Inspect the CLI
 
 ```bash
-go test ./...
+mdtoc --version # show version information
+mdtoc --help    # show CLI usage
 ```
 
-## 5. <a id="why-this-tool-exists"></a>Why this tool exists
+### 4.2. <a id="use-this-readme-as-example"></a>Use this README as example
 
-Managing Markdown documents at scale sounds simple—until it isn’t.
+```bash
+mdtoc generate -f README.md -a off -toc off # generate numbering only
+cat README.md | mdtoc strip > README.md     # strip managed artifacts from stdin
+mdtoc generate -f README.md                  # regenerate ToC, numbering, and anchors
+mdtoc check -f README.md                     # verify the managed state for CI
+```
 
-<!--
-Existing tools typically solve parts of the problem:
+## 5. <a id="managed-structure"></a>Managed Structure
 
-Generate a Table of Contents (ToC)
-Generate anchor links
-Sometimes number headings
+`mdtoc` uses an explicit container so generated content is easy to spot and safe to regenerate:
 
-But they often fail when you need all of the following at once:
-
-Stable, deterministic output (CI-friendly)
-Idempotent behavior (safe to run repeatedly)
-Consistent heading numbering
-Anchor IDs derived from the semantic title (not numbering)
-Correct handling of Markdown edge cases (especially fenced code blocks)
-Clean separation between source content and generated artifacts
-
-In practice, combining multiple tools leads to:
-
-Conflicting transformations
-Broken anchor links
-Non-reproducible results
-Fragile CI pipelines
-Design goals
-
-mdtoc is built to address these issues with a single, coherent model.
-
-Deterministic
-
-Given the same input, mdtoc always produces the same output.
-
-This is essential for:
-
-CI pipelines
-reproducible documentation builds
-clean diffs in version control
+```md
+<!-- mdtoc -->
+* [About](#about)
+<!-- mdtoc-config
+numbering=on
+min-level=2
+max-level=4
+anchors=on
+toc=on
+state=generated
 -->
-
-There are many tools that generate a table of contents. Some also generate anchors. A few can add heading numbers. But once a document needs all of these features together, the usual solutions become awkward:
-
-* heading numbers change visible text
-* anchors should stay based on the semantic title, not the number
-* repeated runs should not keep changing the file
-* code fences must not be mistaken for headings
-* generated content must stay clearly separated from authored content
-
-In practice, this often leads to fragile tool chains, broken links, noisy diffs, and CI checks that are hard to trust.
-
-`mdtoc` is being developed to solve this as **one coherent problem**, not as a pile of loosely connected text transformations.
-
-## 6. <a id="what-makes-mdtoc-different"></a>What makes mdtoc different
-
-`mdtoc` is built around a simple idea:
-
-> The heading title is the source of truth.  
-> Everything else is derived from it.
-
-That means:
-
-* heading numbers are generated, not authored
-* anchor IDs are generated from the unnumbered title
-* the table of contents is generated from the same structure
-* generated artifacts can be removed and recreated at any time
-
-This keeps documents predictable, reviewable, and safe to process automatically.
-
-## 7. <a id="why-not-just-use-an-existing-tool"></a>Why not just use an existing tool?
-
-Because the existing tools we looked at solve only parts of the problem well.
-
-Some are good at generating ToCs, but do not manage heading numbering.  
-Some number headings, but are not robust around fenced code blocks.  
-Some produce anchors, but not in a way that fits a deterministic, idempotent workflow.
-
-For the intended use case, especially in CI and long-lived technical documentation, that is not enough.
-
-## 8. <a id="project-goal"></a>Project goal
-
-`mdtoc` is meant to be a small, reliable helper tool for Markdown documents that need:
-
-* reproducible structure
-* stable generated navigation
-* deterministic heading numbering
-* safe automation in CI
-
-It is not meant to be a full Markdown processor or site generator.
-
-## 9. <a id="in-one-sentence"></a>In one sentence
-
-`mdtoc` exists because technical Markdown needs more than a ToC generator: it needs a deterministic structure manager.
-
-### 9.1. <a id="try-it-out-with-this-readme-md"></a>Try it out with this README.md
-
-```bash
-mdtoc --version
-mdtoc --help
-mdtoc generate -f README.md -a off -toc off
-cat README.md | mdtoc strip > README.md
-mdtoc generate -f README.md
-mdtoc check -f README.md
+<!-- /mdtoc -->
 ```
 
-## 10. <a id="state"></a>State
+The heading title stays the source of truth. Numbers, anchors, and ToC entries are derived from it.
+
+## 6. <a id="scope"></a>Scope
+
+`mdtoc` is intentionally small:
+
+- processes one Markdown file at a time
+- supports ATX headings (`#` to `######`)
+- is not a site generator and not a full Markdown formatter
+
+## 7. <a id="documentation"></a>Documentation
+
+### 7.1. <a id="specification"></a>Specification
+
+- [mdtoc spec](./docs/mdtoc-spec.md)
+
+### 7.2. <a id="comparison"></a>Comparison
+
+- [Replacement tools comparison](./docs/mdtoc-replacement-tools-comparison.md)
+
+## 8. <a id="status"></a>Status
 
 ```diff
 + READY TO USE +
