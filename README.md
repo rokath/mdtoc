@@ -10,6 +10,7 @@
 * [7. Why not just use an existing tool?](#why-not-just-use-an-existing-tool)
 * [8. Project goal](#project-goal)
 * [9. In one sentence](#in-one-sentence)
+  * [9.1. Try it out with this README.md](#try-it-out-with-this-readme-md)
 * [10. State](#state)
 <!-- mdtoc-config
 numbering=on
@@ -144,7 +145,7 @@ It is not meant to be a full Markdown processor or site generator.
 
 `mdtoc` exists because technical Markdown needs more than a ToC generator: it needs a deterministic structure manager.
 
-### Try it out with this README.md
+### 9.1. <a id="try-it-out-with-this-readme-md"></a>Try it out with this README.md
 
 ```bash
 mdtoc --version
