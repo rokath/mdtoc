@@ -6,25 +6,46 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* No unreleased changes yet.
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.1.1..HEAD`
+
+```txt
+```
+
+## <a id='v0.1.1-changes'></a>v0.1.1 Changes (2026-04-18)
+
+### <a id='v0.1.1-overview'></a>v0.1.1 Overview
+
 * CLI usability improved for interactive use:
   * `generate`, `strip`, and `check` now fail fast when no `--file` is given and no input is piped via `stdin`
   * this resolves confusing blocking behavior described in [#4](https://github.com/rokath/mdtoc/issues/4)
-* Test coverage and regression protection were expanded:
+* Test coverage and regression protection were expanded substantially:
   * overall statement coverage was raised above 90%
   * `cmd/mdtoc` is now test-covered
   * additional parser, config, CLI, process, and helper branches are verified directly
 * Code and test documentation were normalized:
-  * missing comments were added for exported and non-exported functions, structs, and test functions
+  * missing comments were added for exported and non-exported functions, structs, helper functions, and test functions
 * README and project docs were refined:
   * badges were refreshed and aligned to `mdtoc`
   * the README now doubles as a nested ToC example and usage demo
   * comparison docs were renamed from `replacement-tools-comparison` to `tools-comparison`
+  * specification docs were normalized for Markdown list spacing and marker consistency
+  * an initial project changelog was added
+* CI compatibility was updated:
+  * the GoReleaser workflow now uses `goreleaser/goreleaser-action@v7`
+  * this avoids the Node 20 deprecation warning on GitHub Actions runners
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.1.1-git-log'></a>v0.1.1 Git Log
 
-Used git range: `v0.1.0..HEAD`
+Used git range: `v0.1.0..v0.1.1`
 
 ```txt
+* 4623bb6 2026-04-18 ci(goreleaser): use goreleaser-action v7
+* 28e1c85 2026-04-18 docs(spec): normalize list spacing and markers
+* 33995a8 2026-04-18 docs(changelog): add initial changelog
 * 8b39226 2026-04-18 test: raise coverage and document helpers
 * ec07245 2026-04-18 feat(cli): fail fast on missing interactive input
 * b4d12c8 2026-04-18 docs(readme): refresh badges and comparison docs
