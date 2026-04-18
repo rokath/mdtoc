@@ -5,19 +5,21 @@
 `mdtoc` ist ein deterministisches CLI-Werkzeug zur Verarbeitung einzelner Markdown-Dokumente.
 
 Funktionen:
-- Generierung eines Inhaltsverzeichnisses (ToC)
-- konsistente Kapitelnummerierung
-- Erzeugung stabiler Anchor-IDs, unabhängig von Kapitelnummern
-- Entfernen aller von `mdtoc` generierten Artefakte
-- Zustandsprüfung eines Dokuments für CI
+
+* Generierung eines Inhaltsverzeichnisses (ToC)
+* konsistente Kapitelnummerierung
+* Erzeugung stabiler Anchor-IDs, unabhängig von Kapitelnummern
+* Entfernen aller von `mdtoc` generierten Artefakte
+* Zustandsprüfung eines Dokuments für CI
 
 Grundprinzipien:
-- Der sichtbare Überschriftentext ist die einzige semantische Quelle der Wahrheit.
-- Kapitelnummern sind abgeleitet und nicht persistent.
-- Anchor-IDs werden nur aus dem unnummerierten Titel berechnet.
-- Generierte Inhalte sind vollständig rekonstruierbar.
-- `mdtoc` ändert ein Dokument nur auf Basis einer klar definierten verwalteten Struktur.
-- Das Werkzeug ist idempotent.
+
+* Der sichtbare Überschriftentext ist die einzige semantische Quelle der Wahrheit.
+* Kapitelnummern sind abgeleitet und nicht persistent.
+* Anchor-IDs werden nur aus dem unnummerierten Titel berechnet.
+* Generierte Inhalte sind vollständig rekonstruierbar.
+* `mdtoc` ändert ein Dokument nur auf Basis einer klar definierten verwalteten Struktur.
+* Das Werkzeug ist idempotent.
 
 _Anmerkung:_ "formal" bedeutet in diesem Dokument nur "klar genug für Parser, Tests und spätere Code-Generierung". Gemeint ist keine große Architektur, sondern ein kleiner, robuster Vertragsrahmen.
 
@@ -26,19 +28,21 @@ _Anmerkung:_ "formal" bedeutet in diesem Dokument nur "klar genug für Parser, T
 `mdtoc` verarbeitet absichtlich nur einen kleinen, eindeutigen Markdown-Subset.
 
 Unterstützt in v1:
-- einzelne Markdown-Datei
-- ATX-Überschriften mit `#` bis `######`
-- definierte ToC-Marker
-- definierter Config-Block
-- definierte Inline-Ankerform in Überschriften
+
+* einzelne Markdown-Datei
+* ATX-Überschriften mit `#` bis `######`
+* definierte ToC-Marker
+* definierter Config-Block
+* definierte Inline-Ankerform in Überschriften
 
 Nicht unterstützt in v1:
-- Setext-Überschriften
-- GUI-Automation
-- PDF-Erzeugung
-- Mehrdateiverarbeitung
-- vollständiger Markdown-AST als eigener `mdtoc`-Spezifikationsgegenstand
-- partielle Verarbeitung wie `--toc-only` oder `--anchors-only`
+
+* Setext-Überschriften
+* GUI-Automation
+* PDF-Erzeugung
+* Mehrdateiverarbeitung
+* vollständiger Markdown-AST als eigener `mdtoc`-Spezifikationsgegenstand
+* partielle Verarbeitung wie `--toc-only` oder `--anchors-only`
 
 _Anmerkung:_ Die Beschränkung auf einen kleinen Markdown-Subset ist Absicht. Damit bleiben Parser, Testfälle und Fehlersuche einfach.
 
@@ -61,15 +65,16 @@ state=generated
 ```
 
 Regeln:
-- Der äußere Container besteht aus Start-Marker, ToC-Bereich, Config-Block und End-Marker.
-- Der Config-Block muss unmittelbar vor `<!-- /mdtoc -->` stehen.
-- `<!-- mdtoc -->` darf höchstens einmal vorkommen.
-- `<!-- /mdtoc -->` darf höchstens einmal vorkommen.
-- Der Config-Block darf höchstens einmal vorkommen.
-- Kommt keiner der äußeren Marker vor, fügt `generate` den kompletten Container am Dateianfang ein.
-- Kommt nur einer der äußeren Marker vor oder liegt der Start-Marker nach dem End-Marker, ist das ein Parsing-Fehler.
-- Alles zwischen `<!-- mdtoc -->` und dem Anfang des Config-Blocks ist der verwaltete ToC-Bereich.
-- Fremder Inhalt im ToC-Bereich wird bei `generate` nicht gelöscht, sondern als HTML-Kommentar erhalten.
+
+* Der äußere Container besteht aus Start-Marker, ToC-Bereich, Config-Block und End-Marker.
+* Der Config-Block muss unmittelbar vor `<!-- /mdtoc -->` stehen.
+* `<!-- mdtoc -->` darf höchstens einmal vorkommen.
+* `<!-- /mdtoc -->` darf höchstens einmal vorkommen.
+* Der Config-Block darf höchstens einmal vorkommen.
+* Kommt keiner der äußeren Marker vor, fügt `generate` den kompletten Container am Dateianfang ein.
+* Kommt nur einer der äußeren Marker vor oder liegt der Start-Marker nach dem End-Marker, ist das ein Parsing-Fehler.
+* Alles zwischen `<!-- mdtoc -->` und dem Anfang des Config-Blocks ist der verwaltete ToC-Bereich.
+* Fremder Inhalt im ToC-Bereich wird bei `generate` nicht gelöscht, sondern als HTML-Kommentar erhalten.
 
 Hinweis: Der User kann durch Verschieben des Toc-Bereiches bestimmen, wo das Inhaltsverzeichnis sein soll.
 
@@ -91,31 +96,34 @@ _Erklärung:_ Für die Implementierung in Go ist ein interner Parser wie `goldma
 Diese Bereiche werden beim Erkennen von Markern und Überschriften ignoriert:
 
 1. Fenced code blocks mit Backticks:
-   - Beginn: ein Backtick-Fence gemäß unterstütztem Markdown-Parser oder unterstütztem v1-Subset (eine Zeile, die mit drei Backticks beginnt)
-   - Ende: das zugehörige schließende Backtick-Fence (die nächste Zeile, die mit drei Backticks beginnt)
+   * Beginn: ein Backtick-Fence gemäß unterstütztem Markdown-Parser oder unterstütztem v1-Subset (eine Zeile, die mit drei Backticks beginnt)
+   * Ende: das zugehörige schließende Backtick-Fence (die nächste Zeile, die mit drei Backticks beginnt)
 2. Fenced code blocks mit Tilde:
-   - Beginn: ein Tilde-Fence gemäß unterstütztem Markdown-Parser oder unterstütztem v1-Subset (eine Zeile, die mit drei Tilden (`~~~`) beginnt)
-   - Ende: das zugehörige schließende Tilde-Fence (die nächste Zeile, die mit drei Tilden (`~~~`) beginnt)
+   * Beginn: ein Tilde-Fence gemäß unterstütztem Markdown-Parser oder unterstütztem v1-Subset (eine Zeile, die mit drei Tilden (`~~~`) beginnt)
+   * Ende: das zugehörige schließende Tilde-Fence (die nächste Zeile, die mit drei Tilden (`~~~`) beginnt)
 3. Inline code spans:
-   - Bereich zwischen zwei Backticks in derselben Zeile
+   * Bereich zwischen zwei Backticks in derselben Zeile
 4. HTML-Kommentare:
-   - `<!-- ... -->`
-   - Ausnahme: `<!-- mdtoc -->`, `<!-- /mdtoc -->` und `<!-- mdtoc-config ... -->`
+   * `<!-- ... -->`
+   * Ausnahme: `<!-- mdtoc -->`, `<!-- /mdtoc -->` und `<!-- mdtoc-config ... -->`
 
 Nicht ignoriert:
+
 5. Blockquotes
 
 Blockquotes sind normale Eingabezeilen.  
 Sie werden nicht als Sonderbereich behandelt.
 
 Praktische Folge:
-- Eine Blockquote-Zeile beginnt mit optionalen Spaces und dann `>`.
-- Eine von `mdtoc` erkannte Überschrift muss mit einem `hashes`-Präfix direkt an Spalte 1 beginnen.
-- Dadurch können Blockquotes nicht auf die Heading-Syntax matchen und brauchen keine Sonderbehandlung.
+
+* Eine Blockquote-Zeile beginnt mit optionalen Spaces und dann `>`.
+* Eine von `mdtoc` erkannte Überschrift muss mit einem `hashes`-Präfix direkt an Spalte 1 beginnen.
+* Dadurch können Blockquotes nicht auf die Heading-Syntax matchen und brauchen keine Sonderbehandlung.
 
 _Interpretation:_
-- "Blockquotes nicht ignorieren" bedeutet hier ausdrücklich nicht, dass daraus Überschriften entstehen.
-- Es bedeutet nur, dass `mdtoc` keinen eigenen Blockquote-Modus braucht.
+
+* "Blockquotes nicht ignorieren" bedeutet hier ausdrücklich nicht, dass daraus Überschriften entstehen.
+* Es bedeutet nur, dass `mdtoc` keinen eigenen Blockquote-Modus braucht.
 
 ### 4.3 Parsing-Reihenfolge
 
@@ -129,8 +137,9 @@ Die Verarbeitung läuft logisch in dieser Reihenfolge:
 6. Ausgabe rendern.
 
 _Erklärung:_
-- Ohne diese Reihenfolge wären Marker oder Überschriften innerhalb eines Code-Fence mehrdeutig.
-- Genau diese Unklarheit soll hier ausgeschlossen werden.
+
+* Ohne diese Reihenfolge wären Marker oder Überschriften innerhalb eines Code-Fence mehrdeutig.
+* Genau diese Unklarheit soll hier ausgeschlossen werden.
 
 ## 5. Heading-Syntax
 
@@ -143,8 +152,9 @@ hashes := "# " | "## " | "### " | "#### " | "##### " | "###### "
 ```
 
 Damit gilt zugleich:
-- nach den `#` muss genau ein Leerzeichen folgen
-- vor den `#` dürfen keine Leerzeichen stehen
+
+* nach den `#` muss genau ein Leerzeichen folgen
+* vor den `#` dürfen keine Leerzeichen stehen
 
 _Anmerkung:_ Das Leerzeichen ist hier bewusst Teil von `hashes`. Das vereinfacht den Parser: Nach dem Präfix kommt entweder direkt die Nummer, direkt der Anchor oder direkt der Titel.
 
@@ -161,17 +171,19 @@ SP           := exactly one U+0020 space
 ```
 
 Zusätzliche Regeln:
-- `number` ist optional.
-- Wenn `number` vorkommt, steht sie direkt nach `hashes` und wird von genau einem Leerzeichen gefolgt.
-- `anchor` ist optional.
-- Wenn `anchor` vorkommt, steht er direkt nach `hashes` oder direkt nach `number SP`.
-- Zwischen `</a>` und dem ersten Zeichen des Titels steht **kein** Leerzeichen.
-- Innerhalb des Titels bleiben Leerzeichen und Zeichen unverändert erhalten.
-- Nur Überschriften, die exakt dieser Positionslogik entsprechen, dürfen von `mdtoc` umgeschrieben werden.
+
+* `number` ist optional.
+* Wenn `number` vorkommt, steht sie direkt nach `hashes` und wird von genau einem Leerzeichen gefolgt.
+* `anchor` ist optional.
+* Wenn `anchor` vorkommt, steht er direkt nach `hashes` oder direkt nach `number SP`.
+* Zwischen `</a>` und dem ersten Zeichen des Titels steht **kein** Leerzeichen.
+* Innerhalb des Titels bleiben Leerzeichen und Zeichen unverändert erhalten.
+* Nur Überschriften, die exakt dieser Positionslogik entsprechen, dürfen von `mdtoc` umgeschrieben werden.
 
 _Erklärung:_
-- Die fehlende Leerstelle zwischen `</a>` und Titel bleibt bewusst erhalten, weil sie Teil des verwalteten Render-Formats ist.
-- Die Motivation ist jetzt aber nicht mehr `dumeng`-Kompatibilität, sondern ein eindeutig wiedererkennbares und idempotentes Render-Schema.
+
+* Die fehlende Leerstelle zwischen `</a>` und Titel bleibt bewusst erhalten, weil sie Teil des verwalteten Render-Formats ist.
+* Die Motivation ist jetzt aber nicht mehr `dumeng`-Kompatibilität, sondern ein eindeutig wiedererkennbares und idempotentes Render-Schema.
 
 Beispiele gültiger verwalteter Überschriften:
 
@@ -193,9 +205,9 @@ Beispiele, die `mdtoc` nicht als verwaltete Struktur behandelt:
 
 ### 5.3 Bedeutung der Syntax
 
-- `### 2024 roadmap` ist **keine** Nummer, weil das erste Token nicht auf `.` endet.
-- `### 3D graphics` ist **keine** Nummer, weil das erste Token kein reines `x.y.z.`-Muster ist.
-- `### 2.1. API` ist eine verwaltete Nummernsyntax.
+* `### 2024 roadmap` ist **keine** Nummer, weil das erste Token nicht auf `.` endet.
+* `### 3D graphics` ist **keine** Nummer, weil das erste Token kein reines `x.y.z.`-Muster ist.
+* `### 2.1. API` ist eine verwaltete Nummernsyntax.
 
 _Anmerkung:_ Das Muster `### 2.1. API` ist damit bewusst für `mdtoc` reserviert. Wer eine freie Überschrift exakt in diesem Format schreibt, verwendet dieselbe Syntax wie das Tool.
 
@@ -204,10 +216,11 @@ _Anmerkung:_ Das Muster `### 2.1. API` ist damit bewusst für `mdtoc` reserviert
 `mdtoc` ist kein allgemeiner Markdown-Parser.
 
 Für Überschriften gilt in v1:
-- nur ATX-Überschriften
-- nur die oben definierte Heading-Syntax
-- keine Setext-Überschriften
-- keine impliziten oder mehrdeutigen Sonderfälle
+
+* nur ATX-Überschriften
+* nur die oben definierte Heading-Syntax
+* keine Setext-Überschriften
+* keine impliziten oder mehrdeutigen Sonderfälle
 
 Der praktische Vorfilter lautet damit mindestens:
 
@@ -236,31 +249,34 @@ ManagedHeading
 ```
 
 Semantisch wichtig sind nur:
-- `level`
-- `title_markup`
-- `title_text`
+
+* `level`
+* `title_markup`
+* `title_text`
 
 Abgeleitet werden daraus:
-- `number`
-- `anchor_id`
+
+* `number`
+* `anchor_id`
 
 _Erklärung:_
-- Die Trennung `title_markup` vs. `title_text` bleibt sinnvoll, auch wenn `mdtoc` die Ableitung von `title_text` nicht selbst spezifiziert.
-- `title_text` ist in v1 vollständig an `goldmark` delegiert.
-- Maßgeblich ist die von `goldmark` gelieferte Plain-Text-Interpretation des Heading-Inhalts.
-- `mdtoc` definiert dafür in v1 keine eigene abweichende Textableitungslogik.
+
+* Die Trennung `title_markup` vs. `title_text` bleibt sinnvoll, auch wenn `mdtoc` die Ableitung von `title_text` nicht selbst spezifiziert.
+* `title_text` ist in v1 vollständig an `goldmark` delegiert.
+* Maßgeblich ist die von `goldmark` gelieferte Plain-Text-Interpretation des Heading-Inhalts.
+* `mdtoc` definiert dafür in v1 keine eigene abweichende Textableitungslogik.
 
 ### 6.2 Dokumentzustand
 
 Ein Dokument befindet sich für `mdtoc` praktisch in einem dieser Zustände:
 
-- `unmanaged`  
+* `unmanaged`  
   Kein gültiger `mdtoc`-Container mit gültigem Config-Block vorhanden.
 
-- `generated`  
+* `generated`  
   Das Dokument entspricht dem aus Inhalt + Config abgeleiteten Sollzustand.
 
-- `stripped`  
+* `stripped`  
   Die verwalteten Artefakte sind entfernt, der Container mit Config bleibt erhalten.
 
 ### 6.3 Verarbeitungspipeline
@@ -272,10 +288,11 @@ parse -> normalize -> derive -> render
 ```
 
 Das bedeutet:
-- **parse**: Container, Config und Überschriften erkennen
-- **normalize**: verwaltete Nummern und verwaltete Anchors semantisch entfernen
-- **derive**: Nummern, Anchor-IDs und ToC neu berechnen
-- **render**: Dokument deterministisch zurückschreiben
+
+* **parse**: Container, Config und Überschriften erkennen
+* **normalize**: verwaltete Nummern und verwaltete Anchors semantisch entfernen
+* **derive**: Nummern, Anchor-IDs und ToC neu berechnen
+* **render**: Dokument deterministisch zurückschreiben
 
 _Anmerkung:_ Das soll keine große AST-Architektur erzwingen. Es legt nur fest, welche Informationen semantisch zählen und welche nur Render-Artefakte sind.
 
@@ -283,19 +300,21 @@ _Anmerkung:_ Das soll keine große AST-Architektur erzwingen. Es legt nur fest, 
 
 Diese Fassung geht von folgender, leicht verständlicher Regel aus:
 
-- `min-level` und `max-level` filtern dieselbe Menge an Überschriften für
-  - ToC-Erzeugung
-  - Nummerierung
-  - Anchor-Erzeugung
+* `min-level` und `max-level` filtern dieselbe Menge an Überschriften für
+  * ToC-Erzeugung
+  * Nummerierung
+  * Anchor-Erzeugung
 
 Praktische Folge:
-- Bei `generate` werden zunächst alle verwalteten Nummern und verwalteten Anchors aus allen verwalteten Überschriften entfernt.
-- Danach werden Nummern und Anchors nur für Überschriften innerhalb des aktiven Level-Bereichs neu gesetzt.
-- Überschriften außerhalb des Bereichs bleiben inhaltlich erhalten, werden aber nicht neu verwaltet.
+
+* Bei `generate` werden zunächst alle verwalteten Nummern und verwalteten Anchors aus allen verwalteten Überschriften entfernt.
+* Danach werden Nummern und Anchors nur für Überschriften innerhalb des aktiven Level-Bereichs neu gesetzt.
+* Überschriften außerhalb des Bereichs bleiben inhaltlich erhalten, werden aber nicht neu verwaltet.
 
 _Verweis:_
-- Dieselbe Regel wird in Abschnitt 10 für den ToC noch einmal verwendet.
-- Das ist Absicht; beide Stellen beschreiben denselben Vertrag aus zwei Blickwinkeln.
+
+* Dieselbe Regel wird in Abschnitt 10 für den ToC noch einmal verwendet.
+* Das ist Absicht; beide Stellen beschreiben denselben Vertrag aus zwei Blickwinkeln.
 
 ## 7. Config-Block
 
@@ -313,29 +332,30 @@ state=generated
 ```
 
 Regeln:
-- Der Config-Block ist zeilenbasiert.
-- Jedes Feld steht in einer eigenen Zeile.
-- Alle Felder verwenden `key=value`.
-- Die Feldreihenfolge ist fest:
+
+* Der Config-Block ist zeilenbasiert.
+* Jedes Feld steht in einer eigenen Zeile.
+* Alle Felder verwenden `key=value`.
+* Die Feldreihenfolge ist fest:
   1. `numbering`
   2. `min-level`
   3. `max-level`
   4. `anchors`
   5. `toc`
   6. `state`
-- Zulässige Werte:
-  - `numbering=on|off`
-  - `anchors=on|off`
-  - `toc=on|off`
-  - `state=generated|stripped`
-- `min-level` und `max-level` sind positive ganze Zahlen.
-- `min-level` darf nicht größer als `max-level` sein.
-- `max-level` darf nicht größer als 6 sein.
-- `generate` schreibt alle Generator-Optionen in den Config-Block; nicht angegebene Optionen mit Default-Wert.
-- `--file`, `--help`, `--version`, `--verbose` und `--raw` werden nicht persistiert.
-- `strip` behält den Config-Block und setzt nur `state=stripped`.
-- `strip --raw` entfernt den Config-Block vollständig.
-- `toc=off` bedeutet: der verwaltete ToC-Bereich bleibt Teil des Containers, wird aber leer gerendert.
+* Zulässige Werte:
+  * `numbering=on|off`
+  * `anchors=on|off`
+  * `toc=on|off`
+  * `state=generated|stripped`
+* `min-level` und `max-level` sind positive ganze Zahlen.
+* `min-level` darf nicht größer als `max-level` sein.
+* `max-level` darf nicht größer als 6 sein.
+* `generate` schreibt alle Generator-Optionen in den Config-Block; nicht angegebene Optionen mit Default-Wert.
+* `--file`, `--help`, `--version`, `--verbose` und `--raw` werden nicht persistiert.
+* `strip` behält den Config-Block und setzt nur `state=stripped`.
+* `strip --raw` entfernt den Config-Block vollständig.
+* `toc=off` bedeutet: der verwaltete ToC-Bereich bleibt Teil des Containers, wird aber leer gerendert.
 
 _Anmerkung:_ `state` ist hier bewusst ebenfalls auf `key=value` vereinheitlicht. Das macht den Parser trivialer und vermeidet einen unnötigen Sonderfall.
 
@@ -385,23 +405,24 @@ Kurzformen:
 
 ### 8.3 I/O- und Logging-Verhalten
 
-- Mit `--file` wird die Datei gelesen und überschrieben.
-- Ohne `--file` kommt die Eingabe von `stdin` und die Dokumentausgabe geht auf `stdout`.
-- Erfolgreiche Kommandos erzeugen keine Ausgabe, außer bei `--help`, `--version` oder `--verbose`.
-- Fehler und Diagnosemeldungen gehen ausschließlich auf `stderr`.
+* Mit `--file` wird die Datei gelesen und überschrieben.
+* Ohne `--file` kommt die Eingabe von `stdin` und die Dokumentausgabe geht auf `stdout`.
+* Erfolgreiche Kommandos erzeugen keine Ausgabe, außer bei `--help`, `--version` oder `--verbose`.
+* Fehler und Diagnosemeldungen gehen ausschließlich auf `stderr`.
 
 ## 9. Kommandos
 
 ### 9.1 `generate`
 
 Verhalten:
+
 1. Dokument parsen.
 2. Wenn kein verwalteter Container vorhanden ist, kompletten Container am Dateianfang anlegen.
 3. Wenn Marker-Struktur oder Config ungültig ist: Fehler und keine Änderung.
 4. Vorhandene verwaltete Artefakte semantisch entfernen:
-   - ToC-Inhalt
-   - verwaltete Kapitelnummern
-   - verwaltete Inline-Anker
+   * ToC-Inhalt
+   * verwaltete Kapitelnummern
+   * verwaltete Inline-Anker
 5. Relevante Überschriften bestimmen.
 6. Nummern neu berechnen, falls `numbering=on`.
 7. `anchor_id` für alle relevanten Überschriften neu berechnen.
@@ -412,11 +433,12 @@ Verhalten:
 12. Dokument zurückschreiben.
 
 Zusätzliche Regeln:
-- Nummerierung und Anchor-ID sind strikt entkoppelt.
-- Anchor-IDs werden nur aus dem unnummerierten Titel berechnet.
-- Duplicate IDs werden deterministisch aufgelöst.
-- Fremder Inhalt im ToC-Bereich wird nicht gelöscht, sondern als HTML-Kommentar erhalten.
-- Bei Erfolg ist das Ergebnis idempotent.
+
+* Nummerierung und Anchor-ID sind strikt entkoppelt.
+* Anchor-IDs werden nur aus dem unnummerierten Titel berechnet.
+* Duplicate IDs werden deterministisch aufgelöst.
+* Fremder Inhalt im ToC-Bereich wird nicht gelöscht, sondern als HTML-Kommentar erhalten.
+* Bei Erfolg ist das Ergebnis idempotent.
 
 Beispiel für eine gerenderte Überschrift:
 
@@ -425,19 +447,21 @@ Beispiel für eine gerenderte Überschrift:
 ```
 
 _Erklärung:_
-- Zusätzliche benutzerdefinierte Inline-Elemente im Titel sind nicht grundsätzlich verboten.
-- Für die normative Ableitung von `anchor_id` zählt aber nicht das rohe Markup, sondern `title_text` gemäß Abschnitt 6 und Abschnitt 11.
+
+* Zusätzliche benutzerdefinierte Inline-Elemente im Titel sind nicht grundsätzlich verboten.
+* Für die normative Ableitung von `anchor_id` zählt aber nicht das rohe Markup, sondern `title_text` gemäß Abschnitt 6 und Abschnitt 11.
 
 ### 9.2 `strip`
 
 Verhalten:
-- benötigt einen gültigen Config-Block
-- entfernt verwalteten ToC-Inhalt
-- entfernt verwaltete Kapitelnummern
-- entfernt verwaltete Inline-Anker
-- behält äußeren Container
-- behält Config-Block
-- setzt `state=stripped`
+
+* benötigt einen gültigen Config-Block
+* entfernt verwalteten ToC-Inhalt
+* entfernt verwaltete Kapitelnummern
+* entfernt verwaltete Inline-Anker
+* behält äußeren Container
+* behält Config-Block
+* setzt `state=stripped`
 
 Nach `strip` ist damit diese Struktur weiterhin gültig:
 
@@ -455,46 +479,53 @@ state=stripped
 ```
 
 Fehlerfall:
-- kein gültiger Config-Block -> Fehler
-- keine implizite Reparatur
+
+* kein gültiger Config-Block -> Fehler
+* keine implizite Reparatur
 
 ### 9.3 `strip --raw`
 
 Verhalten:
-- ignoriert den Config-Block
-- entfernt den kompletten verwalteten Container, falls vorhanden:
-  - `<!-- mdtoc -->`
-  - ToC-Inhalt
-  - `mdtoc-config`
-  - `<!-- /mdtoc -->`
-- entfernt zusätzlich verwaltete Kapitelnummern
-- entfernt zusätzlich verwaltete Inline-Anker
+
+* ignoriert den Config-Block
+* entfernt den kompletten verwalteten Container, falls vorhanden:
+  * `<!-- mdtoc -->`
+  * ToC-Inhalt
+  * `mdtoc-config`
+  * `<!-- /mdtoc -->`
+* entfernt zusätzlich verwaltete Kapitelnummern
+* entfernt zusätzlich verwaltete Inline-Anker
 
 Konservative Regel:
-- Wenn nicht sicher entschieden werden kann, ob eine Nummer oder ein Inline-Anker verwaltet ist, bleibt der Inhalt stehen.
-- Dieser Fall soll in jedem Fall als Diagnose ausgegeben werden.
+
+* Wenn nicht sicher entschieden werden kann, ob eine Nummer oder ein Inline-Anker verwaltet ist, bleibt der Inhalt stehen.
+* Dieser Fall soll in jedem Fall als Diagnose ausgegeben werden.
 
 Einsatzfälle:
-- beschädigte Config
-- Migration
-- vollständige Entfernung der `mdtoc`-Verwaltung
-- Tests
+
+* beschädigte Config
+* Migration
+* vollständige Entfernung der `mdtoc`-Verwaltung
+* Tests
 
 ### 9.4 `check`
 
 Verhalten:
-- benötigt einen gültigen Config-Block
-- rekonstruiert den Sollzustand aus aktuellem Dokumentinhalt und Config
-- vergleicht Sollzustand und Istzustand byte-genau
-- liefert `0`, wenn beide identisch sind
-- liefert bei Abweichung einen Fehler-Exit-Code
+
+* benötigt einen gültigen Config-Block
+* rekonstruiert den Sollzustand aus aktuellem Dokumentinhalt und Config
+* vergleicht Sollzustand und Istzustand byte-genau
+* liefert `0`, wenn beide identisch sind
+* liefert bei Abweichung einen Fehler-Exit-Code
 
 Keine Seiteneffekte:
-- `check` verändert das Dokument nie
+
+* `check` verändert das Dokument nie
 
 _Interpretation:_
-- `check` muss den Sollzustand abhängig von `state` rekonstruieren.
-- Bei `state=generated` entspricht der Sollzustand dem Ergebnis von `generate`; bei `state=stripped` dem Ergebnis von `strip`.
+
+* `check` muss den Sollzustand abhängig von `state` rekonstruieren.
+* Bei `state=generated` entspricht der Sollzustand dem Ergebnis von `generate`; bei `state=stripped` dem Ergebnis von `strip`.
 
 _Anmerkung:_ "byte-genau" klingt formaler als es praktisch ist. Gemeint ist: `check` berechnet denselben Text, den `generate` oder `strip` schreiben würden, und vergleicht genau diesen.
 
@@ -503,10 +534,11 @@ _Anmerkung:_ "byte-genau" klingt formaler als es praktisch ist. Gemeint ist: `ch
 Der ToC basiert auf allen verwalteten Überschriften innerhalb von `min-level` bis `max-level` inklusive.
 
 Render-Regeln:
-- Eine Überschrift erzeugt genau einen ToC-Eintrag.
-- Die Hierarchie folgt dem Heading-Level.
-- Pro zusätzlicher Ebene relativ zu `min-level` wird um zwei Spaces eingerückt.
-- Jeder Eintrag ist ein Markdown-Listenpunkt mit Link.
+
+* Eine Überschrift erzeugt genau einen ToC-Eintrag.
+* Die Hierarchie folgt dem Heading-Level.
+* Pro zusätzlicher Ebene relativ zu `min-level` wird um zwei Spaces eingerückt.
+* Jeder Eintrag ist ein Markdown-Listenpunkt mit Link.
 
 Beispiel:
 
@@ -516,24 +548,29 @@ Beispiel:
 ```
 
 Anzeige im Linktext:
-- bei `numbering=on`: `nummer + titel`
-- bei `numbering=off`: nur `titel`
+
+* bei `numbering=on`: `nummer + titel`
+* bei `numbering=off`: nur `titel`
 
 Linkziel:
-- grundsätzlich `#` + `anchor_id`
-- `anchor_id` wird exakt nach Abschnitt 11 berechnet
+
+* grundsätzlich `#` + `anchor_id`
+* `anchor_id` wird exakt nach Abschnitt 11 berechnet
 
 Verhalten von `anchors`:
-- bei `anchors=on` rendert `mdtoc` zusätzlich einen verwalteten Inline-Anker mit genau derselben `anchor_id`
-- bei `anchors=off` rendert `mdtoc` keinen verwalteten Inline-Anker; die ToC-Links bleiben trotzdem `#anchor_id`
+
+* bei `anchors=on` rendert `mdtoc` zusätzlich einen verwalteten Inline-Anker mit genau derselben `anchor_id`
+* bei `anchors=off` rendert `mdtoc` keinen verwalteten Inline-Anker; die ToC-Links bleiben trotzdem `#anchor_id`
 
 _Erklärung:_
-- `anchors=off` ist damit ein rendererabhängiger Kompatibilitätsmodus.
-- Vollständig portable und rendererunabhängige ToC-Links sind nur mit `anchors=on` garantiert.
+
+* `anchors=off` ist damit ein rendererabhängiger Kompatibilitätsmodus.
+* Vollständig portable und rendererunabhängige ToC-Links sind nur mit `anchors=on` garantiert.
 
 _Verweis:_
-- Die eigentliche Norm für `anchor_id` steht ausschließlich in Abschnitt 11.
-- Dieser Abschnitt 10 beschreibt nur die Verwendung der bereits berechneten ID im ToC.
+
+* Die eigentliche Norm für `anchor_id` steht ausschließlich in Abschnitt 11.
+* Dieser Abschnitt 10 beschreibt nur die Verwendung der bereits berechneten ID im ToC.
 
 ## 11. Gemeinsame Slug- und Anchor-ID-Spezifikation (GitHub-kompatibel)
 
@@ -546,11 +583,11 @@ Die ID wird deterministisch aus dem **unnummerierten Plain-Text-Titel (`title_te
 
 Die erzeugten Werte sollen sein:
 
-- stabil
-- deterministisch
-- gut lesbar
-- in den dokumentierten Grundregeln GitHub-kompatibel
-- sowohl für Inline-Anker als auch ToC-Links identisch
+* stabil
+* deterministisch
+* gut lesbar
+* in den dokumentierten Grundregeln GitHub-kompatibel
+* sowohl für Inline-Anker als auch ToC-Links identisch
 
 ### 11.2 Eingabe für die Ableitung
 
@@ -562,15 +599,17 @@ anchor_id   := slugify(slug_source)
 ```
 
 Dabei gilt:
-- `title_text` ist **nicht** der rohe Titelstring aus der Zeile.
-- `title_text` ist die Plain-Text-Interpretation von `title_markup`.
-- Verwaltete Nummer und verwalteter Inline-Anker gehören **nicht** zu `title_text`.
+
+* `title_text` ist **nicht** der rohe Titelstring aus der Zeile.
+* `title_text` ist die Plain-Text-Interpretation von `title_markup`.
+* Verwaltete Nummer und verwalteter Inline-Anker gehören **nicht** zu `title_text`.
 
 _Erklärung:_
-- In v1 wird die Ableitung von `title_text` vollständig an `goldmark` delegiert.
-- Maßgeblich ist die von `goldmark` gelieferte Plain-Text-Interpretation des Heading-Inhalts.
-- `mdtoc` definiert dafür in v1 keine eigene abweichende Textableitungslogik.
-- Nur so bleiben Slug-/Anchor-Bildung, ToC-Linktext und GitHub-ähnliches Verhalten konsistent.
+
+* In v1 wird die Ableitung von `title_text` vollständig an `goldmark` delegiert.
+* Maßgeblich ist die von `goldmark` gelieferte Plain-Text-Interpretation des Heading-Inhalts.
+* `mdtoc` definiert dafür in v1 keine eigene abweichende Textableitungslogik.
+* Nur so bleiben Slug-/Anchor-Bildung, ToC-Linktext und GitHub-ähnliches Verhalten konsistent.
 
 ### 11.3 GitHub-kompatible Grundregeln
 
@@ -585,22 +624,24 @@ Die Funktion `slugify` MUSS mindestens diese Schritte ausführen:
 7. Wenn der so berechnete Slug bereits in demselben Dokument existiert, wird `-1`, `-2`, `-3`, ... angehängt.
 
 _Interpretation:_
-- Diese Regeln folgen den von GitHub dokumentierten Grundregeln in einer für `mdtoc` explizit testbaren Form.
-- Für nicht dokumentierte Randfälle macht `mdtoc` in den folgenden Unterpunkten weitere Festlegungen.
+
+* Diese Regeln folgen den von GitHub dokumentierten Grundregeln in einer für `mdtoc` explizit testbaren Form.
+* Für nicht dokumentierte Randfälle macht `mdtoc` in den folgenden Unterpunkten weitere Festlegungen.
 
 ### 11.4 Explizite Festlegungen für Randfälle
 
 Zusätzlich gilt in `mdtoc` v1:
 
-- Symbole, Emojis und sonstige Nicht-Buchstaben-/Nicht-Ziffern-Zeichen werden entfernt.
-- Läufe aus Leerraum/Satzzeichen werden nicht mehrfach als `--`, `---` usw. abgebildet, sondern zu genau einem `-` zusammengezogen.
-- Die Kollisionsauflösung beginnt beim **zweiten** Vorkommen mit `-1`.
-- Wenn der normalisierte Slug leer wird, verwendet `mdtoc` den Fallback `section`.
-- Weitere Kollisionen auf diesem Fallback werden mit `section-1`, `section-2`, ... aufgelöst.
+* Symbole, Emojis und sonstige Nicht-Buchstaben-/Nicht-Ziffern-Zeichen werden entfernt.
+* Läufe aus Leerraum/Satzzeichen werden nicht mehrfach als `--`, `---` usw. abgebildet, sondern zu genau einem `-` zusammengezogen.
+* Die Kollisionsauflösung beginnt beim **zweiten** Vorkommen mit `-1`.
+* Wenn der normalisierte Slug leer wird, verwendet `mdtoc` den Fallback `section`.
+* Weitere Kollisionen auf diesem Fallback werden mit `section-1`, `section-2`, ... aufgelöst.
 
 _Erklärung:_
-- Der Fallback `section` ist eine bewusste `mdtoc`-Festlegung.
-- GitHubs öffentliche Grundregeln beschreiben diesen Leerslug-Randfall nicht explizit.
+
+* Der Fallback `section` ist eine bewusste `mdtoc`-Festlegung.
+* GitHubs öffentliche Grundregeln beschreiben diesen Leerslug-Randfall nicht explizit.
 
 ### 11.5 Beziehung zur Inline-Anker-Syntax
 
@@ -611,12 +652,14 @@ Wenn `anchors=on`, rendert `mdtoc` exakt diese Form:
 ```
 
 Dabei gilt:
-- der String in `id="..."` MUSS exakt dem nach diesem Abschnitt berechneten `anchor_id` entsprechen
-- `slug`, `anchor_id` und ToC-Linkziel sind damit dieselbe Zeichenkette
+
+* der String in `id="..."` MUSS exakt dem nach diesem Abschnitt berechneten `anchor_id` entsprechen
+* `slug`, `anchor_id` und ToC-Linkziel sind damit dieselbe Zeichenkette
 
 _Verweis:_
-- Abschnitt 5 definiert nur die Position und das Render-Format des Inline-Ankers.
-- Die Zeichenkette innerhalb von `id="..."` wird ausschließlich hier in Abschnitt 11 normiert.
+
+* Abschnitt 5 definiert nur die Position und das Render-Format des Inline-Ankers.
+* Die Zeichenkette innerhalb von `id="..."` wird ausschließlich hier in Abschnitt 11 normiert.
 
 ### 11.6 Beispiele
 
@@ -692,21 +735,24 @@ api-1
 ## 12. Fehlerverhalten, Logging und Exit-Codes
 
 Fehlerfälle:
-- fehlender oder unvollständiger `mdtoc`-Container
-- fehlender Config-Block bei `strip` oder `check`
-- ungültiger Config-Block
-- Parsing-Fehler
-- ungültige Optionen
+
+* fehlender oder unvollständiger `mdtoc`-Container
+* fehlender Config-Block bei `strip` oder `check`
+* ungültiger Config-Block
+* Parsing-Fehler
+* ungültige Optionen
 
 Grundregeln:
-- Fehler werden auf `stderr` ausgegeben.
-- Bei Fehlern gibt es keine implizite Reparatur, außer dem explizit erlaubten Anlegen eines neuen Containers durch `generate`, wenn noch gar keine `mdtoc`-Verwaltung existiert.
-- Erfolgreiche Kommandos schreiben keine Statusmeldungen auf `stdout`.
+
+* Fehler werden auf `stderr` ausgegeben.
+* Bei Fehlern gibt es keine implizite Reparatur, außer dem explizit erlaubten Anlegen eines neuen Containers durch `generate`, wenn noch gar keine `mdtoc`-Verwaltung existiert.
+* Erfolgreiche Kommandos schreiben keine Statusmeldungen auf `stdout`.
 
 Empfohlene Exit-Codes:
-- `0` -> Erfolg
-- `1` -> Parsing-, Config- oder CLI-Fehler
-- `2` -> `check` hat eine Abweichung gefunden
+
+* `0` -> Erfolg
+* `1` -> Parsing-, Config- oder CLI-Fehler
+* `2` -> `check` hat eine Abweichung gefunden
 
 ## 13. Idempotenz
 
@@ -736,16 +782,18 @@ mdtoc strip --raw
 => keine weitere Änderung beim zweiten Lauf
 
 _Verweis:_
-- Die Idempotenz ist bereits in Abschnitt 1 als Grundprinzip und in Abschnitt 9 als Kommandosemantik angelegt.
-- Dieser Abschnitt 13 wiederholt den Vertrag absichtlich noch einmal in Testform.
+
+* Die Idempotenz ist bereits in Abschnitt 1 als Grundprinzip und in Abschnitt 9 als Kommandosemantik angelegt.
+* Dieser Abschnitt 13 wiederholt den Vertrag absichtlich noch einmal in Testform.
 
 ## 14. Erweiterbarkeit
 
 Mögliche spätere Erweiterungen:
-- alternative Anchor-Styles
-- alternative ToC-Formate
-- Versionierung im Config-Block
-- weitere Ausgabeformate
+
+* alternative Anchor-Styles
+* alternative ToC-Formate
+* Versionierung im Config-Block
+* weitere Ausgabeformate
 
 _Anmerkung:_ Diese Punkte sind ausdrücklich Erweiterungen. Sie sollen v1 nicht unnötig komplex machen.
 
@@ -754,22 +802,25 @@ _Anmerkung:_ Diese Punkte sind ausdrücklich Erweiterungen. Sie sollen v1 nicht 
 Für eine Go-Implementierung ist die Verwendung von `goldmark` sinnvoll.
 
 Empfohlenes Setup:
-- Modul: `github.com/yuin/goldmark`
-- Zielbereich: aktuelle stabile `1.x`-Version
-- konkrete Referenz für diese Spezifikation: `v1.8.x`
-- empfohlene Erweiterung: `extension.GFM`
+
+* Modul: `github.com/yuin/goldmark`
+* Zielbereich: aktuelle stabile `1.x`-Version
+* konkrete Referenz für diese Spezifikation: `v1.8.x`
+* empfohlene Erweiterung: `extension.GFM`
 
 Empfehlung für `mdtoc`:
-- `goldmark` SOLL für Parsing, Heading-Erkennung, Ableitung von `title_text` aus Überschriften und robuste Behandlung von Fenced Code Blocks verwendet werden.
-- Die Ableitung von `title_text` wird in v1 vollständig an `goldmark` delegiert.
-- Maßgeblich ist die von `goldmark` gelieferte Plain-Text-Interpretation des Heading-Inhalts.
-- `mdtoc` definiert dafür in v1 keine eigene abweichende Textableitungslogik.
-- Die normative Slug-/Anchor-ID aus Abschnitt 11 SOLL weiterhin von `mdtoc` selbst gemäß dieser Spezifikation berechnet werden.
-- `parser.WithAutoHeadingID()` SOLL daher nicht die normative Quelle der `anchor_id` sein.
-- Wenn im Code trotzdem eine `goldmark`-eigene ID-Erzeugung genutzt werden soll, MUSS dafür eine eigene `parser.IDs`-Implementierung verwendet werden, die Abschnitt 11 exakt einhält.
+
+* `goldmark` SOLL für Parsing, Heading-Erkennung, Ableitung von `title_text` aus Überschriften und robuste Behandlung von Fenced Code Blocks verwendet werden.
+* Die Ableitung von `title_text` wird in v1 vollständig an `goldmark` delegiert.
+* Maßgeblich ist die von `goldmark` gelieferte Plain-Text-Interpretation des Heading-Inhalts.
+* `mdtoc` definiert dafür in v1 keine eigene abweichende Textableitungslogik.
+* Die normative Slug-/Anchor-ID aus Abschnitt 11 SOLL weiterhin von `mdtoc` selbst gemäß dieser Spezifikation berechnet werden.
+* `parser.WithAutoHeadingID()` SOLL daher nicht die normative Quelle der `anchor_id` sein.
+* Wenn im Code trotzdem eine `goldmark`-eigene ID-Erzeugung genutzt werden soll, MUSS dafür eine eigene `parser.IDs`-Implementierung verwendet werden, die Abschnitt 11 exakt einhält.
 
 _Erklärung:_
-- `goldmark` reduziert den Implementationsaufwand deutlich, weil Heading-Struktur, Fences, Inline-Markup und Source-Positionen nicht per Regex nachgebaut werden müssen.
-- Die eigentliche Fachlogik von `mdtoc` bleibt trotzdem klein und eigenständig: Container finden, verwaltete Überschriften normalisieren, Nummern/IDs ableiten, deterministisch rendern.
+
+* `goldmark` reduziert den Implementationsaufwand deutlich, weil Heading-Struktur, Fences, Inline-Markup und Source-Positionen nicht per Regex nachgebaut werden müssen.
+* Die eigentliche Fachlogik von `mdtoc` bleibt trotzdem klein und eigenständig: Container finden, verwaltete Überschriften normalisieren, Nummern/IDs ableiten, deterministisch rendern.
 
 ---
