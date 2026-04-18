@@ -2,19 +2,18 @@
 
 <!-- mdtoc -->
 * [1. Why mdtoc?](#why-mdtoc)
-* [2. What it does](#what-it-does)
-* [3. Install](#install)
-  * [3.1. Releases](#releases)
-  * [3.2. Build from source](#build-from-source)
-* [4. Quickstart](#quickstart)
-  * [4.1. Inspect the CLI](#inspect-the-cli)
-  * [4.2. Use this README as example](#use-this-readme-as-example)
-* [5. Managed Structure](#managed-structure)
-* [6. Scope](#scope)
-* [7. Documentation](#documentation)
-  * [7.1. Specification](#specification)
-  * [7.2. Comparison](#comparison)
-* [8. Status](#status)
+* [2. Install](#install)
+  * [2.1. Releases](#releases)
+  * [2.2. Build from source](#build-from-source)
+* [3. Usage](#usage)
+  * [3.1. Inspect the CLI](#inspect-the-cli)
+  * [3.2. Use this README as example](#use-this-readme-as-example)
+* [4. Managed Structure](#managed-structure)
+* [5. Scope](#scope)
+* [6. Documentation](#documentation)
+  * [6.1. Specification](#specification)
+  * [6.2. Comparison](#comparison)
+* [7. Status](#status)
 <!-- mdtoc-config
 numbering=on
 min-level=2
@@ -43,48 +42,37 @@ Deterministic Markdown ToC manager for single files.
 - fenced code blocks are ignored safely while parsing headings and markers
 - generated content stays clearly separated from authored content
 
-## 2. <a id="what-it-does"></a>What it does
+## 2. <a id="install"></a>Install
 
-`mdtoc` manages this as one coherent workflow:
-
-- `generate` updates the managed container, heading numbers, and anchors
-- `strip` removes generated numbering, anchors, and the managed container
-- `strip --raw` removes only generated heading artifacts
-- `check` verifies that a document already matches the reconstructed target state
-
-This makes it useful for technical Markdown that should stay reproducible in Git and trustworthy in CI.
-
-## 3. <a id="install"></a>Install
-
-### 3.1. <a id="releases"></a>Releases
+### 2.1. <a id="releases"></a>Releases
 
 Download a prebuilt binary from [GitHub Releases](https://github.com/rokath/mdtoc/releases).
 
-### 3.2. <a id="build-from-source"></a>Build from source
+### 2.2. <a id="build-from-source"></a>Build from source
 
 ```bash
 go build ./cmd/mdtoc
 ```
 
-## 4. <a id="quickstart"></a>Quickstart
+## 3. <a id="usage"></a>Usage
 
-### 4.1. <a id="inspect-the-cli"></a>Inspect the CLI
+### 3.1. <a id="inspect-the-cli"></a>Inspect the CLI
 
 ```bash
 mdtoc --version # show version information
-mdtoc --help    # show CLI usage
+mdtoc --help    # show CLI usage and commands
 ```
 
-### 4.2. <a id="use-this-readme-as-example"></a>Use this README as example
+### 3.2. <a id="use-this-readme-as-example"></a>Use this README as example
 
 ```bash
-mdtoc generate -f README.md -a off -toc off # generate numbering only
-cat README.md | mdtoc strip > README.md     # strip managed artifacts from stdin
-mdtoc generate -f README.md                  # regenerate ToC, numbering, and anchors
-mdtoc check -f README.md                     # verify the managed state for CI
+mdtoc generate -f README.md -a off -toc off # rewrite headings only, keep anchors and ToC disabled
+cat README.md | mdtoc strip > README.md     # remove managed artifacts via Unix pipe and write clean Markdown back
+mdtoc generate -f README.md                  # generate the managed container, numbering, anchors, and ToC
+mdtoc check -f README.md                     # fail in CI when README.md differs from the reconstructed target state
 ```
 
-## 5. <a id="managed-structure"></a>Managed Structure
+## 4. <a id="managed-structure"></a>Managed Structure
 
 `mdtoc` uses an explicit container so generated content is easy to spot and safe to regenerate:
 
@@ -104,25 +92,26 @@ state=generated
 
 The heading title stays the source of truth. Numbers, anchors, and ToC entries are derived from it.
 
-## 6. <a id="scope"></a>Scope
+## 5. <a id="scope"></a>Scope
 
 `mdtoc` is intentionally small:
 
 - processes one Markdown file at a time
+- supports file input and Unix pipes
 - supports ATX headings (`#` to `######`)
 - is not a site generator and not a full Markdown formatter
 
-## 7. <a id="documentation"></a>Documentation
+## 6. <a id="documentation"></a>Documentation
 
-### 7.1. <a id="specification"></a>Specification
+### 6.1. <a id="specification"></a>Specification
 
 - [mdtoc spec](./docs/mdtoc-spec.md)
 
-### 7.2. <a id="comparison"></a>Comparison
+### 6.2. <a id="comparison"></a>Comparison
 
 - [Replacement tools comparison](./docs/mdtoc-replacement-tools-comparison.md)
 
-## 8. <a id="status"></a>Status
+## 7. <a id="status"></a>Status
 
 ```diff
 + READY TO USE +
