@@ -35,6 +35,7 @@ type Runner struct {
 	stdout    io.Writer
 	stderr    io.Writer
 	buildInfo BuildInfo
+	stdinTTY  bool
 }
 
 // NewRunner creates a testable CLI runner.
@@ -44,7 +45,18 @@ func NewRunner(stdin io.Reader, stdout, stderr io.Writer) *Runner {
 
 // NewRunnerWithBuildInfo creates a testable CLI runner with injected build metadata.
 func NewRunnerWithBuildInfo(stdin io.Reader, stdout, stderr io.Writer, buildInfo BuildInfo) *Runner {
-	return &Runner{stdin: stdin, stdout: stdout, stderr: stderr, buildInfo: buildInfo.normalized()}
+	return newRunner(stdin, stdout, stderr, buildInfo, isInteractiveInput(stdin))
+}
+
+// newRunner builds a runner with an explicitly injected stdin interactivity flag.
+func newRunner(stdin io.Reader, stdout, stderr io.Writer, buildInfo BuildInfo, stdinTTY bool) *Runner {
+	return &Runner{
+		stdin:     stdin,
+		stdout:    stdout,
+		stderr:    stderr,
+		buildInfo: buildInfo.normalized(),
+		stdinTTY:  stdinTTY,
+	}
 }
 
 // Run executes the CLI and returns the intended process exit code.
@@ -68,6 +80,7 @@ func (r *Runner) Run(args []string) (int, error) {
 	}
 }
 
+// runRoot handles root-level flags such as --help and --version.
 func (r *Runner) runRoot(args []string) (int, error) {
 	fs := flag.NewFlagSet("mdtoc", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -105,6 +118,7 @@ func (r *Runner) runRoot(args []string) (int, error) {
 	return 0, nil
 }
 
+// runGenerate parses and executes the generate subcommand.
 func (r *Runner) runGenerate(args []string) (int, error) {
 	fs := flag.NewFlagSet("generate", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -140,6 +154,9 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if *fileS != "" {
 		*file = *fileS
 	}
+	if err := r.requireInputSource(*file); err != nil {
+		return 1, err
+	}
 	numberingB, err := parseOnOff(*numbering)
 	if err != nil {
 		return 1, err
@@ -167,6 +184,7 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	return 0, nil
 }
 
+// runStrip parses and executes the strip subcommand.
 func (r *Runner) runStrip(args []string) (int, error) {
 	fs := flag.NewFlagSet("strip", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -190,6 +208,9 @@ func (r *Runner) runStrip(args []string) (int, error) {
 	if *fileS != "" {
 		*file = *fileS
 	}
+	if err := r.requireInputSource(*file); err != nil {
+		return 1, err
+	}
 	input, err := r.readInput(*file)
 	if err != nil {
 		return 1, err
@@ -211,6 +232,7 @@ func (r *Runner) runStrip(args []string) (int, error) {
 	return 0, nil
 }
 
+// runCheck parses and executes the check subcommand.
 func (r *Runner) runCheck(args []string) (int, error) {
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -233,6 +255,9 @@ func (r *Runner) runCheck(args []string) (int, error) {
 	if *fileS != "" {
 		*file = *fileS
 	}
+	if err := r.requireInputSource(*file); err != nil {
+		return 1, err
+	}
 	input, err := r.readInput(*file)
 	if err != nil {
 		return 1, err
@@ -248,6 +273,7 @@ func (r *Runner) runCheck(args []string) (int, error) {
 	return 2, errors.New("document does not match the reconstructed target state")
 }
 
+// readInput loads document content from a file or from stdin.
 func (r *Runner) readInput(file string) (string, error) {
 	if file != "" {
 		b, err := os.ReadFile(file)
@@ -257,6 +283,15 @@ func (r *Runner) readInput(file string) (string, error) {
 	return string(b), err
 }
 
+// requireInputSource rejects interactive invocations that forgot both -f and piped stdin.
+func (r *Runner) requireInputSource(file string) error {
+	if file != "" || !r.stdinTTY {
+		return nil
+	}
+	return errors.New("no input provided; use --file <name> or pipe Markdown via stdin")
+}
+
+// writeOutput writes transformed content either back to a file or to stdout.
 func (r *Runner) writeOutput(file, content string) error {
 	if file != "" {
 		return os.WriteFile(file, []byte(content), 0o644)
@@ -265,6 +300,7 @@ func (r *Runner) writeOutput(file, content string) error {
 	return err
 }
 
+// writeDiagnostics emits collected warnings only in verbose mode.
 func (r *Runner) writeDiagnostics(verbose bool, warnings []string) {
 	if !verbose {
 		return
@@ -274,6 +310,7 @@ func (r *Runner) writeDiagnostics(verbose bool, warnings []string) {
 	}
 }
 
+// hasFlag reports whether args contains the exact flag token.
 func hasFlag(args []string, flag string) bool {
 	for _, arg := range args {
 		if arg == flag {
@@ -283,6 +320,7 @@ func hasFlag(args []string, flag string) bool {
 	return false
 }
 
+// isSubcommand reports whether the first CLI token names a supported subcommand.
 func isSubcommand(arg string) bool {
 	switch arg {
 	case "generate", "strip", "check":
@@ -292,6 +330,20 @@ func isSubcommand(arg string) bool {
 	}
 }
 
+// isInteractiveInput reports whether the reader is backed by a terminal device.
+func isInteractiveInput(r io.Reader) bool {
+	f, ok := r.(*os.File)
+	if !ok {
+		return false
+	}
+	info, err := f.Stat()
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeCharDevice != 0
+}
+
+// shortHelp returns the compact root help text.
 func shortHelp() string {
 	return strings.TrimSpace(`mdtoc - deterministic Markdown ToC manager
 
@@ -304,10 +356,12 @@ Usage:
 `) + "\n"
 }
 
+// longHelp returns the root help text with the command summary section.
 func longHelp() string {
 	return shortHelp() + "\nCommands:\n  generate   generate or update ToC, numbers, and anchors\n  strip      remove managed artifacts and keep the container\n  check      validate that the document matches its persisted state\n"
 }
 
+// generateHelp returns the generate subcommand help text.
 func generateHelp(verbose bool) string {
 	if verbose {
 		return strings.TrimSpace(`mdtoc generate
@@ -339,6 +393,7 @@ Options:
 `) + "\n"
 }
 
+// stripHelp returns the strip subcommand help text.
 func stripHelp(verbose bool) string {
 	if verbose {
 		return strings.TrimSpace(`mdtoc strip
@@ -362,6 +417,7 @@ Options:
 `) + "\n"
 }
 
+// checkHelp returns the check subcommand help text.
 func checkHelp(verbose bool) string {
 	if verbose {
 		return strings.TrimSpace(`mdtoc check

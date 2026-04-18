@@ -1,10 +1,13 @@
 package mdtoc
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
+// TestRunnerRootHelpShortFlagWithoutCommand verifies that root short help is printed for -h.
 func TestRunnerRootHelpShortFlagWithoutCommand(t *testing.T) {
 	var stdout, stderr strings.Builder
 	runner := NewRunner(strings.NewReader(""), &stdout, &stderr)
@@ -20,6 +23,7 @@ func TestRunnerRootHelpShortFlagWithoutCommand(t *testing.T) {
 	}
 }
 
+// TestRunnerRootVersionWithoutCommand verifies non-verbose root version output.
 func TestRunnerRootVersionWithoutCommand(t *testing.T) {
 	var stdout, stderr strings.Builder
 	runner := NewRunnerWithBuildInfo(strings.NewReader(""), &stdout, &stderr, BuildInfo{
@@ -42,6 +46,7 @@ func TestRunnerRootVersionWithoutCommand(t *testing.T) {
 	}
 }
 
+// TestRunnerRootVersionVerboseWithoutCommand verifies verbose root version output.
 func TestRunnerRootVersionVerboseWithoutCommand(t *testing.T) {
 	var stdout, stderr strings.Builder
 	runner := NewRunnerWithBuildInfo(strings.NewReader(""), &stdout, &stderr, BuildInfo{
@@ -61,6 +66,7 @@ func TestRunnerRootVersionVerboseWithoutCommand(t *testing.T) {
 	}
 }
 
+// TestRunnerSubcommandVerboseHelpIsNotIgnored verifies verbose subcommand help text selection.
 func TestRunnerSubcommandVerboseHelpIsNotIgnored(t *testing.T) {
 	var stdout, stderr strings.Builder
 	runner := NewRunner(strings.NewReader(""), &stdout, &stderr)
@@ -76,6 +82,7 @@ func TestRunnerSubcommandVerboseHelpIsNotIgnored(t *testing.T) {
 	}
 }
 
+// TestRunnerGenerateFromStdin verifies that generate accepts piped stdin content.
 func TestRunnerGenerateFromStdin(t *testing.T) {
 	stdin := strings.NewReader("# Title\n\n## Intro\n")
 	var stdout, stderr strings.Builder
@@ -92,6 +99,76 @@ func TestRunnerGenerateFromStdin(t *testing.T) {
 	}
 }
 
+// TestRunnerGenerateFailsFastOnInteractiveStdinWithoutFile verifies issue #4 behavior for generate.
+func TestRunnerGenerateFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
+	var stdout, stderr strings.Builder
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
+	exitCode, err := runner.Run([]string{"generate"})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if got := err.Error(); !strings.Contains(got, "no input provided") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// TestRunnerStripFailsFastOnInteractiveStdinWithoutFile verifies issue #4 behavior for strip.
+func TestRunnerStripFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
+	var stdout, stderr strings.Builder
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
+	exitCode, err := runner.Run([]string{"strip"})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+}
+
+// TestRunnerCheckFailsFastOnInteractiveStdinWithoutFile verifies issue #4 behavior for check.
+func TestRunnerCheckFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
+	var stdout, stderr strings.Builder
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
+	exitCode, err := runner.Run([]string{"check"})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+}
+
+// TestRunnerGenerateWithFileDoesNotRequireStdin verifies that -f bypasses interactive stdin checks.
+func TestRunnerGenerateWithFileDoesNotRequireStdin(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.md")
+	if err := os.WriteFile(path, []byte("# Title\n\n## Intro\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	var stdout, stderr strings.Builder
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
+	exitCode, err := runner.Run([]string{"generate", "-f", path})
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile error: %v", err)
+	}
+	if !strings.Contains(string(got), "* [1. Intro](#intro)") {
+		t.Fatalf("generated file does not contain ToC:\n%s", string(got))
+	}
+}
+
+// TestRunnerCheckExitCodeOnMismatch verifies the special mismatch exit code from check.
 func TestRunnerCheckExitCodeOnMismatch(t *testing.T) {
 	stdin := strings.NewReader(strings.Join([]string{startMarker, "* [1. Wrong](#wrong)", configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n")
 	var stdout, stderr strings.Builder
