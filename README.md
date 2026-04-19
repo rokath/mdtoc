@@ -14,11 +14,10 @@
 
 [View Github Pages](https://rokath.github.io/mdtoc/)
 
-Deterministic Markdown ToC manager for single files.
+> `mdtoc`: Markdown Table of Contents ☰ with numbering and stable anchor links
+> `generate`, `strip`, `check` without turning your Markdown into a moving target.
 
-<img src="./docs/mdtoc.jpeg" width="400">
-
-`mdtoc` generates and validates a managed table of contents, heading numbering, and stable anchors without turning your Markdown into a moving target.
+<img src="./docs/mdtoc_mascot_1024.webp" width="400">
 
 <h2>Table of Contents</h2><!-- TABLE OF CONTENTS START -->
 
