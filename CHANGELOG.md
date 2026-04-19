@@ -8,6 +8,7 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 * Documentation and presentation were refined further:
   * the README now includes a hero image and a collapsible table of contents
+  * the README mascot asset and intro text were refreshed
   * the tools-comparison link in the README was corrected
   * specification documents were normalized further for list-marker consistency
   * the obsolete `AI-log.md` file was removed from the repository
@@ -25,6 +26,7 @@ This file summarizes notable repository changes in a compact, release-oriented f
 Used git range: `v0.1.1..HEAD`
 
 ```txt
+* 09973d8 2026-04-19 docs(readme): refresh mascot asset and intro
 * 1cd6d2f 2026-04-19 docs(changelog): update unreleased notes
 * a726d95 2026-04-19 docs(readme): add hero image and collapsible toc
 * 48db36f 2026-04-18 Update link for tools comparison in README
