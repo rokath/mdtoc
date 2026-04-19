@@ -11,17 +11,21 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * the tools-comparison link in the README was corrected
   * specification documents were normalized further for list-marker consistency
   * the obsolete `AI-log.md` file was removed from the repository
+  * GitHub Pages rendering for the `docs/` Markdown pages was stabilized via Jekyll defaults and homepage link rewrites
 * Licensing and metadata were completed:
   * an MIT license file was added to the repository
   * the README gained a Coveralls coverage badge
 * CI coverage reporting was added:
   * a dedicated GitHub Actions workflow now runs Go coverage and uploads it to Coveralls
+* Repository workflow guidance was tightened:
+  * `AGENTS.md` now requires reviewing and updating `CHANGELOG.md` before every push when relevant
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v0.1.1..HEAD`
 
 ```txt
+* 1cd6d2f 2026-04-19 docs(changelog): update unreleased notes
 * a726d95 2026-04-19 docs(readme): add hero image and collapsible toc
 * 48db36f 2026-04-18 Update link for tools comparison in README
 * d3b9b65 2026-04-18 Changed list elements marker from dash - to start *.

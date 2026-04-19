@@ -43,6 +43,7 @@
 
 * Keep unrelated changes out of the same commit.
 * If the work naturally splits into independent topics, prefer separate commits unless the user requests a single combined commit.
+* Before every `git push`, review `CHANGELOG.md` and update it when the pushed changes affect release notes, unreleased notes, or version sections.
 
 ## Tests
 
