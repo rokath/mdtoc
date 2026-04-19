@@ -17,5 +17,5 @@ This keeps the homepage content in sync with README.md.
 {% endcapture %}
 {{ readme
   | replace: "./docs/mdtoc-spec.md", "./docs/mdtoc-spec.html"
-  | replace: "./docs/mdtoc-replacement-tools-comparison_(german).md", "./docs/mdtoc-replacement-tools-comparison_(german).html"
+  | replace: "./docs/mdtoc-tools-comparison_(german).md", "./docs/mdtoc-tools-comparison_(german).html"
   | markdownify }}
