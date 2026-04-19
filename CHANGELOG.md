@@ -6,13 +6,29 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* No unreleased changes yet.
+* Documentation and presentation were refined further:
+  * the README now includes a hero image and a collapsible table of contents
+  * the tools-comparison link in the README was corrected
+  * specification documents were normalized further for list-marker consistency
+  * the obsolete `AI-log.md` file was removed from the repository
+* Licensing and metadata were completed:
+  * an MIT license file was added to the repository
+  * the README gained a Coveralls coverage badge
+* CI coverage reporting was added:
+  * a dedicated GitHub Actions workflow now runs Go coverage and uploads it to Coveralls
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v0.1.1..HEAD`
 
 ```txt
+* a726d95 2026-04-19 docs(readme): add hero image and collapsible toc
+* 48db36f 2026-04-18 Update link for tools comparison in README
+* d3b9b65 2026-04-18 Changed list elements marker from dash - to start *.
+* 23aeb4e 2026-04-18 docs: remove AI log
+* b3a2453 2026-04-18 docs(license): add MIT license
+* ca51634 2026-04-18 ci(coverage): add coveralls workflow
+* d0d4bc5 2026-04-18 docs(readme): add coverage badge
 ```
 
 ## <a id='v0.1.1-changes'></a>v0.1.1 Changes (2026-04-18)
