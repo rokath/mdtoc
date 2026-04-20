@@ -5,6 +5,8 @@ import "fmt"
 const (
 	startMarker = "<!-- mdtoc -->"
 	endMarker   = "<!-- /mdtoc -->"
+	offMarker   = "<!-- mdtoc off -->"
+	onMarker    = "<!-- mdtoc on -->"
 	configStart = "<!-- mdtoc-config"
 	configEnd   = "-->"
 

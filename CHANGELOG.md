@@ -6,14 +6,16 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* None yet.
+* Markdown heading exclusion support was added:
+  * `<!-- mdtoc off -->` and `<!-- mdtoc on -->` now exclude heading regions from ToC generation and managed heading rewrites
+  * a missing `<!-- mdtoc on -->` is accepted and keeps the exclusion active until end of file
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v0.1.2..HEAD`
 
 ```txt
-* none yet
+* not tagged yet
 ```
 
 ## <a id='v0.1.2-changes'></a>v0.1.2 Changes (2026-04-20)

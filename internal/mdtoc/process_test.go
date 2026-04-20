@@ -148,6 +148,61 @@ func TestGenerateIgnoresHeadingsInsideFencesAndComments(t *testing.T) {
 	}
 }
 
+// TestGenerateIgnoresHeadingsInsideMdtocOffRegions verifies explicit mdtoc off/on exclusion blocks.
+func TestGenerateIgnoresHeadingsInsideMdtocOffRegions(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"<!-- mdtoc off -->",
+		"## Excluded",
+		"### Also excluded",
+		"<!-- mdtoc on -->",
+		"",
+		"## Included",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if strings.Contains(got, "Excluded](#excluded)") || strings.Contains(got, "Also excluded](#also-excluded)") {
+		t.Fatalf("excluded headings leaked into ToC:\n%s", got)
+	}
+	if strings.Contains(got, "## 1. <a id=\"excluded\"></a>Excluded") || strings.Contains(got, "### 1.1. <a id=\"also-excluded\"></a>Also excluded") {
+		t.Fatalf("excluded headings were rewritten:\n%s", got)
+	}
+	if !strings.Contains(got, "* [1. Included](#included)") || !strings.Contains(got, "## 1. <a id=\"included\"></a>Included") {
+		t.Fatalf("included heading was not managed:\n%s", got)
+	}
+}
+
+// TestGenerateTreatsMdtocOffWithoutOnAsExclusionToEOF verifies issue #6 EOF behavior.
+func TestGenerateTreatsMdtocOffWithoutOnAsExclusionToEOF(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"## Managed",
+		"",
+		"<!-- mdtoc off -->",
+		"## Excluded to EOF",
+		"### Still excluded",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if strings.Contains(got, "Excluded to EOF](#excluded-to-eof)") || strings.Contains(got, "Still excluded](#still-excluded)") {
+		t.Fatalf("EOF-excluded headings leaked into ToC:\n%s", got)
+	}
+	if strings.Contains(got, "## 2. <a id=\"excluded-to-eof\"></a>Excluded to EOF") || strings.Contains(got, "### 2.1. <a id=\"still-excluded\"></a>Still excluded") {
+		t.Fatalf("EOF-excluded headings were rewritten:\n%s", got)
+	}
+	if !strings.Contains(got, "* [1. Managed](#managed)") || !strings.Contains(got, "## 1. <a id=\"managed\"></a>Managed") {
+		t.Fatalf("managed heading before exclusion was not preserved:\n%s", got)
+	}
+}
+
 // TestStripKeepsContainerAndMarksStateStripped verifies stripped-state rendering with the container retained.
 func TestStripKeepsContainerAndMarksStateStripped(t *testing.T) {
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())

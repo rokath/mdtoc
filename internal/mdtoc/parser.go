@@ -108,7 +108,7 @@ func startsGenericHTMLComment(trimmed string) bool {
 	if !strings.HasPrefix(trimmed, "<!--") {
 		return false
 	}
-	return trimmed != startMarker && trimmed != endMarker && trimmed != configStart
+	return trimmed != startMarker && trimmed != endMarker && trimmed != offMarker && trimmed != onMarker && trimmed != configStart
 }
 
 // fenceOpen reports the supported fence marker that starts on the given line.
@@ -178,8 +178,15 @@ func parseHeadings(lines []string) ([]Heading, []string, error) {
 	inFence := false
 	fenceMarker := ""
 	inGenericComment := false
+	inExcludedRegion := false
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
+		if inExcludedRegion {
+			if trimmed == onMarker {
+				inExcludedRegion = false
+			}
+			continue
+		}
 		if inFence {
 			if isFenceClose(trimmed, fenceMarker) {
 				inFence, fenceMarker = false, ""
@@ -194,6 +201,10 @@ func parseHeadings(lines []string) ([]Heading, []string, error) {
 		}
 		if marker := fenceOpen(trimmed); marker != "" {
 			inFence, fenceMarker = true, marker
+			continue
+		}
+		if trimmed == offMarker {
+			inExcludedRegion = true
 			continue
 		}
 		if startsGenericHTMLComment(trimmed) {

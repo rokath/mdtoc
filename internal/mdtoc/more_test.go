@@ -274,6 +274,31 @@ func TestMarkdownHelpersAndHeadingParserBranches(t *testing.T) {
 	}
 }
 
+// TestParseDocumentIgnoresMdtocOffMarkersInsideFences verifies that off/on markers only act outside ignored regions.
+func TestParseDocumentIgnoresMdtocOffMarkersInsideFences(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"```md",
+		"<!-- mdtoc off -->",
+		"## Still code",
+		"```",
+		"",
+		"## Real heading",
+	}, "\n") + "\n"
+
+	parsed, err := ParseDocument(input)
+	if err != nil {
+		t.Fatalf("ParseDocument error: %v", err)
+	}
+	if len(parsed.Headings) != 2 {
+		t.Fatalf("unexpected headings parsed: %+v", parsed.Headings)
+	}
+	if parsed.Headings[1].TitleText != "Real heading" {
+		t.Fatalf("second heading = %q, want Real heading", parsed.Headings[1].TitleText)
+	}
+}
+
 // TestParserAndContainerHelpers covers structural parser helpers and container validation errors.
 func TestParserAndContainerHelpers(t *testing.T) {
 	if got := splitLines(""); len(got) != 0 {

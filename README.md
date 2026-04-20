@@ -26,7 +26,7 @@
 <summary>(click to expand)</summary>
 
 <!-- mdtoc -->
-* [1. Why mdtoc?](#why-mdtoc)
+* [1. Features](#features)
 * [2. Install](#install)
   * [2.1. Releases](#releases)
   * [2.2. Build from source](#build-from-source)
@@ -34,7 +34,7 @@
   * [3.1. Inspect the CLI](#inspect-the-cli)
   * [3.2. Use this README as example](#use-this-readme-as-example)
 * [4. Managed Structure](#managed-structure)
-* [5. Scope](#scope)
+* [5. Limits](#limits)
 * [6. Documentation](#documentation)
   * [6.1. Specification](#specification)
   * [6.2. Comparison](#comparison)
@@ -50,14 +50,17 @@ state=generated
 <!-- /mdtoc -->
 </details>
 
-## 1. <a id="why-mdtoc"></a>Why mdtoc?
+## 1. <a id="features"></a>Features
 
-* one small CLI for ToC, numbering, anchors, stripping, regeneration, and CI checks
-* **ignores headings inside fenced code blocks safely**
-* **works with repeated headings**
-* deterministic and idempotent output
-* anchors are derived from the semantic heading title, not from generated numbers
+* ToC generate, strip, regen, and check
+* works with files and Unix pipes
+* targets ATX headings (`#` to `######`)
+* ignores headings inside fenced code blocks safely
+* exclusion regions: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
+* slug link anchors from heading titles, not numbers
+* works with repeated headings (see [#8](https://github.com/rokath/mdtoc/issues/8) for limitations)
 * generated content stays clearly separated from authored content
+* deterministic and idempotent output
 
 ## 2. <a id="install"></a>Install
 
@@ -90,6 +93,8 @@ mdtoc regen -f README.md                    # rebuild the generated state from t
 mdtoc generate -f README.md                 # generate with current CLI flags or defaults and rewrite the config block
 mdtoc check -f README.md                    # fail in CI when README.md differs from the reconstructed target state
 ```
+
+Use `<!-- mdtoc off -->` and `<!-- mdtoc on -->` to exclude heading regions from ToC generation and heading rewrites. If `<!-- mdtoc on -->` is omitted, the exclusion continues to end of file.
 
 ## 4. <a id="managed-structure"></a>Managed Structure
 
@@ -125,14 +130,11 @@ This means:
 
 </details>
 
-## 5. <a id="scope"></a>Scope
+## 5. <a id="limits"></a>Limits
 
-`mdtoc` is intentionally small:
-
-* processes one Markdown file at a time
-* supports file input and Unix pipes
-* supports ATX headings (`#` to `######`)
-* is not a site generator and not a full Markdown formatter
+* no Setext heading support (`Heading` followed by `===` or `---`)
+* not a site generator
+* not a Markdown formatter
 
 ## 6. <a id="documentation"></a>Documentation
 
