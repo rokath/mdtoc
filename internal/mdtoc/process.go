@@ -7,7 +7,31 @@ import (
 
 // Generate applies the managed transformation from the specification.
 func Generate(input string, opts Options) (string, []string, error) {
-	cfg := opts.ToConfig()
+	return generateWithConfig(input, opts.ToConfig())
+}
+
+// Regen rebuilds the generated state from the persisted config of an existing
+// managed container.
+func Regen(input string) (string, []string, error) {
+	parsed, err := ParseDocument(input)
+	if err != nil {
+		return "", nil, err
+	}
+	if parsed.Container == nil {
+		return "", nil, fmt.Errorf("regen requires a valid mdtoc config block")
+	}
+	cfg := parsed.Container.Config
+	switch cfg.State {
+	case StateGenerated, StateStripped:
+		cfg.State = StateGenerated
+		return generateWithConfig(input, cfg)
+	default:
+		return "", parsed.Warnings, fmt.Errorf("unsupported state %q", parsed.Container.Config.State)
+	}
+}
+
+// generateWithConfig renders the managed document state for a fully validated config.
+func generateWithConfig(input string, cfg Config) (string, []string, error) {
 	if err := cfg.Validate(); err != nil {
 		return "", nil, err
 	}

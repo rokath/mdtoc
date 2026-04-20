@@ -26,8 +26,29 @@ func TestRunnerRunAndHelpHelpers(t *testing.T) {
 		t.Fatalf("Run should reject unknown root arg")
 	}
 
-	if got := longHelp(); !strings.Contains(got, "Commands:") {
-		t.Fatalf("longHelp missing commands section:\n%s", got)
+	stdout.Reset()
+	exitCode, err = runner.Run([]string{"--verbose"})
+	if err != nil || exitCode != 0 {
+		t.Fatalf("Run(--verbose) failed: exit=%d err=%v", exitCode, err)
+	}
+	if got := stdout.String(); !strings.Contains(got, "Generate options:") {
+		t.Fatalf("Run(--verbose) did not print long help:\n%s", got)
+	}
+
+	if got := longHelp(); !strings.Contains(got, "Usage:") {
+		t.Fatalf("longHelp missing usage section:\n%s", got)
+	}
+	if got := longHelp(); !strings.Contains(got, "Help:") {
+		t.Fatalf("longHelp missing help section:\n%s", got)
+	}
+	if got := longHelp(); !strings.Contains(got, "Generate options:") {
+		t.Fatalf("longHelp missing generate options section:\n%s", got)
+	}
+	if got := longHelp(); !strings.Contains(got, "Info: https://github.com/rokath/mdtoc/") {
+		t.Fatalf("longHelp missing project info link:\n%s", got)
+	}
+	if got := longHelp(); !strings.Contains(got, "mdtoc <command> --help [--verbose]") {
+		t.Fatalf("longHelp missing subcommand help usage:\n%s", got)
 	}
 	if got := stripHelp(true); !strings.Contains(got, "Remove managed artifacts") {
 		t.Fatalf("stripHelp(verbose) missing verbose text:\n%s", got)
@@ -37,6 +58,9 @@ func TestRunnerRunAndHelpHelpers(t *testing.T) {
 	}
 	if got := checkHelp(true); !strings.Contains(got, "compare it byte-for-byte") {
 		t.Fatalf("checkHelp(verbose) missing verbose text:\n%s", got)
+	}
+	if got := regenHelp(true); !strings.Contains(got, "persisted config") {
+		t.Fatalf("regenHelp(verbose) missing verbose text:\n%s", got)
 	}
 	if got := generateHelp(false); strings.Contains(got, "Generate or update") {
 		t.Fatalf("generateHelp(non-verbose) unexpectedly contains verbose text:\n%s", got)
@@ -81,8 +105,26 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	if err != nil || exitCode != 0 {
 		t.Fatalf("root verbose help failed: exit=%d err=%v", exitCode, err)
 	}
-	if got := stdout.String(); !strings.Contains(got, "Commands:") {
-		t.Fatalf("verbose root help missing commands section:\n%s", got)
+	if got := stdout.String(); !strings.Contains(got, "Help:") {
+		t.Fatalf("verbose root help missing help section:\n%s", got)
+	}
+	if got := stdout.String(); !strings.Contains(got, "Generate options:") {
+		t.Fatalf("verbose root help missing generate options section:\n%s", got)
+	}
+	if got := stdout.String(); !strings.Contains(got, "mdtoc <command> --help [--verbose]") {
+		t.Fatalf("verbose root help missing subcommand help hint:\n%s", got)
+	}
+	if got := stdout.String(); !strings.Contains(got, "check    [--file <name>] [--verbose]") {
+		t.Fatalf("verbose root help missing reordered check usage:\n%s", got)
+	}
+
+	stdout.Reset()
+	exitCode, err = runner.Run([]string{"regen", "--help"})
+	if err != nil || exitCode != 0 {
+		t.Fatalf("regen help failed: exit=%d err=%v", exitCode, err)
+	}
+	if got := stdout.String(); !strings.Contains(got, "mdtoc regen") {
+		t.Fatalf("regen help missing usage:\n%s", got)
 	}
 
 	stdout.Reset()
@@ -106,6 +148,9 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	}
 	if exitCode, err = runner.Run([]string{"strip", "--badflag"}); err == nil || exitCode != 1 {
 		t.Fatalf("strip invalid flag should fail, exit=%d err=%v", exitCode, err)
+	}
+	if exitCode, err = runner.Run([]string{"regen", "--badflag"}); err == nil || exitCode != 1 {
+		t.Fatalf("regen invalid flag should fail, exit=%d err=%v", exitCode, err)
 	}
 	if exitCode, err = runner.Run([]string{"check", "--badflag"}); err == nil || exitCode != 1 {
 		t.Fatalf("check invalid flag should fail, exit=%d err=%v", exitCode, err)

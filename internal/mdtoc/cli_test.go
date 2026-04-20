@@ -82,6 +82,34 @@ func TestRunnerSubcommandVerboseHelpIsNotIgnored(t *testing.T) {
 	}
 }
 
+// TestRunnerSubcommandVerboseWithoutHelpPrintsLongHelp verifies verbose-only rootless subcommand help behavior.
+func TestRunnerSubcommandVerboseWithoutHelpPrintsLongHelp(t *testing.T) {
+	tests := []struct {
+		args []string
+		want string
+	}{
+		{args: []string{"generate", "--verbose"}, want: "Generate or update ToC, heading numbers, and anchors."},
+		{args: []string{"regen", "--verbose"}, want: "Regenerate using the persisted config from an existing managed container."},
+		{args: []string{"strip", "--verbose"}, want: "Remove managed artifacts and optionally the entire managed container."},
+		{args: []string{"check", "--verbose"}, want: "Reconstruct the target document state and compare it byte-for-byte."},
+	}
+
+	for _, tc := range tests {
+		var stdout, stderr strings.Builder
+		runner := NewRunner(strings.NewReader(""), &stdout, &stderr)
+		exitCode, err := runner.Run(tc.args)
+		if err != nil {
+			t.Fatalf("Run(%v) error: %v", tc.args, err)
+		}
+		if exitCode != 0 {
+			t.Fatalf("Run(%v) exit code = %d, want 0", tc.args, exitCode)
+		}
+		if got := stdout.String(); !strings.Contains(got, tc.want) {
+			t.Fatalf("Run(%v) did not print long help:\n%s", tc.args, got)
+		}
+	}
+}
+
 // TestRunnerGenerateFromStdin verifies that generate accepts piped stdin content.
 func TestRunnerGenerateFromStdin(t *testing.T) {
 	stdin := strings.NewReader("# Title\n\n## Intro\n")
@@ -99,6 +127,34 @@ func TestRunnerGenerateFromStdin(t *testing.T) {
 	}
 }
 
+// TestRunnerRegenFromStdin verifies that regen reuses persisted container config from stdin.
+func TestRunnerRegenFromStdin(t *testing.T) {
+	input, _, err := Generate("# Title\n\n## Intro\n", Options{
+		Numbering: false,
+		MinLevel:  2,
+		MaxLevel:  4,
+		Anchors:   false,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	input = strings.Replace(input, "* [Intro](#intro)", "* [BROKEN](#intro)", 1)
+
+	var stdout, stderr strings.Builder
+	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"regen"})
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+	if got := stdout.String(); !strings.Contains(got, "* [Intro](#intro)") || strings.Contains(got, "<a id=") {
+		t.Fatalf("stdout does not contain regen output honoring stored config:\n%s", got)
+	}
+}
+
 // TestRunnerGenerateFailsFastOnInteractiveStdinWithoutFile verifies issue #4 behavior for generate.
 func TestRunnerGenerateFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
 	var stdout, stderr strings.Builder
@@ -112,6 +168,19 @@ func TestRunnerGenerateFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
 	}
 	if got := err.Error(); !strings.Contains(got, "no input provided") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// TestRunnerRegenFailsFastOnInteractiveStdinWithoutFile verifies issue #4 behavior for regen.
+func TestRunnerRegenFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
+	var stdout, stderr strings.Builder
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
+	exitCode, err := runner.Run([]string{"regen"})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
 	}
 }
 
@@ -165,6 +234,44 @@ func TestRunnerGenerateWithFileDoesNotRequireStdin(t *testing.T) {
 	}
 	if !strings.Contains(string(got), "* [1. Intro](#intro)") {
 		t.Fatalf("generated file does not contain ToC:\n%s", string(got))
+	}
+}
+
+// TestRunnerRegenWithFileDoesNotRequireStdin verifies that regen honors -f input files.
+func TestRunnerRegenWithFileDoesNotRequireStdin(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.md")
+	input, _, err := Generate("# Title\n\n## Intro\n", Options{
+		Numbering: false,
+		MinLevel:  2,
+		MaxLevel:  4,
+		Anchors:   false,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	input = strings.Replace(input, "* [Intro](#intro)", "* [BROKEN](#intro)", 1)
+	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	var stdout, stderr strings.Builder
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
+	exitCode, err := runner.Run([]string{"regen", "-f", path})
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile error: %v", err)
+	}
+	if s := string(got); !strings.Contains(s, "* [Intro](#intro)") || strings.Contains(s, "<a id=") {
+		t.Fatalf("regen file output does not honor stored config:\n%s", s)
 	}
 }
 

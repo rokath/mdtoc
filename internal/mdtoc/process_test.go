@@ -52,6 +52,87 @@ func TestGeneratePreservesForeignTOCContentAsComment(t *testing.T) {
 	}
 }
 
+// TestRegenReusesPersistedContainerConfig verifies that regen reads stored config instead of CLI defaults.
+func TestRegenReusesPersistedContainerConfig(t *testing.T) {
+	input := "# Title\n\n## Intro\n\n### API\n"
+	generated, _, err := Generate(input, Options{
+		Numbering: false,
+		MinLevel:  2,
+		MaxLevel:  3,
+		Anchors:   false,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	manual := strings.Replace(generated, "* [Intro](#intro)", "* [WRONG](#intro)", 1)
+	manual = strings.Replace(manual, "## Intro", "## 9. Intro", 1)
+
+	got, _, err := Regen(manual)
+	if err != nil {
+		t.Fatalf("Regen error: %v", err)
+	}
+	if strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
+		t.Fatalf("regen did not honor persisted config:\n%s", got)
+	}
+	if !strings.Contains(got, "* [Intro](#intro)") || !strings.Contains(got, "## Intro") {
+		t.Fatalf("regen did not reconstruct expected output:\n%s", got)
+	}
+}
+
+// TestRegenRequiresManagedConfig verifies that regen fails without a valid managed container.
+func TestRegenRequiresManagedConfig(t *testing.T) {
+	if _, _, err := Regen("# Title\n\n## Intro\n"); err == nil {
+		t.Fatalf("Regen without config unexpectedly succeeded")
+	}
+}
+
+// TestRegenRestoresGeneratedStateFromStrippedInput verifies regen after a stripped-state workflow.
+func TestRegenRestoresGeneratedStateFromStrippedInput(t *testing.T) {
+	generated, _, err := Generate("# Title\n\n## Intro\n", Options{
+		Numbering: true,
+		MinLevel:  1,
+		MaxLevel:  4,
+		Anchors:   true,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	stripped, _, err := Strip(generated)
+	if err != nil {
+		t.Fatalf("Strip error: %v", err)
+	}
+	if !strings.Contains(stripped, "state=stripped") {
+		t.Fatalf("stripped document missing stripped state:\n%s", stripped)
+	}
+
+	manual := strings.Replace(stripped, "## Intro", "## 7. Intro", 1)
+	regenerated, _, err := Regen(manual)
+	if err != nil {
+		t.Fatalf("Regen error: %v", err)
+	}
+	if strings.Contains(regenerated, "## 7. Intro") {
+		t.Fatalf("regen kept manual stripped-state edits:\n%s", regenerated)
+	}
+	if !strings.Contains(regenerated, "state=generated") {
+		t.Fatalf("regen did not restore generated state:\n%s", regenerated)
+	}
+	if !strings.Contains(regenerated, "<a id=") || !strings.Contains(regenerated, "## 1.1. ") {
+		t.Fatalf("regen did not rebuild managed artifacts:\n%s", regenerated)
+	}
+
+	ok, _, err := Check(regenerated)
+	if err != nil {
+		t.Fatalf("Check error: %v", err)
+	}
+	if !ok {
+		t.Fatalf("Check rejected regen output after restoring generated state:\n%s", regenerated)
+	}
+}
+
 // TestGenerateIgnoresHeadingsInsideFencesAndComments verifies ignored-region parsing behavior.
 func TestGenerateIgnoresHeadingsInsideFencesAndComments(t *testing.T) {
 	input := strings.Join([]string{"# Title", "", "```md", "## Code heading", "```", "", "<!--", "## Comment heading", "-->", "", "## Real heading"}, "\n") + "\n"

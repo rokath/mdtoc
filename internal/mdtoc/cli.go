@@ -9,6 +9,25 @@ import (
 	"strings"
 )
 
+// fileSystem abstracts CLI file access for deterministic workflow tests.
+type fileSystem interface {
+	ReadFile(name string) ([]byte, error)
+	WriteFile(name string, data []byte, perm os.FileMode) error
+}
+
+// osFileSystem implements fileSystem on top of the local OS filesystem.
+type osFileSystem struct{}
+
+// ReadFile loads a file from the local filesystem.
+func (osFileSystem) ReadFile(name string) ([]byte, error) {
+	return os.ReadFile(name)
+}
+
+// WriteFile persists a file on the local filesystem.
+func (osFileSystem) WriteFile(name string, data []byte, perm os.FileMode) error {
+	return os.WriteFile(name, data, perm)
+}
+
 // BuildInfo contains release metadata injected by the build system.
 type BuildInfo struct {
 	Version string
@@ -36,6 +55,7 @@ type Runner struct {
 	stderr    io.Writer
 	buildInfo BuildInfo
 	stdinTTY  bool
+	fs        fileSystem
 }
 
 // NewRunner creates a testable CLI runner.
@@ -50,12 +70,18 @@ func NewRunnerWithBuildInfo(stdin io.Reader, stdout, stderr io.Writer, buildInfo
 
 // newRunner builds a runner with an explicitly injected stdin interactivity flag.
 func newRunner(stdin io.Reader, stdout, stderr io.Writer, buildInfo BuildInfo, stdinTTY bool) *Runner {
+	return newRunnerWithFS(stdin, stdout, stderr, buildInfo, stdinTTY, osFileSystem{})
+}
+
+// newRunnerWithFS builds a runner with explicitly injected stdin metadata and filesystem access.
+func newRunnerWithFS(stdin io.Reader, stdout, stderr io.Writer, buildInfo BuildInfo, stdinTTY bool, fs fileSystem) *Runner {
 	return &Runner{
 		stdin:     stdin,
 		stdout:    stdout,
 		stderr:    stderr,
 		buildInfo: buildInfo.normalized(),
 		stdinTTY:  stdinTTY,
+		fs:        fs,
 	}
 }
 
@@ -71,6 +97,8 @@ func (r *Runner) Run(args []string) (int, error) {
 	switch args[0] {
 	case "generate":
 		return r.runGenerate(args[1:])
+	case "regen":
+		return r.runRegen(args[1:])
 	case "strip":
 		return r.runStrip(args[1:])
 	case "check":
@@ -114,6 +142,10 @@ func (r *Runner) runRoot(args []string) (int, error) {
 		}
 		return 0, nil
 	}
+	if *verbose {
+		fmt.Fprint(r.stdout, longHelp())
+		return 0, nil
+	}
 	fmt.Fprint(r.stdout, shortHelp())
 	return 0, nil
 }
@@ -143,6 +175,10 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	}
 	if *help || *helpS {
 		fmt.Fprint(r.stdout, generateHelp(*verbose))
+		return 0, nil
+	}
+	if *verbose && fs.NFlag() == 1 {
+		fmt.Fprint(r.stdout, generateHelp(true))
 		return 0, nil
 	}
 	if *numberingS != "" {
@@ -184,6 +220,51 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	return 0, nil
 }
 
+// runRegen parses and executes the regen subcommand.
+func (r *Runner) runRegen(args []string) (int, error) {
+	fs := flag.NewFlagSet("regen", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	file := fs.String("file", "", "")
+	fileS := fs.String("f", "", "")
+	verbose := fs.Bool("verbose", false, "")
+	verboseS := fs.Bool("v", false, "")
+	help := fs.Bool("help", false, "")
+	helpS := fs.Bool("h", false, "")
+	if err := fs.Parse(args); err != nil {
+		return 1, err
+	}
+	if *verboseS {
+		*verbose = true
+	}
+	if *help || *helpS {
+		fmt.Fprint(r.stdout, regenHelp(*verbose))
+		return 0, nil
+	}
+	if *verbose && fs.NFlag() == 1 {
+		fmt.Fprint(r.stdout, regenHelp(true))
+		return 0, nil
+	}
+	if *fileS != "" {
+		*file = *fileS
+	}
+	if err := r.requireInputSource(*file); err != nil {
+		return 1, err
+	}
+	input, err := r.readInput(*file)
+	if err != nil {
+		return 1, err
+	}
+	result, warnings, err := Regen(input)
+	if err != nil {
+		return 1, err
+	}
+	if err := r.writeOutput(*file, result); err != nil {
+		return 1, err
+	}
+	r.writeDiagnostics(*verbose, warnings)
+	return 0, nil
+}
+
 // runStrip parses and executes the strip subcommand.
 func (r *Runner) runStrip(args []string) (int, error) {
 	fs := flag.NewFlagSet("strip", flag.ContinueOnError)
@@ -203,6 +284,10 @@ func (r *Runner) runStrip(args []string) (int, error) {
 	}
 	if *help || *helpS {
 		fmt.Fprint(r.stdout, stripHelp(*verbose))
+		return 0, nil
+	}
+	if *verbose && fs.NFlag() == 1 {
+		fmt.Fprint(r.stdout, stripHelp(true))
 		return 0, nil
 	}
 	if *fileS != "" {
@@ -252,6 +337,10 @@ func (r *Runner) runCheck(args []string) (int, error) {
 		fmt.Fprint(r.stdout, checkHelp(*verbose))
 		return 0, nil
 	}
+	if *verbose && fs.NFlag() == 1 {
+		fmt.Fprint(r.stdout, checkHelp(true))
+		return 0, nil
+	}
 	if *fileS != "" {
 		*file = *fileS
 	}
@@ -276,7 +365,7 @@ func (r *Runner) runCheck(args []string) (int, error) {
 // readInput loads document content from a file or from stdin.
 func (r *Runner) readInput(file string) (string, error) {
 	if file != "" {
-		b, err := os.ReadFile(file)
+		b, err := r.fs.ReadFile(file)
 		return string(b), err
 	}
 	b, err := io.ReadAll(r.stdin)
@@ -294,7 +383,7 @@ func (r *Runner) requireInputSource(file string) error {
 // writeOutput writes transformed content either back to a file or to stdout.
 func (r *Runner) writeOutput(file, content string) error {
 	if file != "" {
-		return os.WriteFile(file, []byte(content), 0o644)
+		return r.fs.WriteFile(file, []byte(content), 0o644)
 	}
 	_, err := io.WriteString(r.stdout, content)
 	return err
@@ -323,7 +412,7 @@ func hasFlag(args []string, flag string) bool {
 // isSubcommand reports whether the first CLI token names a supported subcommand.
 func isSubcommand(arg string) bool {
 	switch arg {
-	case "generate", "strip", "check":
+	case "generate", "regen", "strip", "check":
 		return true
 	default:
 		return false
@@ -345,20 +434,44 @@ func isInteractiveInput(r io.Reader) bool {
 
 // shortHelp returns the compact root help text.
 func shortHelp() string {
-	return strings.TrimSpace(`mdtoc - deterministic Markdown ToC manager
+	return strings.TrimSpace(`Usage: mdtoc <command>
 
-Usage:
-  mdtoc --help [--verbose]
-  mdtoc --version [--verbose]
-  mdtoc generate [OPTIONS]
-  mdtoc strip [--raw] [--file <name>] [--verbose]
-  mdtoc check [--file <name>] [--verbose]
+Commands:
+  generate [--file <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
+  check    [--file <name>] [--verbose]            validate that the document matches its persisted state
+  regen    [--file <name>] [--verbose]            regenerate using persisted container config
+  strip    [--file <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
+
+Details: mdtoc -v   short for mdtoc --help --verbose
 `) + "\n"
 }
 
 // longHelp returns the root help text with the command summary section.
 func longHelp() string {
-	return shortHelp() + "\nCommands:\n  generate   generate or update ToC, numbers, and anchors\n  strip      remove managed artifacts and keep the container\n  check      validate that the document matches its persisted state\n"
+	return strings.TrimSpace(`mdtoc - deterministic Markdown ToC manager
+
+Usage: mdtoc <command>
+
+Commands:
+  generate [--file <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
+  check    [--file <name>] [--verbose]            validate that the document matches its persisted state
+  regen    [--file <name>] [--verbose]            regenerate using persisted container config
+  strip    [--file <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
+
+Generate options:
+  --numbering=on  heading numbers on or off
+  --min-level=2   minimum heading level (valid 1 to --max-level)
+  --max-level=4   maximum heading level (valid --min-level to 6)
+  --anchors=on    link anchors in headings on or off
+  --toc=on        table of contents on or off
+
+Help:
+  mdtoc [--help] [--verbose]         general help
+  mdtoc <command> --help [--verbose] specific help
+  mdtoc --version [--verbose]        version info
+
+Info: https://github.com/rokath/mdtoc/
+`) + "\n"
 }
 
 // generateHelp returns the generate subcommand help text.
@@ -387,6 +500,28 @@ Options:
   --max-level <N>
   --anchors, -a <on|off>
   --toc <on|off>
+  --file, -f <name>
+  --verbose, -v
+  --help, -h
+`) + "\n"
+}
+
+// regenHelp returns the regen subcommand help text.
+func regenHelp(verbose bool) string {
+	if verbose {
+		return strings.TrimSpace(`mdtoc regen
+
+Regenerate using the persisted config from an existing managed container.
+
+Options:
+  --file, -f <name>
+  --verbose, -v
+  --help, -h
+`) + "\n"
+	}
+	return strings.TrimSpace(`mdtoc regen
+
+Options:
   --file, -f <name>
   --verbose, -v
   --help, -h
