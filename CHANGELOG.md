@@ -6,31 +6,52 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* Documentation and presentation were refined further:
-  * the README now includes a hero image and a collapsible table of contents
-  * the README mascot asset and intro text were refreshed
-  * the README now explains explicitly that `generate` does not reuse stored container config automatically
-  * the tools-comparison link in the README was corrected
-  * specification documents were normalized further for list-marker consistency
-  * the obsolete `AI-log.md` file was removed from the repository
-  * GitHub Pages rendering for the `docs/` Markdown pages was stabilized via Jekyll defaults and homepage link rewrites
-* Licensing and metadata were completed:
-  * an MIT license file was added to the repository
-  * the README gained a Coveralls coverage badge
-* CI coverage reporting was added:
-  * a dedicated GitHub Actions workflow now runs Go coverage and uploads it to Coveralls
-* Repository workflow guidance was tightened:
-  * `AGENTS.md` now requires reviewing and updating `CHANGELOG.md` before every push when relevant
-* Future CLI behavior was clarified:
-  * issue [#5](https://github.com/rokath/mdtoc/issues/5) proposes an explicit `regen` command for reusing persisted container config
-  * changing config values is still intended to go through `generate`
+* None yet.
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.1.1..HEAD`
+Used git range: `v0.1.2..HEAD`
 
 ```txt
+* none yet
+```
+
+## <a id='v0.1.2-changes'></a>v0.1.2 Changes (2026-04-20)
+
+### <a id='v0.1.2-overview'></a>v0.1.2 Overview
+
+* CLI capabilities expanded:
+  * `regen` was added as an explicit command for rebuilding the generated state from persisted container config
+  * `regen` now restores the generated state correctly even after `strip`
+  * `mdtoc --verbose` now shows the long root help
+  * `mdtoc <command> -v` now shows the long help for the selected command
+* Test coverage and workflow safety improved:
+  * new regression tests cover `generate`, `strip`, `regen`, and `check` as real command sequences
+  * file-based CLI workflow tests now run against an in-memory filesystem to catch state-transition regressions
+* README and project metadata were refined:
+  * the README now documents `regen`, the new help behavior, and the persisted-config semantics more clearly
+  * the README hero section, collapsible blocks, and usage examples were polished further
+  * the README now highlights safe handling of fenced code blocks more prominently
+  * a Coveralls coverage badge was added
+* Project infrastructure and docs were completed:
+  * a dedicated GitHub Actions coverage workflow now uploads Go coverage to Coveralls
+  * an MIT license file was added
+  * GitHub Pages rendering for `docs/` Markdown pages was stabilized
+  * spec and comparison docs were normalized further for Markdown list formatting and links
+  * `AGENTS.md` now requires reviewing and updating `CHANGELOG.md` before every push when relevant
+
+### <a id='v0.1.2-git-log'></a>v0.1.2 Git Log
+
+Used git range: `v0.1.1..v0.1.2`
+
+```txt
+* 3ca1ed6 2026-04-20 feat(cli): add regen workflows and verbose command help
+* e6cdeea 2026-04-20 docs(readme): clarify generate vs stored config
+* 6517855 2026-04-20 Enhance README formatting and content details
+* ea7da43 2026-04-19 docs: tighten changelog-before-push rule
 * 09973d8 2026-04-19 docs(readme): refresh mascot asset and intro
+* ec73c52 2026-04-19 docs: fix pages rendering and update push guidance
+* 01e9e1b 2026-04-19 Update markdown replacement for German tools comparison
 * 1cd6d2f 2026-04-19 docs(changelog): update unreleased notes
 * a726d95 2026-04-19 docs(readme): add hero image and collapsible toc
 * 48db36f 2026-04-18 Update link for tools comparison in README

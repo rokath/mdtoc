@@ -16,7 +16,7 @@
 
 >`mdtoc`: Markdown Table of Contents ☰ with numbering and stable anchor links
 >
->`generate`, `strip`, `check` without turning your Markdown into a moving target.
+>`generate`, `strip`, `regen`, `check` without turning your Markdown into a moving target.
 
 <img src="./docs/mdtoc_mascot_1024.webp" width="600">
 
@@ -52,10 +52,10 @@ state=generated
 
 ## 1. <a id="why-mdtoc"></a>Why mdtoc?
 
-* one small CLI for ToC, numbering, anchors, stripping, and CI checks
+* one small CLI for ToC, numbering, anchors, stripping, regeneration, and CI checks
+* **ignores headings inside fenced code blocks safely**
 * deterministic and idempotent output
 * anchors are derived from the semantic heading title, not from generated numbers
-* fenced code blocks are ignored safely while parsing headings and markers
 * generated content stays clearly separated from authored content
 
 ## 2. <a id="install"></a>Install
@@ -75,8 +75,9 @@ go build ./cmd/mdtoc
 ### 3.1. <a id="inspect-the-cli"></a>Inspect the CLI
 
 ```bash
-mdtoc --version # show version information
-mdtoc --help    # show CLI usage and commands
+mdtoc --help        # show compact CLI usage and commands
+mdtoc --verbose     # show extended root help with command details
+mdtoc <command> -v  # show the long help for one command
 ```
 
 ### 3.2. <a id="use-this-readme-as-example"></a>Use this README as example
@@ -84,13 +85,17 @@ mdtoc --help    # show CLI usage and commands
 ```bash
 mdtoc generate -f README.md -a off -toc off # rewrite headings only, keep anchors and ToC disabled
 cat README.md | mdtoc strip > README.md     # remove managed artifacts via Unix pipe and write clean Markdown back
-mdtoc generate -f README.md                 # generate the managed container, numbering, anchors, and ToC
+mdtoc regen -f README.md                    # rebuild the generated state from the stored container config
+mdtoc generate -f README.md                 # generate with current CLI flags or defaults and rewrite the config block
 mdtoc check -f README.md                    # fail in CI when README.md differs from the reconstructed target state
 ```
 
 ## 4. <a id="managed-structure"></a>Managed Structure
 
-`mdtoc` uses an explicit container so generated content is easy to spot and safe to regenerate:
+`mdtoc` uses an explicit container so generated content is easy to spot and safe to regenerate.
+
+<details markdown="1">
+<summary>(click to expand)</summary>
 
 ```md
 <!-- mdtoc -->
@@ -108,15 +113,16 @@ state=generated
 
 The heading title stays the source of truth. Numbers, anchors, and ToC entries are derived from it.
 
-The config block records the settings that produced the current managed state.
-
-`generate` does not reuse the stored config automatically. It always uses the current CLI flags or defaults and then rewrites the config block to match that run.
+The config block records the settings that produced the current managed state. `generate` always uses current CLI flags or defaults and then rewrites that block. `regen` reuses the stored container config and rebuilds the generated state from it.
 
 This means:
 
 * the stored config is persisted output state
+* `regen` rebuilds the generated state from that persisted config
 * `check` uses that persisted state
 * changing generation settings currently goes through `generate`, not through manual config edits
+
+</details>
 
 ## 5. <a id="scope"></a>Scope
 
