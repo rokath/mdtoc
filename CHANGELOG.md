@@ -11,6 +11,7 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * supported bullet styles are `*`, `-`, and `+`
   * ties are resolved deterministically with `*` > `-` > `+`
   * `--bullets` and `-b` now allow forcing a specific ToC bullet style or keeping `auto`
+  * workflow regression tests now verify that managed ToC bullets are not counted during `auto` detection and that legacy containers without `bullets=` stay on `*`
 * Markdown heading exclusion support was added:
   * `<!-- mdtoc off -->` and `<!-- mdtoc on -->` now exclude heading regions from ToC generation and managed heading rewrites
   * a missing `<!-- mdtoc on -->` is accepted and keeps the exclusion active until end of file

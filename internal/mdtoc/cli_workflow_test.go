@@ -149,6 +149,91 @@ func TestRunnerFileWorkflowAutoBulletsAndForcedOverride(t *testing.T) {
 	}
 }
 
+// TestRunnerFileWorkflowAutoBulletsIgnoreManagedTOC verifies that auto detection does not count the existing managed ToC.
+func TestRunnerFileWorkflowAutoBulletsIgnoreManagedTOC(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: strings.Join([]string{
+			startMarker,
+			"* [1. Wrong](#wrong)",
+			configStart,
+			"numbering=on",
+			"min-level=2",
+			"max-level=4",
+			"anchors=on",
+			"toc=on",
+			"bullets=auto",
+			"state=generated",
+			configEnd,
+			endMarker,
+			"",
+			"- local bullet",
+			"- local bullet",
+			"",
+			"## Intro",
+		}, "\n") + "\n",
+	})
+
+	runFileCommand(t, fs, "generate", "-f", path)
+	got := fs.fileString(path)
+	if !strings.Contains(got, "bullets=auto") {
+		t.Fatalf("generate did not keep auto bullet mode:\n%s", got)
+	}
+	if !strings.Contains(got, "- [1. Intro](#intro)") {
+		t.Fatalf("auto bullet detection did not use surrounding dash lists:\n%s", got)
+	}
+	if strings.Contains(got, "* [1. Intro](#intro)") {
+		t.Fatalf("existing managed ToC was incorrectly counted for auto detection:\n%s", got)
+	}
+}
+
+// TestRunnerFileWorkflowLegacyContainerKeepsStarBullets verifies backward-compatible handling of pre-bullets containers.
+func TestRunnerFileWorkflowLegacyContainerKeepsStarBullets(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: strings.Join([]string{
+			startMarker,
+			"* [1. Wrong](#wrong)",
+			configStart,
+			"numbering=on",
+			"min-level=2",
+			"max-level=4",
+			"anchors=on",
+			"toc=on",
+			"state=generated",
+			configEnd,
+			endMarker,
+			"",
+			"- local bullet",
+			"- local bullet",
+			"",
+			"## Intro",
+		}, "\n") + "\n",
+	})
+
+	runFileCommand(t, fs, "generate", "-f", path)
+	got := fs.fileString(path)
+	if !strings.Contains(got, "bullets=*") {
+		t.Fatalf("legacy container was not normalized to star bullets:\n%s", got)
+	}
+	if !strings.Contains(got, "* [1. Intro](#intro)") {
+		t.Fatalf("legacy star bullets were not preserved:\n%s", got)
+	}
+	if strings.Contains(got, "- [1. Intro](#intro)") {
+		t.Fatalf("legacy container unexpectedly switched to auto-detected dash bullets:\n%s", got)
+	}
+
+	runFileCommand(t, fs, "strip", "-f", path)
+	runFileCommand(t, fs, "regen", "-f", path)
+	got = fs.fileString(path)
+	if !strings.Contains(got, "bullets=*") || !strings.Contains(got, "* [1. Intro](#intro)") {
+		t.Fatalf("regen did not preserve normalized legacy star bullets:\n%s", got)
+	}
+	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
+		t.Fatalf("check unexpectedly failed after legacy star regen: %v", err)
+	}
+}
+
 // TestRunnerFileWorkflowStripCheckThenRegenCheck verifies both persisted target states on the same file.
 func TestRunnerFileWorkflowStripCheckThenRegenCheck(t *testing.T) {
 	const path = "doc.md"
