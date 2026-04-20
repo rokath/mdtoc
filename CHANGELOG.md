@@ -9,6 +9,7 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Documentation and presentation were refined further:
   * the README now includes a hero image and a collapsible table of contents
   * the README mascot asset and intro text were refreshed
+  * the README now explains explicitly that `generate` does not reuse stored container config automatically
   * the tools-comparison link in the README was corrected
   * specification documents were normalized further for list-marker consistency
   * the obsolete `AI-log.md` file was removed from the repository
@@ -20,6 +21,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * a dedicated GitHub Actions workflow now runs Go coverage and uploads it to Coveralls
 * Repository workflow guidance was tightened:
   * `AGENTS.md` now requires reviewing and updating `CHANGELOG.md` before every push when relevant
+* Future CLI behavior was clarified:
+  * issue [#5](https://github.com/rokath/mdtoc/issues/5) proposes an explicit `regen` command for reusing persisted container config
+  * changing config values is still intended to go through `generate`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

@@ -108,6 +108,16 @@ state=generated
 
 The heading title stays the source of truth. Numbers, anchors, and ToC entries are derived from it.
 
+The config block records the settings that produced the current managed state.
+
+`generate` does not reuse the stored config automatically. It always uses the current CLI flags or defaults and then rewrites the config block to match that run.
+
+This means:
+
+* the stored config is persisted output state
+* `check` uses that persisted state
+* changing generation settings currently goes through `generate`, not through manual config edits
+
 ## 5. <a id="scope"></a>Scope
 
 `mdtoc` is intentionally small:
