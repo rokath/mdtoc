@@ -54,7 +54,7 @@ state=generated
 
 * one small CLI for ToC, numbering, anchors, stripping, regeneration, and CI checks
 * **ignores headings inside fenced code blocks safely**
-* **Works with repeated headings**
+* **works with repeated headings**
 * deterministic and idempotent output
 * anchors are derived from the semantic heading title, not from generated numbers
 * generated content stays clearly separated from authored content
