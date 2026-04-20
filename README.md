@@ -53,8 +53,7 @@ state=generated
 
 ## 1. <a id="features"></a>Features
 
-* ToC generate, strip, regen, and check
-* auto-detects the dominant ToC bullet style (`*`, `-`, `+`)
+* auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
 * targets ATX headings (`#` to `######`)
 * ignores headings inside fenced code blocks safely
