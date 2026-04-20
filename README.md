@@ -45,6 +45,7 @@ min-level=2
 max-level=4
 anchors=on
 toc=on
+bullets=auto
 state=generated
 -->
 <!-- /mdtoc -->
@@ -53,12 +54,13 @@ state=generated
 ## 1. <a id="features"></a>Features
 
 * ToC generate, strip, regen, and check
+* auto-detects the dominant ToC bullet style (`*`, `-`, `+`)
 * works with files and Unix pipes
 * targets ATX headings (`#` to `######`)
 * ignores headings inside fenced code blocks safely
 * exclusion regions: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
 * slug link anchors from heading titles, not numbers
-* works with repeated headings (see [#8](https://github.com/rokath/mdtoc/issues/8) for limitations)
+* works with repeated headings
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
 
@@ -94,8 +96,6 @@ mdtoc generate -f README.md                 # generate with current CLI flags or
 mdtoc check -f README.md                    # fail in CI when README.md differs from the reconstructed target state
 ```
 
-Use `<!-- mdtoc off -->` and `<!-- mdtoc on -->` to exclude heading regions from ToC generation and heading rewrites. If `<!-- mdtoc on -->` is omitted, the exclusion continues to end of file.
-
 ## 4. <a id="managed-structure"></a>Managed Structure
 
 `mdtoc` uses an explicit container so generated content is easy to spot and safe to regenerate.
@@ -112,6 +112,7 @@ min-level=2
 max-level=4
 anchors=on
 toc=on
+bullets=auto
 state=generated
 -->
 <!-- /mdtoc -->
@@ -133,6 +134,7 @@ This means:
 ## 5. <a id="limits"></a>Limits
 
 * no Setext heading support (`Heading` followed by `===` or `---`)
+* repeated-heading links depend on occurrence order ([issue #8](https://github.com/rokath/mdtoc/issues/8))
 * not a site generator
 * not a Markdown formatter
 

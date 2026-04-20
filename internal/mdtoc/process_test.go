@@ -16,7 +16,7 @@ func TestGenerateCreatesContainerAndDerivedArtifacts(t *testing.T) {
 	if len(warnings) != 0 {
 		t.Fatalf("unexpected warnings: %v", warnings)
 	}
-	checks := []string{startMarker, "* [1. Intro](#intro)", "  * [1.1. API](#api)", `## 1. <a id="intro"></a>Intro`, `### 1.1. <a id="api"></a>API`, "state=generated"}
+	checks := []string{startMarker, "* [1. Intro](#intro)", "  * [1.1. API](#api)", `## 1. <a id="intro"></a>Intro`, `### 1.1. <a id="api"></a>API`, "bullets=auto", "state=generated"}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
 			t.Fatalf("generated output missing %q:\n%s", check, got)
@@ -200,6 +200,149 @@ func TestGenerateTreatsMdtocOffWithoutOnAsExclusionToEOF(t *testing.T) {
 	}
 	if !strings.Contains(got, "* [1. Managed](#managed)") || !strings.Contains(got, "## 1. <a id=\"managed\"></a>Managed") {
 		t.Fatalf("managed heading before exclusion was not preserved:\n%s", got)
+	}
+}
+
+// TestGenerateAutoDetectsDominantBullet verifies majority-based ToC bullet selection.
+func TestGenerateAutoDetectsDominantBullet(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"- alpha",
+		"- beta",
+		"+ gamma",
+		"",
+		"## Intro",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if !strings.Contains(got, "- [1. Intro](#intro)") {
+		t.Fatalf("ToC did not use dominant dash bullets:\n%s", got)
+	}
+	if strings.Contains(got, "* [1. Intro](#intro)") || strings.Contains(got, "+ [1. Intro](#intro)") {
+		t.Fatalf("ToC used an unexpected bullet marker:\n%s", got)
+	}
+}
+
+// TestGenerateAutoDetectsBulletTiePrecedence verifies tie-breaking order * > - > +.
+func TestGenerateAutoDetectsBulletTiePrecedence(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []string
+		want  string
+	}{
+		{name: "allTie", input: []string{"* a", "- b", "+ c"}, want: "* [1. Intro](#intro)"},
+		{name: "dashBeatsPlus", input: []string{"- a", "+ b"}, want: "- [1. Intro](#intro)"},
+	}
+
+	for _, tc := range tests {
+		lines := append([]string{"# Title", ""}, tc.input...)
+		lines = append(lines, "", "## Intro")
+		got, _, err := Generate(strings.Join(lines, "\n")+"\n", DefaultOptions())
+		if err != nil {
+			t.Fatalf("%s: Generate error: %v", tc.name, err)
+		}
+		if !strings.Contains(got, tc.want) {
+			t.Fatalf("%s: ToC missing expected bullet choice %q:\n%s", tc.name, tc.want, got)
+		}
+	}
+}
+
+// TestGenerateAutoDetectsBulletsOutsideIgnoredRegions verifies bullet detection ignores fences, comments, and exclusions.
+func TestGenerateAutoDetectsBulletsOutsideIgnoredRegions(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"```md",
+		"- code bullet",
+		"```",
+		"",
+		"<!--",
+		"- comment bullet",
+		"-->",
+		"",
+		"<!-- mdtoc off -->",
+		"- excluded bullet",
+		"<!-- mdtoc on -->",
+		"",
+		"+ live bullet",
+		"+ another live bullet",
+		"",
+		"## Intro",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if !strings.Contains(got, "+ [1. Intro](#intro)") {
+		t.Fatalf("ToC did not ignore non-live bullet regions:\n%s", got)
+	}
+}
+
+// TestGenerateForcedBulletModeOverridesAutoDetection verifies explicit bullet selection.
+func TestGenerateForcedBulletModeOverridesAutoDetection(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"- alpha",
+		"- beta",
+		"",
+		"## Intro",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, Options{
+		Numbering: true,
+		MinLevel:  2,
+		MaxLevel:  4,
+		Anchors:   true,
+		TOC:       true,
+		Bullets:   BulletPlus,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if !strings.Contains(got, "bullets=+") || !strings.Contains(got, "+ [1. Intro](#intro)") {
+		t.Fatalf("forced bullet mode was not applied:\n%s", got)
+	}
+}
+
+// TestGenerateTreatsLegacyConfigWithoutBulletsAsStar verifies backward-compatible normalization of old containers.
+func TestGenerateTreatsLegacyConfigWithoutBulletsAsStar(t *testing.T) {
+	input := strings.Join([]string{
+		startMarker,
+		"- [1. Wrong](#wrong)",
+		configStart,
+		"numbering=on",
+		"min-level=2",
+		"max-level=4",
+		"anchors=on",
+		"toc=on",
+		"state=generated",
+		configEnd,
+		endMarker,
+		"",
+		"- local bullet",
+		"- local bullet",
+		"",
+		"## Intro",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if !strings.Contains(got, "bullets=*") {
+		t.Fatalf("legacy config was not normalized to bullets=*:\n%s", got)
+	}
+	if !strings.Contains(got, "* [1. Intro](#intro)") {
+		t.Fatalf("legacy config did not preserve star bullets:\n%s", got)
+	}
+	if strings.Contains(got, "- [1. Intro](#intro)") || strings.Contains(got, "+ [1. Intro](#intro)") {
+		t.Fatalf("legacy config unexpectedly switched to non-star bullets:\n%s", got)
 	}
 }
 

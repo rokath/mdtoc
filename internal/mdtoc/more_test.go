@@ -44,6 +44,9 @@ func TestRunnerRunAndHelpHelpers(t *testing.T) {
 	if got := longHelp(); !strings.Contains(got, "Generate options:") {
 		t.Fatalf("longHelp missing generate options section:\n%s", got)
 	}
+	if got := longHelp(); !strings.Contains(got, "--bullets=auto") {
+		t.Fatalf("longHelp missing bullets option:\n%s", got)
+	}
 	if got := longHelp(); !strings.Contains(got, "Info: https://github.com/rokath/mdtoc/") {
 		t.Fatalf("longHelp missing project info link:\n%s", got)
 	}
@@ -64,6 +67,9 @@ func TestRunnerRunAndHelpHelpers(t *testing.T) {
 	}
 	if got := generateHelp(false); strings.Contains(got, "Generate or update") {
 		t.Fatalf("generateHelp(non-verbose) unexpectedly contains verbose text:\n%s", got)
+	}
+	if got := generateHelp(true); !strings.Contains(got, "--bullets, -b <auto|*|-|+>") {
+		t.Fatalf("generateHelp(verbose) missing bullets option:\n%s", got)
 	}
 	if !hasFlag([]string{"--raw", "--help"}, "--raw") || hasFlag([]string{"--help"}, "--raw") {
 		t.Fatalf("hasFlag returned unexpected result")
@@ -146,6 +152,9 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	if exitCode, err = runner.Run([]string{"generate", "--toc", "maybe"}); err == nil || exitCode != 1 {
 		t.Fatalf("generate invalid toc should fail, exit=%d err=%v", exitCode, err)
 	}
+	if exitCode, err = runner.Run([]string{"generate", "--bullets", "x"}); err == nil || exitCode != 1 {
+		t.Fatalf("generate invalid bullets should fail, exit=%d err=%v", exitCode, err)
+	}
 	if exitCode, err = runner.Run([]string{"strip", "--badflag"}); err == nil || exitCode != 1 {
 		t.Fatalf("strip invalid flag should fail, exit=%d err=%v", exitCode, err)
 	}
@@ -188,6 +197,7 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 		"max-level=4",
 		"anchors=off",
 		"toc=on",
+		"bullets=auto",
 		"state=stripped",
 		configEnd,
 	}
@@ -195,8 +205,26 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseConfig(valid) error: %v", err)
 	}
-	if cfg.Anchors || cfg.State != StateStripped {
+	if cfg.Anchors || cfg.State != StateStripped || cfg.Bullets != BulletAuto {
 		t.Fatalf("parseConfig(valid) returned unexpected config: %+v", cfg)
+	}
+
+	legacy := []string{
+		configStart,
+		"numbering=on",
+		"min-level=2",
+		"max-level=4",
+		"anchors=off",
+		"toc=on",
+		"state=stripped",
+		configEnd,
+	}
+	cfg, err = parseConfig(legacy)
+	if err != nil {
+		t.Fatalf("parseConfig(legacy) error: %v", err)
+	}
+	if cfg.Bullets != BulletStar || cfg.BulletsExplicit {
+		t.Fatalf("legacy config should default bullets=* : %+v", cfg)
 	}
 
 	cases := []struct {
@@ -205,10 +233,11 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	}{
 		{"badLength", valid[:7]},
 		{"badDelimiters", append([]string{"<!-- wrong -->"}, valid[1:]...)},
-		{"badKeyOrder", []string{configStart, "anchors=on", "min-level=2", "max-level=4", "numbering=on", "toc=on", "state=generated", configEnd}},
-		{"badState", []string{configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "state=weird", configEnd}},
-		{"badMin", []string{configStart, "numbering=on", "min-level=x", "max-level=4", "anchors=on", "toc=on", "state=generated", configEnd}},
-		{"badMax", []string{configStart, "numbering=on", "min-level=2", "max-level=x", "anchors=on", "toc=on", "state=generated", configEnd}},
+		{"badKeyOrder", []string{configStart, "anchors=on", "min-level=2", "max-level=4", "numbering=on", "toc=on", "bullets=auto", "state=generated", configEnd}},
+		{"badState", []string{configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "bullets=auto", "state=weird", configEnd}},
+		{"badMin", []string{configStart, "numbering=on", "min-level=x", "max-level=4", "anchors=on", "toc=on", "bullets=auto", "state=generated", configEnd}},
+		{"badMax", []string{configStart, "numbering=on", "min-level=2", "max-level=x", "anchors=on", "toc=on", "bullets=auto", "state=generated", configEnd}},
+		{"badBullets", []string{configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "bullets=x", "state=generated", configEnd}},
 	}
 	for _, tc := range cases {
 		if _, err := parseConfig(tc.lines); err == nil {
@@ -225,12 +254,19 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	if onOff(false) != "off" {
 		t.Fatalf("onOff(false) must return off")
 	}
+	if mode, err := parseBulletMode("-"); err != nil || mode != BulletDash {
+		t.Fatalf("parseBulletMode(-) = %q, %v", mode, err)
+	}
+	if _, err := parseBulletMode("x"); err == nil {
+		t.Fatalf("parseBulletMode should reject invalid values")
+	}
 
 	for _, cfg := range []Config{
-		{MinLevel: 0, MaxLevel: 4, State: StateGenerated},
-		{MinLevel: 2, MaxLevel: 7, State: StateGenerated},
-		{MinLevel: 4, MaxLevel: 2, State: StateGenerated},
-		{MinLevel: 2, MaxLevel: 4, State: State("broken")},
+		{MinLevel: 0, MaxLevel: 4, Bullets: BulletAuto, State: StateGenerated},
+		{MinLevel: 2, MaxLevel: 7, Bullets: BulletAuto, State: StateGenerated},
+		{MinLevel: 4, MaxLevel: 2, Bullets: BulletAuto, State: StateGenerated},
+		{MinLevel: 2, MaxLevel: 4, Bullets: BulletMode("x"), State: StateGenerated},
+		{MinLevel: 2, MaxLevel: 4, Bullets: BulletAuto, State: State("broken")},
 	} {
 		if err := cfg.Validate(); err == nil {
 			t.Fatalf("Validate unexpectedly succeeded for %+v", cfg)
@@ -271,6 +307,21 @@ func TestMarkdownHelpersAndHeadingParserBranches(t *testing.T) {
 
 	if _, _, ok, err := parseHeadingLine("## ", 1); err != nil || ok {
 		t.Fatalf("empty heading should not be accepted")
+	}
+	if bullet, ok := detectListBullet("  - item"); !ok || bullet != BulletDash {
+		t.Fatalf("detectListBullet dash case failed: %q %v", bullet, ok)
+	}
+	if bullet, ok := detectListBullet("\t+ item"); !ok || bullet != BulletPlus {
+		t.Fatalf("detectListBullet plus case failed: %q %v", bullet, ok)
+	}
+	if _, ok := detectListBullet("***"); ok {
+		t.Fatalf("detectListBullet should reject thematic breaks")
+	}
+	if got := detectDominantBullet([]string{"* a", "- b", "+ c"}); got != BulletStar {
+		t.Fatalf("detectDominantBullet tie = %q, want *", got)
+	}
+	if got := detectDominantBullet([]string{"- a", "+ b"}); got != BulletDash {
+		t.Fatalf("detectDominantBullet dash-plus tie = %q, want -", got)
 	}
 }
 
@@ -317,7 +368,7 @@ func TestParserAndContainerHelpers(t *testing.T) {
 		t.Fatalf("findConfigEnd missing terminator = %d, want -1", end)
 	}
 
-	lines := []string{startMarker, configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "state=generated", configEnd, endMarker}
+	lines := []string{startMarker, configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "bullets=auto", "state=generated", configEnd, endMarker}
 	if _, err := buildContainer(lines, -1, 1, -1, -1); err == nil {
 		t.Fatalf("buildContainer should reject incomplete container")
 	}
@@ -352,6 +403,7 @@ func TestProcessHelperBranches(t *testing.T) {
 		"max-level=4",
 		"anchors=on",
 		"toc=on",
+		"bullets=auto",
 		"state=stripped",
 		configEnd,
 		endMarker,
@@ -380,6 +432,7 @@ func TestProcessHelperBranches(t *testing.T) {
 		"max-level=4",
 		"anchors=on",
 		"toc=on",
+		"bullets=auto",
 		"state=generated",
 		configEnd,
 		endMarker,

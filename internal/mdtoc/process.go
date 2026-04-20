@@ -32,18 +32,21 @@ func Regen(input string) (string, []string, error) {
 
 // generateWithConfig renders the managed document state for a fully validated config.
 func generateWithConfig(input string, cfg Config) (string, []string, error) {
-	if err := cfg.Validate(); err != nil {
-		return "", nil, err
-	}
 	parsed, err := ParseDocument(input)
 	if err != nil {
+		return "", nil, err
+	}
+	if parsed.Container != nil && !parsed.Container.Config.BulletsExplicit && cfg.Bullets == BulletAuto {
+		cfg.Bullets = BulletStar
+	}
+	if err := cfg.Validate(); err != nil {
 		return "", nil, err
 	}
 	bodyLines, headings := removeContainerAndNormalizeHeadings(parsed)
 	assignDerivedArtifacts(headings, cfg)
 	var tocLines []string
 	if cfg.TOC {
-		tocLines = renderTOC(headings, cfg)
+		tocLines = renderTOC(headings, bodyLines, cfg)
 	}
 	containerLines := renderContainer(cfg, preserveForeignTOC(parsed.Container), tocLines)
 	bodyLines = rewriteHeadings(bodyLines, headings, cfg)
@@ -91,7 +94,7 @@ func Check(input string) (bool, []string, error) {
 	var expected string
 	switch parsed.Container.Config.State {
 	case StateGenerated:
-		expected, _, err = Generate(input, Options{Numbering: parsed.Container.Config.Numbering, MinLevel: parsed.Container.Config.MinLevel, MaxLevel: parsed.Container.Config.MaxLevel, Anchors: parsed.Container.Config.Anchors, TOC: parsed.Container.Config.TOC})
+		expected, _, err = Generate(input, Options{Numbering: parsed.Container.Config.Numbering, MinLevel: parsed.Container.Config.MinLevel, MaxLevel: parsed.Container.Config.MaxLevel, Anchors: parsed.Container.Config.Anchors, TOC: parsed.Container.Config.TOC, Bullets: parsed.Container.Config.Bullets})
 	case StateStripped:
 		expected, _, err = Strip(input)
 	default:
@@ -188,8 +191,9 @@ func rewriteHeadings(lines []string, headings []Heading, cfg Config) []string {
 }
 
 // renderTOC converts managed headings into Markdown list entries.
-func renderTOC(headings []Heading, cfg Config) []string {
+func renderTOC(headings []Heading, bodyLines []string, cfg Config) []string {
 	lines := []string{}
+	bullet := resolveTOCBullet(bodyLines, cfg)
 	for _, h := range headings {
 		if !h.InManagedRange(cfg) {
 			continue
@@ -199,9 +203,90 @@ func renderTOC(headings []Heading, cfg Config) []string {
 		if cfg.Numbering && h.ManagedNumber != "" {
 			text = h.ManagedNumber + " " + text
 		}
-		lines = append(lines, fmt.Sprintf("%s* [%s](#%s)", strings.Repeat("  ", h.Level-cfg.MinLevel), text, anchorID))
+		lines = append(lines, fmt.Sprintf("%s%s [%s](#%s)", strings.Repeat("  ", h.Level-cfg.MinLevel), bullet, text, anchorID))
 	}
 	return lines
+}
+
+// resolveTOCBullet returns the configured or auto-detected unordered-list marker.
+func resolveTOCBullet(bodyLines []string, cfg Config) BulletMode {
+	if cfg.Bullets != BulletAuto {
+		return cfg.Bullets
+	}
+	return detectDominantBullet(bodyLines)
+}
+
+// detectDominantBullet counts list markers outside ignored regions and applies the tie-break order * > - > +.
+func detectDominantBullet(lines []string) BulletMode {
+	counts := map[BulletMode]int{
+		BulletStar: 0,
+		BulletDash: 0,
+		BulletPlus: 0,
+	}
+	inFence := false
+	fenceMarker := ""
+	inGenericComment := false
+	inExcludedRegion := false
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if inExcludedRegion {
+			if trimmed == onMarker {
+				inExcludedRegion = false
+			}
+			continue
+		}
+		if inFence {
+			if isFenceClose(trimmed, fenceMarker) {
+				inFence, fenceMarker = false, ""
+			}
+			continue
+		}
+		if inGenericComment {
+			if strings.Contains(line, "-->") {
+				inGenericComment = false
+			}
+			continue
+		}
+		if marker := fenceOpen(trimmed); marker != "" {
+			inFence, fenceMarker = true, marker
+			continue
+		}
+		if trimmed == offMarker {
+			inExcludedRegion = true
+			continue
+		}
+		if startsGenericHTMLComment(trimmed) {
+			if !strings.Contains(trimmed, "-->") {
+				inGenericComment = true
+			}
+			continue
+		}
+		if bullet, ok := detectListBullet(line); ok {
+			counts[bullet]++
+		}
+	}
+
+	best := BulletStar
+	for _, candidate := range []BulletMode{BulletDash, BulletPlus} {
+		if counts[candidate] > counts[best] {
+			best = candidate
+		}
+	}
+	return best
+}
+
+// detectListBullet reports a supported unordered-list bullet at the logical start of a line.
+func detectListBullet(line string) (BulletMode, bool) {
+	trimmedLeft := strings.TrimLeft(line, " \t")
+	if len(trimmedLeft) < 2 || trimmedLeft[1] != ' ' {
+		return "", false
+	}
+	switch BulletMode(trimmedLeft[:1]) {
+	case BulletStar, BulletDash, BulletPlus:
+		return BulletMode(trimmedLeft[:1]), true
+	default:
+		return "", false
+	}
 }
 
 // renderContainer renders the normalized managed container for the current config.

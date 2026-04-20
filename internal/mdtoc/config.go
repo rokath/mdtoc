@@ -8,16 +8,25 @@ import (
 
 // parseConfig parses the exact fixed-order config block described by the spec.
 func parseConfig(lines []string) (Config, error) {
-	expectedKeys := []string{"numbering", "min-level", "max-level", "anchors", "toc", "state"}
-	if len(lines) != 8 {
+	expectedKeys := []string{"numbering", "min-level", "max-level", "anchors", "toc", "bullets", "state"}
+	if len(lines) != 8 && len(lines) != 9 {
 		return Config{}, fmt.Errorf("invalid mdtoc config block length")
 	}
-	if strings.TrimSpace(lines[0]) != configStart || strings.TrimSpace(lines[7]) != configEnd {
+	if strings.TrimSpace(lines[0]) != configStart || strings.TrimSpace(lines[len(lines)-1]) != configEnd {
 		return Config{}, fmt.Errorf("invalid mdtoc config block delimiters")
 	}
 	cfg := DefaultConfig()
-	for i, key := range expectedKeys {
-		line := strings.TrimSpace(lines[i+1])
+	startIndex := 1
+	keys := expectedKeys
+	if len(lines) == 8 {
+		keys = []string{"numbering", "min-level", "max-level", "anchors", "toc", "state"}
+		cfg.Bullets = BulletStar
+		cfg.BulletsExplicit = false
+	} else {
+		cfg.BulletsExplicit = true
+	}
+	for i, key := range keys {
+		line := strings.TrimSpace(lines[startIndex+i])
 		parts := strings.SplitN(line, "=", 2)
 		if len(parts) != 2 || parts[0] != key {
 			return Config{}, fmt.Errorf("invalid config line %q: expected key %q", line, key)
@@ -54,6 +63,12 @@ func parseConfig(lines []string) (Config, error) {
 				return Config{}, err
 			}
 			cfg.TOC = v
+		case "bullets":
+			v, err := parseBulletMode(value)
+			if err != nil {
+				return Config{}, err
+			}
+			cfg.Bullets = v
 		case "state":
 			cfg.State = State(value)
 		}
@@ -76,6 +91,16 @@ func parseOnOff(s string) (bool, error) {
 	}
 }
 
+// parseBulletMode validates the configured unordered-list bullet selection mode.
+func parseBulletMode(s string) (BulletMode, error) {
+	switch BulletMode(s) {
+	case BulletAuto, BulletStar, BulletDash, BulletPlus:
+		return BulletMode(s), nil
+	default:
+		return "", fmt.Errorf("invalid bullets value %q", s)
+	}
+}
+
 // RenderConfig emits the exact normalized config block.
 func RenderConfig(cfg Config) []string {
 	return []string{
@@ -85,6 +110,7 @@ func RenderConfig(cfg Config) []string {
 		fmt.Sprintf("max-level=%d", cfg.MaxLevel),
 		fmt.Sprintf("anchors=%s", onOff(cfg.Anchors)),
 		fmt.Sprintf("toc=%s", onOff(cfg.TOC)),
+		fmt.Sprintf("bullets=%s", cfg.Bullets),
 		fmt.Sprintf("state=%s", cfg.State),
 		configEnd,
 	}

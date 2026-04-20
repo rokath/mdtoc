@@ -112,7 +112,7 @@ func TestRunnerSubcommandVerboseWithoutHelpPrintsLongHelp(t *testing.T) {
 
 // TestRunnerGenerateFromStdin verifies that generate accepts piped stdin content.
 func TestRunnerGenerateFromStdin(t *testing.T) {
-	stdin := strings.NewReader("# Title\n\n## Intro\n")
+	stdin := strings.NewReader("# Title\n\n- item\n- item\n\n## Intro\n")
 	var stdout, stderr strings.Builder
 	runner := NewRunner(stdin, &stdout, &stderr)
 	exitCode, err := runner.Run([]string{"generate"})
@@ -122,8 +122,25 @@ func TestRunnerGenerateFromStdin(t *testing.T) {
 	if exitCode != 0 {
 		t.Fatalf("exit code = %d, want 0", exitCode)
 	}
-	if !strings.Contains(stdout.String(), "* [1. Intro](#intro)") {
+	if !strings.Contains(stdout.String(), "- [1. Intro](#intro)") {
 		t.Fatalf("stdout does not contain generated ToC:\n%s", stdout.String())
+	}
+}
+
+// TestRunnerGenerateAcceptsBulletsOverride verifies the explicit CLI bullet selection.
+func TestRunnerGenerateAcceptsBulletsOverride(t *testing.T) {
+	stdin := strings.NewReader("# Title\n\n- item\n- item\n\n## Intro\n")
+	var stdout, stderr strings.Builder
+	runner := NewRunner(stdin, &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"generate", "--bullets", "+"})
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+	if got := stdout.String(); !strings.Contains(got, "bullets=+") || !strings.Contains(got, "+ [1. Intro](#intro)") {
+		t.Fatalf("stdout does not contain forced bullet output:\n%s", got)
 	}
 }
 

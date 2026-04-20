@@ -161,6 +161,8 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	anchors := fs.String("anchors", "on", "")
 	anchorsS := fs.String("a", "", "")
 	toc := fs.String("toc", "on", "")
+	bullets := fs.String("bullets", "auto", "")
+	bulletsS := fs.String("b", "", "")
 	file := fs.String("file", "", "")
 	fileS := fs.String("f", "", "")
 	verbose := fs.Bool("verbose", false, "")
@@ -187,6 +189,9 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if *anchorsS != "" {
 		*anchors = *anchorsS
 	}
+	if *bulletsS != "" {
+		*bullets = *bulletsS
+	}
 	if *fileS != "" {
 		*file = *fileS
 	}
@@ -205,11 +210,15 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if err != nil {
 		return 1, err
 	}
+	bulletMode, err := parseBulletMode(*bullets)
+	if err != nil {
+		return 1, err
+	}
 	input, err := r.readInput(*file)
 	if err != nil {
 		return 1, err
 	}
-	result, warnings, err := Generate(input, Options{Numbering: numberingB, MinLevel: *minLevel, MaxLevel: *maxLevel, Anchors: anchorsB, TOC: tocB})
+	result, warnings, err := Generate(input, Options{Numbering: numberingB, MinLevel: *minLevel, MaxLevel: *maxLevel, Anchors: anchorsB, TOC: tocB, Bullets: bulletMode})
 	if err != nil {
 		return 1, err
 	}
@@ -464,6 +473,7 @@ Generate options:
   --max-level=4   maximum heading level (valid --min-level to 6)
   --anchors=on    link anchors in headings on or off
   --toc=on        table of contents on or off
+  --bullets=auto  ToC bullets auto, *, -, or +
 
 Help:
   mdtoc [--help] [--verbose]         general help
@@ -487,6 +497,7 @@ Options:
   --max-level <N>
   --anchors, -a <on|off>
   --toc <on|off>
+  --bullets, -b <auto|*|-|+>
   --file, -f <name>
   --verbose, -v
   --help, -h
@@ -500,6 +511,7 @@ Options:
   --max-level <N>
   --anchors, -a <on|off>
   --toc <on|off>
+  --bullets, -b <auto|*|-|+>
   --file, -f <name>
   --verbose, -v
   --help, -h

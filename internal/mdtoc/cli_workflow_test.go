@@ -129,6 +129,26 @@ func TestRunnerFileWorkflowRegenRestoresStoredFlags(t *testing.T) {
 	}
 }
 
+// TestRunnerFileWorkflowAutoBulletsAndForcedOverride verifies both auto detection and explicit bullet mode.
+func TestRunnerFileWorkflowAutoBulletsAndForcedOverride(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n- a\n- b\n\n## Intro\n",
+	})
+
+	runFileCommand(t, fs, "generate", "-f", path)
+	got := fs.fileString(path)
+	if !strings.Contains(got, "bullets=auto") || !strings.Contains(got, "- [1. Intro](#intro)") {
+		t.Fatalf("auto bullets were not detected from the document:\n%s", got)
+	}
+
+	runFileCommand(t, fs, "generate", "-f", path, "--bullets", "+")
+	got = fs.fileString(path)
+	if !strings.Contains(got, "bullets=+") || !strings.Contains(got, "+ [1. Intro](#intro)") {
+		t.Fatalf("forced bullet override was not persisted:\n%s", got)
+	}
+}
+
 // TestRunnerFileWorkflowStripCheckThenRegenCheck verifies both persisted target states on the same file.
 func TestRunnerFileWorkflowStripCheckThenRegenCheck(t *testing.T) {
 	const path = "doc.md"

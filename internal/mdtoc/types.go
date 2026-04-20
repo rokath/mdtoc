@@ -21,6 +21,16 @@ const (
 	StateStripped  State = "stripped"
 )
 
+// BulletMode controls how unordered ToC bullets are selected.
+type BulletMode string
+
+const (
+	BulletAuto BulletMode = "auto"
+	BulletStar BulletMode = "*"
+	BulletDash BulletMode = "-"
+	BulletPlus BulletMode = "+"
+)
+
 // Config mirrors the normalized config block managed by the tool.
 type Config struct {
 	Numbering bool
@@ -28,12 +38,17 @@ type Config struct {
 	MaxLevel  int
 	Anchors   bool
 	TOC       bool
+	Bullets   BulletMode
 	State     State
+
+	// BulletsExplicit reports whether the parsed config block already contained
+	// an explicit bullets line. Legacy configs omit it.
+	BulletsExplicit bool
 }
 
 // DefaultConfig returns the v1 defaults from the specification.
 func DefaultConfig() Config {
-	return Config{Numbering: true, MinLevel: 2, MaxLevel: 4, Anchors: true, TOC: true, State: StateGenerated}
+	return Config{Numbering: true, MinLevel: 2, MaxLevel: 4, Anchors: true, TOC: true, Bullets: BulletAuto, State: StateGenerated}
 }
 
 // Validate checks the persisted configuration contract.
@@ -46,6 +61,9 @@ func (c Config) Validate() error {
 	}
 	if c.MinLevel > c.MaxLevel {
 		return fmt.Errorf("min-level must not be greater than max-level")
+	}
+	if c.Bullets != BulletAuto && c.Bullets != BulletStar && c.Bullets != BulletDash && c.Bullets != BulletPlus {
+		return fmt.Errorf("bullets must be auto, *, -, or +")
 	}
 	if c.State != StateGenerated && c.State != StateStripped {
 		return fmt.Errorf("state must be generated or stripped")
@@ -60,17 +78,22 @@ type Options struct {
 	MaxLevel  int
 	Anchors   bool
 	TOC       bool
+	Bullets   BulletMode
 }
 
 // DefaultOptions mirrors the generator defaults from the spec.
 func DefaultOptions() Options {
 	d := DefaultConfig()
-	return Options{Numbering: d.Numbering, MinLevel: d.MinLevel, MaxLevel: d.MaxLevel, Anchors: d.Anchors, TOC: d.TOC}
+	return Options{Numbering: d.Numbering, MinLevel: d.MinLevel, MaxLevel: d.MaxLevel, Anchors: d.Anchors, TOC: d.TOC, Bullets: d.Bullets}
 }
 
 // ToConfig converts ephemeral generate options to a persisted config.
 func (o Options) ToConfig() Config {
-	return Config{Numbering: o.Numbering, MinLevel: o.MinLevel, MaxLevel: o.MaxLevel, Anchors: o.Anchors, TOC: o.TOC, State: StateGenerated}
+	bullets := o.Bullets
+	if bullets == "" {
+		bullets = BulletAuto
+	}
+	return Config{Numbering: o.Numbering, MinLevel: o.MinLevel, MaxLevel: o.MaxLevel, Anchors: o.Anchors, TOC: o.TOC, Bullets: bullets, State: StateGenerated}
 }
 
 // Heading stores one heading candidate that mdtoc can manage.

@@ -6,6 +6,11 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* ToC bullet handling was improved:
+  * `generate` now auto-detects the dominant unordered-list bullet style from normal document content
+  * supported bullet styles are `*`, `-`, and `+`
+  * ties are resolved deterministically with `*` > `-` > `+`
+  * `--bullets` and `-b` now allow forcing a specific ToC bullet style or keeping `auto`
 * Markdown heading exclusion support was added:
   * `<!-- mdtoc off -->` and `<!-- mdtoc on -->` now exclude heading regions from ToC generation and managed heading rewrites
   * a missing `<!-- mdtoc on -->` is accepted and keeps the exclusion active until end of file
