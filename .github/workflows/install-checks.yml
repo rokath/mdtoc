@@ -68,6 +68,13 @@ jobs:
           path: dist/mdtoc_*_amd64.rpm
           if-no-files-found: error
 
+      - name: Upload APK amd64 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: mdtoc-apk-amd64
+          path: dist/mdtoc_*_amd64.apk
+          if-no-files-found: error
+
       - name: Upload macOS amd64 archive
         uses: actions/upload-artifact@v4
         with:
@@ -284,6 +291,63 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          /usr/bin/mdtoc --version
+          cp .github/fixtures/install-smoke.md artifacts/smoke.md
+          /usr/bin/mdtoc generate -f artifacts/smoke.md
+          /usr/bin/mdtoc check -f artifacts/smoke.md
+          grep -Fq 'bullets=auto' artifacts/smoke.md
+          grep -Fq '+ [1. 2026 Release Plan](#2026-release-plan)' artifacts/smoke.md
+          grep -Fq '+ [2. Overview](#overview)' artifacts/smoke.md
+          grep -Fq '+ [3. Overview](#overview-1)' artifacts/smoke.md
+          grep -Fq '## 1. <a id="2026-release-plan"></a>2026 Release Plan' artifacts/smoke.md
+          grep -Fq '## 2. <a id="overview"></a>Overview' artifacts/smoke.md
+          grep -Fq '## 3. <a id="overview-1"></a>Overview' artifacts/smoke.md
+          grep -Fq '## Hidden Section' artifacts/smoke.md
+          grep -Fq '### Hidden Details' artifacts/smoke.md
+          if grep -Fq 'Code Heading](#code-heading)' artifacts/smoke.md; then
+            echo 'fenced code heading leaked into managed output'
+            exit 1
+          fi
+          if grep -Fq 'Hidden Section](#hidden-section)' artifacts/smoke.md; then
+            echo 'excluded heading leaked into managed ToC'
+            exit 1
+          fi
+          if grep -Fq '## 4. <a id="hidden-section"></a>Hidden Section' artifacts/smoke.md; then
+            echo 'excluded heading was rewritten'
+            exit 1
+          fi
+
+  install-check-apk:
+    name: Install Check Alpine
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    timeout-minutes: 10
+    container:
+      image: alpine:3.22
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download APK amd64 package
+        uses: actions/download-artifact@v5
+        with:
+          name: mdtoc-apk-amd64
+          path: artifacts
+
+      - name: Install APK package
+        shell: sh
+        run: |
+          set -eu
+          package="$(find artifacts -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$package"
+          apk add --allow-untrusted "$package"
+          test -x /usr/bin/mdtoc
+
+      - name: Verify installed binary and smoke test
+        shell: sh
+        run: |
+          set -eu
           /usr/bin/mdtoc --version
           cp .github/fixtures/install-smoke.md artifacts/smoke.md
           /usr/bin/mdtoc generate -f artifacts/smoke.md
