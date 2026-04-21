@@ -15,6 +15,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Markdown heading exclusion support was added:
   * `<!-- mdtoc off -->` and `<!-- mdtoc on -->` now exclude heading regions from ToC generation and managed heading rewrites
   * a missing `<!-- mdtoc on -->` is accepted and keeps the exclusion active until end of file
+* README guidance was refined:
+  * the feature list now calls out the single-binary, no-external-tools setup
+  * usage examples now show safe pipe output to a different file and a simple stdin dry-run pattern
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

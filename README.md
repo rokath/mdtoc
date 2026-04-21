@@ -53,6 +53,7 @@ state=generated
 
 ## 1. <a id="features"></a>Features
 
+* single binary, no external tools required
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
 * targets ATX headings (`#` to `######`)
@@ -88,11 +89,12 @@ mdtoc <command> -v  # show the long help for one command
 ### 3.2. <a id="use-this-readme-as-example"></a>Use this README as example
 
 ```bash
-mdtoc generate -f README.md -a off -toc off # rewrite headings only, keep anchors and ToC disabled
-cat README.md | mdtoc strip > README.md     # remove managed artifacts via Unix pipe and write clean Markdown back
-mdtoc regen -f README.md                    # rebuild the generated state from the stored container config
-mdtoc generate -f README.md                 # generate with current CLI flags or defaults and rewrite the config block
-mdtoc check -f README.md                    # fail in CI when README.md differs from the reconstructed target state
+cat MY_IMPORTANT_DOCUMENT.md | mdtoc generate    # do a dry-run
+mdtoc generate -f README.md -a off -toc off      # rewrite headings only, keep anchors and ToC disabled
+cat README.md | mdtoc strip > README.stripped.md # remove managed artifacts via Unix pipe and write to a different file 
+mdtoc regen -f README.md                         # rebuild the generated state from the stored container config
+mdtoc generate -f README.md                      # generate with current CLI flags or defaults and rewrite the config block
+mdtoc check -f README.md                         # fail in CI when README.md differs from the reconstructed target state
 ```
 
 ## 4. <a id="managed-structure"></a>Managed Structure
