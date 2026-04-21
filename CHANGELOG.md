@@ -19,6 +19,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * GoReleaser now emits `.deb` artifacts for the initial supported Linux package targets
   * the Debian package metadata is now defined explicitly for `mdtoc`, including package name, homepage, license, install path, and shipped license file
   * pull request install checks now install the generated Debian package on Ubuntu via `dpkg -i` and run the shared smoke-test flow against the installed `/usr/bin/mdtoc`
+* RPM packaging support was added:
+  * GoReleaser now emits `.rpm` artifacts for the initial supported Linux package targets
+  * the RPM package metadata is now defined explicitly for `mdtoc`, including package name, homepage, license, install path, and shipped license file
 * README guidance was refined:
   * the feature list now calls out the single-binary, no-external-tools setup
   * usage examples now show safe pipe output to a different file and a simple stdin dry-run pattern
