@@ -75,6 +75,9 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Download Linux amd64 archive
         uses: actions/download-artifact@v5
         with:
@@ -94,6 +97,35 @@ jobs:
           set -euo pipefail
           artifacts/mdtoc_linux_amd64/mdtoc --version
 
+      - name: Run smoke test fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/fixtures/install-smoke.md artifacts/smoke.md
+          artifacts/mdtoc_linux_amd64/mdtoc generate -f artifacts/smoke.md
+          artifacts/mdtoc_linux_amd64/mdtoc check -f artifacts/smoke.md
+          grep -Fq 'bullets=auto' artifacts/smoke.md
+          grep -Fq '+ [1. 2026 Release Plan](#2026-release-plan)' artifacts/smoke.md
+          grep -Fq '+ [2. Overview](#overview)' artifacts/smoke.md
+          grep -Fq '+ [3. Overview](#overview-1)' artifacts/smoke.md
+          grep -Fq '## 1. <a id="2026-release-plan"></a>2026 Release Plan' artifacts/smoke.md
+          grep -Fq '## 2. <a id="overview"></a>Overview' artifacts/smoke.md
+          grep -Fq '## 3. <a id="overview-1"></a>Overview' artifacts/smoke.md
+          grep -Fq '## Hidden Section' artifacts/smoke.md
+          grep -Fq '### Hidden Details' artifacts/smoke.md
+          if grep -Fq 'Code Heading](#code-heading)' artifacts/smoke.md; then
+            echo 'fenced code heading leaked into managed output'
+            exit 1
+          fi
+          if grep -Fq 'Hidden Section](#hidden-section)' artifacts/smoke.md; then
+            echo 'excluded heading leaked into managed ToC'
+            exit 1
+          fi
+          if grep -Fq '## 4. <a id="hidden-section"></a>Hidden Section' artifacts/smoke.md; then
+            echo 'excluded heading was rewritten'
+            exit 1
+          fi
+
   install-check-macos:
     name: Install Check macOS
     runs-on: macos-latest
@@ -101,6 +133,9 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Download macOS amd64 archive
         uses: actions/download-artifact@v5
         with:
@@ -120,6 +155,35 @@ jobs:
           set -euo pipefail
           artifacts/mdtoc_darwin_amd64/mdtoc --version
 
+      - name: Run smoke test fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/fixtures/install-smoke.md artifacts/smoke.md
+          artifacts/mdtoc_darwin_amd64/mdtoc generate -f artifacts/smoke.md
+          artifacts/mdtoc_darwin_amd64/mdtoc check -f artifacts/smoke.md
+          grep -Fq 'bullets=auto' artifacts/smoke.md
+          grep -Fq '+ [1. 2026 Release Plan](#2026-release-plan)' artifacts/smoke.md
+          grep -Fq '+ [2. Overview](#overview)' artifacts/smoke.md
+          grep -Fq '+ [3. Overview](#overview-1)' artifacts/smoke.md
+          grep -Fq '## 1. <a id="2026-release-plan"></a>2026 Release Plan' artifacts/smoke.md
+          grep -Fq '## 2. <a id="overview"></a>Overview' artifacts/smoke.md
+          grep -Fq '## 3. <a id="overview-1"></a>Overview' artifacts/smoke.md
+          grep -Fq '## Hidden Section' artifacts/smoke.md
+          grep -Fq '### Hidden Details' artifacts/smoke.md
+          if grep -Fq 'Code Heading](#code-heading)' artifacts/smoke.md; then
+            echo 'fenced code heading leaked into managed output'
+            exit 1
+          fi
+          if grep -Fq 'Hidden Section](#hidden-section)' artifacts/smoke.md; then
+            echo 'excluded heading leaked into managed ToC'
+            exit 1
+          fi
+          if grep -Fq '## 4. <a id="hidden-section"></a>Hidden Section' artifacts/smoke.md; then
+            echo 'excluded heading was rewritten'
+            exit 1
+          fi
+
   install-check-windows:
     name: Install Check Windows
     runs-on: windows-latest
@@ -127,6 +191,9 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Download Windows amd64 archive
         uses: actions/download-artifact@v5
         with:
@@ -147,3 +214,38 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           ./artifacts/windows/mdtoc_windows_amd64/mdtoc.exe --version
+
+      - name: Run smoke test fixture
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Copy-Item .github/fixtures/install-smoke.md artifacts/smoke.md
+          ./artifacts/windows/mdtoc_windows_amd64/mdtoc.exe generate -f artifacts/smoke.md
+          ./artifacts/windows/mdtoc_windows_amd64/mdtoc.exe check -f artifacts/smoke.md
+          $content = Get-Content artifacts/smoke.md -Raw
+          $required = @(
+            'bullets=auto',
+            '+ [1. 2026 Release Plan](#2026-release-plan)',
+            '+ [2. Overview](#overview)',
+            '+ [3. Overview](#overview-1)',
+            '## 1. <a id="2026-release-plan"></a>2026 Release Plan',
+            '## 2. <a id="overview"></a>Overview',
+            '## 3. <a id="overview-1"></a>Overview',
+            '## Hidden Section',
+            '### Hidden Details'
+          )
+          foreach ($marker in $required) {
+            if (-not $content.Contains($marker)) {
+              throw "Smoke fixture is missing expected marker: $marker"
+            }
+          }
+          $forbidden = @(
+            'Code Heading](#code-heading)',
+            'Hidden Section](#hidden-section)',
+            '## 4. <a id="hidden-section"></a>Hidden Section'
+          )
+          foreach ($marker in $forbidden) {
+            if ($content.Contains($marker)) {
+              throw "Smoke fixture contains forbidden marker: $marker"
+            }
+          }
