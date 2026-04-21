@@ -6,6 +6,19 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* None yet.
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.1.4..HEAD`
+
+```txt
+```
+
+## <a id='v0.1.4-changes'></a>v0.1.4 Changes (2026-04-22)
+
+### <a id='v0.1.4-overview'></a>v0.1.4 Overview
+
 * Pull request install verification was added:
   * a dedicated `install-checks` GitHub Actions workflow now builds release-style snapshot archives on pull requests
   * the workflow uploads deterministic Linux, macOS, and Windows artifacts for downstream validation jobs
@@ -15,27 +28,30 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Published release auditing was added:
   * a separate manual `release-audit` workflow now downloads the latest published Linux and Windows release artifacts from GitHub Releases
   * the workflow verifies `mdtoc --version` plus the shared generate/check smoke-test flow against the checked-in install fixture
-* Debian packaging support was added:
-  * GoReleaser now emits `.deb` artifacts for the initial supported Linux package targets
-  * the Debian package metadata is now defined explicitly for `mdtoc`, including package name, homepage, license, install path, and shipped license file
-  * pull request install checks now install the generated Debian package on Ubuntu via `dpkg -i` and run the shared smoke-test flow against the installed `/usr/bin/mdtoc`
-* RPM packaging support was added:
-  * GoReleaser now emits `.rpm` artifacts for the initial supported Linux package targets
-  * the RPM package metadata is now defined explicitly for `mdtoc`, including package name, homepage, license, install path, and shipped license file
-  * pull request install checks now install the generated RPM package in a Fedora container via `dnf install` and run the shared smoke-test flow against the installed `/usr/bin/mdtoc`
-* Alpine packaging support was added:
-  * GoReleaser now emits `.apk` artifacts for the initial supported Linux package targets
-  * the Alpine package metadata is now defined explicitly for `mdtoc`, including package name, homepage, license, install path, and shipped license file
-  * pull request install checks now install the generated Alpine package in an Alpine container via `apk add --allow-untrusted` and run the shared smoke-test flow against the installed `/usr/bin/mdtoc`
+* Linux packaging support was expanded:
+  * GoReleaser now emits `.deb`, `.rpm`, and `.apk` artifacts for the initial supported Linux package targets
+  * Debian, RPM, and Alpine package metadata is now defined explicitly for `mdtoc`, including package name, homepage, license, install path, and shipped license file
+  * pull request install checks now install the generated Debian, RPM, and Alpine packages and run the shared smoke-test flow against the installed `/usr/bin/mdtoc`
 * README guidance was refined:
   * the feature list now calls out the single-binary, no-external-tools setup
   * usage examples now show safe pipe output to a different file and a simple stdin dry-run pattern
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.1.4-git-log'></a>v0.1.4 Git Log
 
-Used git range: `v0.1.3..HEAD`
+Used git range: `v0.1.3..v0.1.4`
 
 ```txt
+* fec53b0 2026-04-22 ci: test Alpine APK installation
+* c1c78d0 2026-04-22 packaging: add Alpine APK package artifacts
+* b7a5053 2026-04-22 ci: test RPM package installation
+* 6eded44 2026-04-21 packaging: add RPM package artifacts
+* 26a7148 2026-04-21 ci: test Debian package installation
+* e70bba4 2026-04-21 packaging: add Debian package artifacts
+* 9e35f05 2026-04-21 ci: add manual release audit workflow
+* 358a3f4 2026-04-21 fix(toc): preserve generated bullet variants
+* 418d925 2026-04-21 ci: add install smoke-test fixture
+* 3adfb8f 2026-04-21 ci: add PR install-checks workflow
+* 9a77d54 2026-04-21 docs(changelog): add missing v0.1.3 notes
 * fe142b1 2026-04-21 docs(readme): refine features and usage examples
 ```
 
