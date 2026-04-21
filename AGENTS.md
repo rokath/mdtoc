@@ -44,8 +44,12 @@
 * Keep unrelated changes out of the same commit.
 * If the work naturally splits into independent topics, prefer separate commits unless the user requests a single combined commit.
 * Before every `git push`, explicitly review `CHANGELOG.md`.
+* Before every release tag, release creation, or release publication, explicitly review `CHANGELOG.md`.
 * If the pushed commits affect release notes, unreleased notes, version sections, user-visible behavior, CI, docs, or shipped assets, `CHANGELOG.md` must be updated in the same push.
 * Do not push commits first and postpone the `CHANGELOG.md` update for later.
+* A release tag must not be created or published unless the tagged version already exists as its own section in `CHANGELOG.md`.
+* When preparing a release, move the relevant notes from `Unreleased Changes` into the new versioned section and reset `Unreleased Changes` to only cover commits after the new tag.
+* After tagging or before pushing tagged release commits, verify that the latest repository tag mentioned by `git tag` is present in `CHANGELOG.md` with the correct version header and git range.
 
 ## Tests
 

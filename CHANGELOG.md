@@ -6,6 +6,22 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* README guidance was refined:
+  * the feature list now calls out the single-binary, no-external-tools setup
+  * usage examples now show safe pipe output to a different file and a simple stdin dry-run pattern
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.1.3..HEAD`
+
+```txt
+* fe142b1 2026-04-21 docs(readme): refine features and usage examples
+```
+
+## <a id='v0.1.3-changes'></a>v0.1.3 Changes (2026-04-21)
+
+### <a id='v0.1.3-overview'></a>v0.1.3 Overview
+
 * ToC bullet handling was improved:
   * `generate` now auto-detects the dominant unordered-list bullet style from normal document content
   * supported bullet styles are `*`, `-`, and `+`
@@ -16,15 +32,20 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * `<!-- mdtoc off -->` and `<!-- mdtoc on -->` now exclude heading regions from ToC generation and managed heading rewrites
   * a missing `<!-- mdtoc on -->` is accepted and keeps the exclusion active until end of file
 * README guidance was refined:
-  * the feature list now calls out the single-binary, no-external-tools setup
-  * usage examples now show safe pipe output to a different file and a simple stdin dry-run pattern
+  * handling of repeated headings was clarified
+  * bullet-style detection wording was corrected and duplicate command wording was removed
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.1.3-git-log'></a>v0.1.3 Git Log
 
-Used git range: `v0.1.2..HEAD`
+Used git range: `v0.1.2..v0.1.3`
 
 ```txt
-* not tagged yet
+* 4c4eeec 2026-04-21 Fix bullet style detection description in README and removed duplicate line about commands.
+* 737e0af 2026-04-21 test(toc): expand bullet workflow regressions
+* 76c01b7 2026-04-20 feat(toc): auto-detect unordered list bullets
+* eedc98a 2026-04-20 feat(parser): support mdtoc off/on exclusions
+* 70d34d3 2026-04-20 Fix capitalization in README.md
+* 3cd401e 2026-04-20 Add note about handling repeated headings
 ```
 
 ## <a id='v0.1.2-changes'></a>v0.1.2 Changes (2026-04-20)
