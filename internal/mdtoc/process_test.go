@@ -40,6 +40,134 @@ func TestGenerateIsIdempotent(t *testing.T) {
 	}
 }
 
+// TestGenerateIsIdempotentWithPlusBullets verifies repeated generation for auto-detected plus ToCs.
+func TestGenerateIsIdempotentWithPlusBullets(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"+ alpha",
+		"+ beta",
+		"+ gamma",
+		"",
+		"## Overview",
+		"## Overview",
+	}, "\n") + "\n"
+
+	first, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("first Generate error: %v", err)
+	}
+	if !strings.Contains(first, "+ [1. Overview](#overview)") || !strings.Contains(first, "+ [2. Overview](#overview-1)") {
+		t.Fatalf("first generation did not use plus bullets with repeated headings:\n%s", first)
+	}
+
+	second, _, err := Generate(first, DefaultOptions())
+	if err != nil {
+		t.Fatalf("second Generate error: %v", err)
+	}
+	if first != second {
+		t.Fatalf("generate with plus bullets is not idempotent\nfirst:\n%s\nsecond:\n%s", first, second)
+	}
+
+	ok, _, err := Check(first)
+	if err != nil {
+		t.Fatalf("Check error: %v", err)
+	}
+	if !ok {
+		t.Fatalf("Check rejected generated plus-bullet output:\n%s", first)
+	}
+}
+
+// TestGenerateIsIdempotentWithDashBullets verifies repeated generation for auto-detected dash ToCs.
+func TestGenerateIsIdempotentWithDashBullets(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"- alpha",
+		"- beta",
+		"- gamma",
+		"",
+		"## Overview",
+		"## Overview",
+	}, "\n") + "\n"
+
+	first, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("first Generate error: %v", err)
+	}
+	if !strings.Contains(first, "- [1. Overview](#overview)") || !strings.Contains(first, "- [2. Overview](#overview-1)") {
+		t.Fatalf("first generation did not use dash bullets with repeated headings:\n%s", first)
+	}
+
+	second, _, err := Generate(first, DefaultOptions())
+	if err != nil {
+		t.Fatalf("second Generate error: %v", err)
+	}
+	if first != second {
+		t.Fatalf("generate with dash bullets is not idempotent\nfirst:\n%s\nsecond:\n%s", first, second)
+	}
+
+	ok, _, err := Check(first)
+	if err != nil {
+		t.Fatalf("Check error: %v", err)
+	}
+	if !ok {
+		t.Fatalf("Check rejected generated dash-bullet output:\n%s", first)
+	}
+}
+
+// TestGenerateIsIdempotentWithStarBullets verifies repeated generation for explicit star ToCs.
+func TestGenerateIsIdempotentWithStarBullets(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"- alpha",
+		"- beta",
+		"- gamma",
+		"",
+		"## Overview",
+		"## Overview",
+	}, "\n") + "\n"
+
+	first, _, err := Generate(input, Options{
+		Numbering: true,
+		MinLevel:  2,
+		MaxLevel:  4,
+		Anchors:   true,
+		TOC:       true,
+		Bullets:   BulletStar,
+	})
+	if err != nil {
+		t.Fatalf("first Generate error: %v", err)
+	}
+	if !strings.Contains(first, "* [1. Overview](#overview)") || !strings.Contains(first, "* [2. Overview](#overview-1)") {
+		t.Fatalf("first generation did not use star bullets with repeated headings:\n%s", first)
+	}
+
+	second, _, err := Generate(first, Options{
+		Numbering: true,
+		MinLevel:  2,
+		MaxLevel:  4,
+		Anchors:   true,
+		TOC:       true,
+		Bullets:   BulletStar,
+	})
+	if err != nil {
+		t.Fatalf("second Generate error: %v", err)
+	}
+	if first != second {
+		t.Fatalf("generate with star bullets is not idempotent\nfirst:\n%s\nsecond:\n%s", first, second)
+	}
+
+	ok, _, err := Check(first)
+	if err != nil {
+		t.Fatalf("Check error: %v", err)
+	}
+	if !ok {
+		t.Fatalf("Check rejected generated star-bullet output:\n%s", first)
+	}
+}
+
 // TestGeneratePreservesForeignTOCContentAsComment verifies preservation of handwritten managed-area content.
 func TestGeneratePreservesForeignTOCContentAsComment(t *testing.T) {
 	input := strings.Join([]string{startMarker, "Some handwritten note", configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n"

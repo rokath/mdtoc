@@ -292,6 +292,59 @@ func TestRunnerRegenWithFileDoesNotRequireStdin(t *testing.T) {
 	}
 }
 
+// TestRunnerGenerateThenCheckWithFixtureFile verifies the real file workflow used by install checks.
+func TestRunnerGenerateThenCheckWithFixtureFile(t *testing.T) {
+	fixturePath := filepath.Join("..", "..", ".github", "fixtures", "install-smoke.md")
+	input, err := os.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatalf("ReadFile(%q) error: %v", fixturePath, err)
+	}
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "install-smoke.md")
+	if err := os.WriteFile(path, input, 0o644); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	var stdout, stderr strings.Builder
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
+
+	exitCode, err := runner.Run([]string{"generate", "-f", path})
+	if err != nil {
+		t.Fatalf("generate Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("generate exit code = %d, want 0", exitCode)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile error: %v", err)
+	}
+	content := string(got)
+	for _, want := range []string{
+		"bullets=auto",
+		"+ [1. 2026 Release Plan](#2026-release-plan)",
+		"+ [3. Overview](#overview-1)",
+		`## 1. <a id="2026-release-plan"></a>2026 Release Plan`,
+		`## 3. <a id="overview-1"></a>Overview`,
+		"## Hidden Section",
+		"### Hidden Details",
+	} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("generated fixture file missing %q:\n%s", want, content)
+		}
+	}
+
+	exitCode, err = runner.Run([]string{"check", "-f", path})
+	if err != nil {
+		t.Fatalf("check Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("check exit code = %d, want 0", exitCode)
+	}
+}
+
 // TestRunnerCheckExitCodeOnMismatch verifies the special mismatch exit code from check.
 func TestRunnerCheckExitCodeOnMismatch(t *testing.T) {
 	stdin := strings.NewReader(strings.Join([]string{startMarker, "* [1. Wrong](#wrong)", configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n")
