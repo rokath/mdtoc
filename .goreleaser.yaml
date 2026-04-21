@@ -127,6 +127,24 @@ nfpms:
     contents:
       - src: LICENSE.md
         dst: /usr/share/licenses/mdtoc/LICENSE.md
+  - id: mdtoc-apk
+    ids:
+      - mdtoc-64bit
+    formats:
+      - apk
+    package_name: mdtoc
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Arch }}"
+    vendor: rokath
+    homepage: https://github.com/rokath/mdtoc
+    maintainer: rokath
+    description: >-
+      Go-based Markdown Table of Contents manager with numbering and stable
+      anchor links.
+    license: MIT
+    bindir: /usr/bin
+    contents:
+      - src: LICENSE.md
+        dst: /usr/share/licenses/mdtoc/LICENSE.md
 
 release:
   footer: |
