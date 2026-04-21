@@ -10,6 +10,8 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * a dedicated `install-checks` GitHub Actions workflow now builds release-style snapshot archives on pull requests
   * the workflow uploads deterministic Linux, macOS, and Windows artifacts for downstream validation jobs
   * separate Ubuntu, macOS, and Windows jobs now unpack the PR-built archives and verify that the shipped binary starts successfully
+  * the install jobs now reuse a checked-in smoke-test fixture that exercises repeated headings, numbered headings, exclusions, fenced code, and `+` bullet auto-detection
+  * managed ToC preservation now recognizes generated `*`, `-`, and `+` list entries consistently, and Go tests cover fixture-based `generate` plus `check` file workflows
 * README guidance was refined:
   * the feature list now calls out the single-binary, no-external-tools setup
   * usage examples now show safe pipe output to a different file and a simple stdin dry-run pattern

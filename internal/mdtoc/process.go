@@ -356,7 +356,10 @@ func isGeneratedTOCLine(line string) bool {
 	if trimmed == "" {
 		return true
 	}
-	return strings.HasPrefix(trimmed, "* [") && strings.Contains(trimmed, "](#") && strings.HasSuffix(trimmed, ")")
+	if !(strings.HasPrefix(trimmed, "* [") || strings.HasPrefix(trimmed, "- [") || strings.HasPrefix(trimmed, "+ [")) {
+		return false
+	}
+	return strings.Contains(trimmed, "](#") && strings.HasSuffix(trimmed, ")")
 }
 
 // wrapPreservedComment wraps preserved foreign lines in a generated HTML comment.
