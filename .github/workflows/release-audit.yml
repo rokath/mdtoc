@@ -1,0 +1,125 @@
+name: release-audit
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: read
+
+jobs:
+  audit-linux:
+    name: Release Audit Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download latest Linux release artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern 'mdtoc_linux_amd64.tar.gz' --dir artifacts
+
+      - name: Unpack archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -xzf artifacts/mdtoc_linux_amd64.tar.gz -C artifacts
+          test -x artifacts/mdtoc_linux_amd64/mdtoc
+
+      - name: Verify binary and smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifacts/mdtoc_linux_amd64/mdtoc --version
+          cp .github/fixtures/install-smoke.md artifacts/smoke.md
+          artifacts/mdtoc_linux_amd64/mdtoc generate -f artifacts/smoke.md
+          artifacts/mdtoc_linux_amd64/mdtoc check -f artifacts/smoke.md
+          grep -Fq 'bullets=auto' artifacts/smoke.md
+          grep -Fq '+ [1. 2026 Release Plan](#2026-release-plan)' artifacts/smoke.md
+          grep -Fq '+ [2. Overview](#overview)' artifacts/smoke.md
+          grep -Fq '+ [3. Overview](#overview-1)' artifacts/smoke.md
+          grep -Fq '## 1. <a id="2026-release-plan"></a>2026 Release Plan' artifacts/smoke.md
+          grep -Fq '## 2. <a id="overview"></a>Overview' artifacts/smoke.md
+          grep -Fq '## 3. <a id="overview-1"></a>Overview' artifacts/smoke.md
+          if grep -Fq 'Code Heading](#code-heading)' artifacts/smoke.md; then
+            echo 'fenced code heading leaked into managed output'
+            exit 1
+          fi
+          if grep -Fq 'Hidden Section](#hidden-section)' artifacts/smoke.md; then
+            echo 'excluded heading leaked into managed ToC'
+            exit 1
+          fi
+          if grep -Fq '## 4. <a id="hidden-section"></a>Hidden Section' artifacts/smoke.md; then
+            echo 'excluded heading was rewritten'
+            exit 1
+          fi
+
+  audit-windows:
+    name: Release Audit Windows
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download latest Windows release artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = gh release view --repo $env:GITHUB_REPOSITORY --json tagName --jq .tagName
+          gh release download $tag --repo $env:GITHUB_REPOSITORY --pattern 'mdtoc_windows_amd64.zip' --dir artifacts
+
+      - name: Unpack archive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Expand-Archive -Path artifacts/mdtoc_windows_amd64.zip -DestinationPath artifacts/windows
+          if (-not (Test-Path artifacts/windows/mdtoc_windows_amd64/mdtoc.exe)) {
+            throw 'Expected mdtoc.exe was not found in the Windows archive.'
+          }
+
+      - name: Verify binary and smoke test
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./artifacts/windows/mdtoc_windows_amd64/mdtoc.exe --version
+          Copy-Item .github/fixtures/install-smoke.md artifacts/smoke.md
+          ./artifacts/windows/mdtoc_windows_amd64/mdtoc.exe generate -f artifacts/smoke.md
+          ./artifacts/windows/mdtoc_windows_amd64/mdtoc.exe check -f artifacts/smoke.md
+          $content = Get-Content artifacts/smoke.md -Raw
+          $required = @(
+            'bullets=auto',
+            '+ [1. 2026 Release Plan](#2026-release-plan)',
+            '+ [2. Overview](#overview)',
+            '+ [3. Overview](#overview-1)',
+            '## 1. <a id="2026-release-plan"></a>2026 Release Plan',
+            '## 2. <a id="overview"></a>Overview',
+            '## 3. <a id="overview-1"></a>Overview'
+          )
+          foreach ($marker in $required) {
+            if (-not $content.Contains($marker)) {
+              throw "Smoke fixture is missing expected marker: $marker"
+            }
+          }
+          $forbidden = @(
+            'Code Heading](#code-heading)',
+            'Hidden Section](#hidden-section)',
+            '## 4. <a id="hidden-section"></a>Hidden Section'
+          )
+          foreach ($marker in $forbidden) {
+            if ($content.Contains($marker)) {
+              throw "Smoke fixture contains forbidden marker: $marker"
+            }
+          }
