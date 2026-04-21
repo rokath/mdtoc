@@ -15,6 +15,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Published release auditing was added:
   * a separate manual `release-audit` workflow now downloads the latest published Linux and Windows release artifacts from GitHub Releases
   * the workflow verifies `mdtoc --version` plus the shared generate/check smoke-test flow against the checked-in install fixture
+* Debian packaging support was added:
+  * GoReleaser now emits `.deb` artifacts for the initial supported Linux package targets
+  * the Debian package metadata is now defined explicitly for `mdtoc`, including package name, homepage, license, install path, and shipped license file
 * README guidance was refined:
   * the feature list now calls out the single-binary, no-external-tools setup
   * usage examples now show safe pipe output to a different file and a simple stdin dry-run pattern

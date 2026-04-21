@@ -88,6 +88,28 @@ archives:
     files:
       - "none*"
 
+nfpms:
+  - id: mdtoc-deb
+    ids:
+      - mdtoc-64bit
+    formats:
+      - deb
+    package_name: mdtoc
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Arch }}"
+    vendor: rokath
+    homepage: https://github.com/rokath/mdtoc
+    maintainer: rokath
+    description: >-
+      Go-based Markdown Table of Contents manager with numbering and stable
+      anchor links.
+    license: MIT
+    section: utils
+    priority: optional
+    bindir: /usr/bin
+    contents:
+      - src: LICENSE.md
+        dst: /usr/share/doc/mdtoc/copyright
+
 release:
   footer: |
     ### macOS
