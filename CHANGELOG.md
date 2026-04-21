@@ -6,6 +6,10 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* Pull request install verification was added:
+  * a dedicated `install-checks` GitHub Actions workflow now builds release-style snapshot archives on pull requests
+  * the workflow uploads deterministic Linux, macOS, and Windows artifacts for downstream validation jobs
+  * separate Ubuntu, macOS, and Windows jobs now unpack the PR-built archives and verify that the shipped binary starts successfully
 * README guidance was refined:
   * the feature list now calls out the single-binary, no-external-tools setup
   * usage examples now show safe pipe output to a different file and a simple stdin dry-run pattern

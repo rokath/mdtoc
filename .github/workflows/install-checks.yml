@@ -1,0 +1,149 @@
+name: install-checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: install-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: read
+
+jobs:
+  build-artifacts:
+    name: Build PR artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Set up GoReleaser
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          install-only: true
+
+      - name: Build snapshot archives
+        shell: bash
+        run: >-
+          goreleaser release
+          --snapshot
+          --clean
+          --skip=publish
+
+      - name: Upload Linux amd64 archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: mdtoc-linux-amd64
+          path: dist/mdtoc_linux_amd64.tar.gz
+          if-no-files-found: error
+
+      - name: Upload macOS amd64 archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: mdtoc-darwin-amd64
+          path: dist/mdtoc_darwin_amd64.tar.gz
+          if-no-files-found: error
+
+      - name: Upload Windows amd64 archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: mdtoc-windows-amd64
+          path: dist/mdtoc_windows_amd64.zip
+          if-no-files-found: error
+
+  install-check-linux:
+    name: Install Check Linux
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    timeout-minutes: 10
+
+    steps:
+      - name: Download Linux amd64 archive
+        uses: actions/download-artifact@v5
+        with:
+          name: mdtoc-linux-amd64
+          path: artifacts
+
+      - name: Unpack archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -xzf artifacts/mdtoc_linux_amd64.tar.gz -C artifacts
+          test -x artifacts/mdtoc_linux_amd64/mdtoc
+
+      - name: Verify binary runs
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifacts/mdtoc_linux_amd64/mdtoc --version
+
+  install-check-macos:
+    name: Install Check macOS
+    runs-on: macos-latest
+    needs: build-artifacts
+    timeout-minutes: 10
+
+    steps:
+      - name: Download macOS amd64 archive
+        uses: actions/download-artifact@v5
+        with:
+          name: mdtoc-darwin-amd64
+          path: artifacts
+
+      - name: Unpack archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -xzf artifacts/mdtoc_darwin_amd64.tar.gz -C artifacts
+          test -x artifacts/mdtoc_darwin_amd64/mdtoc
+
+      - name: Verify binary runs
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifacts/mdtoc_darwin_amd64/mdtoc --version
+
+  install-check-windows:
+    name: Install Check Windows
+    runs-on: windows-latest
+    needs: build-artifacts
+    timeout-minutes: 10
+
+    steps:
+      - name: Download Windows amd64 archive
+        uses: actions/download-artifact@v5
+        with:
+          name: mdtoc-windows-amd64
+          path: artifacts
+
+      - name: Unpack archive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Expand-Archive -Path artifacts/mdtoc_windows_amd64.zip -DestinationPath artifacts/windows
+          if (-not (Test-Path artifacts/windows/mdtoc_windows_amd64/mdtoc.exe)) {
+            throw 'Expected mdtoc.exe was not found in the Windows archive.'
+          }
+
+      - name: Verify binary runs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./artifacts/windows/mdtoc_windows_amd64/mdtoc.exe --version

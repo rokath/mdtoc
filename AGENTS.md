@@ -46,6 +46,7 @@
 * Before every `git push`, explicitly review `CHANGELOG.md`.
 * Before every release tag, release creation, or release publication, explicitly review `CHANGELOG.md`.
 * If the pushed commits affect release notes, unreleased notes, version sections, user-visible behavior, CI, docs, or shipped assets, `CHANGELOG.md` must be updated in the same push.
+* If a task includes committing, pushing, or opening a PR for changes in those areas, treat the `CHANGELOG.md` update as a precondition and do not defer it.
 * Do not push commits first and postpone the `CHANGELOG.md` update for later.
 * A release tag must not be created or published unless the tagged version already exists as its own section in `CHANGELOG.md`.
 * When preparing a release, move the relevant notes from `Unreleased Changes` into the new versioned section and reset `Unreleased Changes` to only cover commits after the new tag.
