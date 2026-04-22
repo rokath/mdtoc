@@ -9,24 +9,10 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Homebrew release auditing was corrected:
   * the macOS Homebrew audit now uses the canonical tap command `brew tap rokath/tap`
   * this matches the documented user install path and avoids a false-negative audit failure
-* `strip --raw` was hardened:
-  * it now falls back to tolerant container removal when strict config parsing fails for malformed or future managed containers
-  * fallback stripping still removes managed numbering and inline anchors from headings after the container is removed
-  * new regression tests cover future-version config lines, unknown config keys, and malformed config blocks
-* Repository testing guidance was tightened:
-  * `AGENTS.md` now requires a file-level test by default for CLI file workflow and file-backed command changes
-  * virtual filesystem test helpers should be preferred over OS-level files when feasible
-* Homebrew tap publishing was added:
-  * GoReleaser now publishes a formula for `mdtoc` into `rokath/homebrew-tap`
-  * the release workflow now documents the required `HOMEBREW_TAP_GITHUB_TOKEN` secret for cross-repository publishing
-  * the README now documents the intended install command `brew install rokath/tap/mdtoc`
-* Homebrew release auditing was added:
-  * the manual `release-audit` workflow now runs a macOS Homebrew install audit against `brew install rokath/tap/mdtoc`
-  * the audit verifies that the installed Homebrew binary matches the latest GitHub release tag and passes the shared smoke-test fixture
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.1.4..HEAD`
+Used git range: `v0.1.5..HEAD`
 
 ```txt
 ```
