@@ -6,6 +6,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* Homebrew release auditing was corrected:
+  * the macOS Homebrew audit now uses the canonical tap command `brew tap rokath/tap`
+  * this matches the documented user install path and avoids a false-negative audit failure
 * `strip --raw` was hardened:
   * it now falls back to tolerant container removal when strict config parsing fails for malformed or future managed containers
   * fallback stripping still removes managed numbering and inline anchors from headings after the container is removed
