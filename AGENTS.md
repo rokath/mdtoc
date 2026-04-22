@@ -55,6 +55,7 @@
 ## Tests
 
 * Add or update tests when behavior changes.
+* When a behavior change affects CLI file workflows, file mutation, or file-backed command paths, add or update at least one file-level test by default. Prefer the existing virtual filesystem test helpers over OS-level files when feasible.
 * For Go tests in this repository, the standard library `testing` package is the default.
 
 ## Safety

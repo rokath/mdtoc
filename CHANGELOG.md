@@ -10,6 +10,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * it now falls back to tolerant container removal when strict config parsing fails for malformed or future managed containers
   * fallback stripping still removes managed numbering and inline anchors from headings after the container is removed
   * new regression tests cover future-version config lines, unknown config keys, and malformed config blocks
+* Repository testing guidance was tightened:
+  * `AGENTS.md` now requires a file-level test by default for CLI file workflow and file-backed command changes
+  * virtual filesystem test helpers should be preferred over OS-level files when feasible
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
