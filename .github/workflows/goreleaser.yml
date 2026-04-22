@@ -62,3 +62,7 @@ jobs:
           # GoReleaser uses it to create or update the GitHub Release and
           # upload the build artifacts (archives, checksums, etc.).
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Cross-repository Homebrew tap publishing needs a dedicated token
+          # with contents:write on rokath/homebrew-tap. Configure it as a
+          # repository secret in this repo before running release publishing.
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
