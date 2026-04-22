@@ -17,6 +17,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * GoReleaser now publishes a formula for `mdtoc` into `rokath/homebrew-tap`
   * the release workflow now documents the required `HOMEBREW_TAP_GITHUB_TOKEN` secret for cross-repository publishing
   * the README now documents the intended install command `brew install rokath/tap/mdtoc`
+* Homebrew release auditing was added:
+  * the manual `release-audit` workflow now runs a macOS Homebrew install audit against `brew install rokath/tap/mdtoc`
+  * the audit verifies that the installed Homebrew binary matches the latest GitHub release tag and passes the shared smoke-test fixture
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

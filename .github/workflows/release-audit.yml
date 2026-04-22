@@ -63,6 +63,63 @@ jobs:
             exit 1
           fi
 
+  audit-homebrew:
+    name: Release Audit Homebrew
+    runs-on: macos-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install from Homebrew tap
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          brew uninstall --force mdtoc || true
+          brew untap rokath/tap || true
+          brew tap rokath/tap https://github.com/rokath/homebrew-tap
+          brew install rokath/tap/mdtoc
+          version_output="$(mdtoc --version)"
+          printf '%s\n' "$version_output"
+          case "$version_output" in
+            *"mdtoc $tag"*) ;;
+            *)
+              echo "installed Homebrew version does not match latest release tag $tag"
+              exit 1
+              ;;
+          esac
+
+      - name: Run smoke test fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/fixtures/install-smoke.md artifacts-smoke.md
+          mdtoc generate -f artifacts-smoke.md
+          mdtoc check -f artifacts-smoke.md
+          grep -Fq 'bullets=auto' artifacts-smoke.md
+          grep -Fq '+ [1. 2026 Release Plan](#2026-release-plan)' artifacts-smoke.md
+          grep -Fq '+ [2. Overview](#overview)' artifacts-smoke.md
+          grep -Fq '+ [3. Overview](#overview-1)' artifacts-smoke.md
+          grep -Fq '## 1. <a id="2026-release-plan"></a>2026 Release Plan' artifacts-smoke.md
+          grep -Fq '## 2. <a id="overview"></a>Overview' artifacts-smoke.md
+          grep -Fq '## 3. <a id="overview-1"></a>Overview' artifacts-smoke.md
+          if grep -Fq 'Code Heading](#code-heading)' artifacts-smoke.md; then
+            echo 'fenced code heading leaked into managed output'
+            exit 1
+          fi
+          if grep -Fq 'Hidden Section](#hidden-section)' artifacts-smoke.md; then
+            echo 'excluded heading leaked into managed ToC'
+            exit 1
+          fi
+          if grep -Fq '## 4. <a id="hidden-section"></a>Hidden Section' artifacts-smoke.md; then
+            echo 'excluded heading was rewritten'
+            exit 1
+          fi
+
   audit-windows:
     name: Release Audit Windows
     runs-on: windows-latest
