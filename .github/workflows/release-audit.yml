@@ -81,7 +81,7 @@ jobs:
           tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
           brew uninstall --force mdtoc || true
           brew untap rokath/tap || true
-          brew tap rokath/tap https://github.com/rokath/homebrew-tap
+          brew tap rokath/tap
           brew install rokath/tap/mdtoc
           version_output="$(mdtoc --version)"
           printf '%s\n' "$version_output"
