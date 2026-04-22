@@ -6,15 +6,59 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* None yet.
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.1.6..HEAD`
+
+```txt
+```
+
+## <a id='v0.1.6-changes'></a>v0.1.6 Changes (2026-04-23)
+
+### <a id='v0.1.6-overview'></a>v0.1.6 Overview
+
 * Homebrew release auditing was corrected:
   * the macOS Homebrew audit now uses the canonical tap command `brew tap rokath/tap`
   * this matches the documented user install path and avoids a false-negative audit failure
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.1.6-git-log'></a>v0.1.6 Git Log
 
-Used git range: `v0.1.5..HEAD`
+Used git range: `v0.1.5..v0.1.6`
 
 ```txt
+* 7760117 2026-04-22 fix(ci): use canonical Homebrew tap command
+```
+
+## <a id='v0.1.5-changes'></a>v0.1.5 Changes (2026-04-22)
+
+### <a id='v0.1.5-overview'></a>v0.1.5 Overview
+
+* `strip --raw` was hardened:
+  * it now falls back to tolerant container removal when strict config parsing fails for malformed or future managed containers
+  * fallback stripping still removes managed numbering and inline anchors from headings after the container is removed
+  * new regression tests cover future-version config lines, unknown config keys, malformed config blocks, and a file-level CLI fallback path
+* Repository testing guidance was tightened:
+  * `AGENTS.md` now requires a file-level test by default for CLI file workflow and file-backed command changes
+  * virtual filesystem test helpers should be preferred over OS-level files when feasible
+* Homebrew distribution support was added:
+  * GoReleaser now publishes a formula for `mdtoc` into `rokath/homebrew-tap`
+  * the release workflow now documents the required `HOMEBREW_TAP_GITHUB_TOKEN` secret for cross-repository publishing
+  * the README now documents the intended install command `brew install rokath/tap/mdtoc`
+* Homebrew release auditing was added:
+  * the manual `release-audit` workflow now runs a macOS Homebrew install audit against `brew install rokath/tap/mdtoc`
+  * the audit verifies that the installed Homebrew binary matches the latest GitHub release tag and passes the shared smoke-test fixture
+
+### <a id='v0.1.5-git-log'></a>v0.1.5 Git Log
+
+Used git range: `v0.1.4..v0.1.5`
+
+```txt
+* e15ccd6 2026-04-22 ci: audit Homebrew installation path
+* dc13519 2026-04-22 distribution: add Homebrew tap publishing path
+* 8ca3e1e 2026-04-22 docs(agents): require file-level workflow tests by default
+* cb57d2b 2026-04-22 fix(strip): harden raw strip fallback
 ```
 
 ## <a id='v0.1.4-changes'></a>v0.1.4 Changes (2026-04-22)
