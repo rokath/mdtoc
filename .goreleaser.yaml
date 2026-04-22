@@ -88,6 +88,27 @@ archives:
     files:
       - "none*"
 
+brews:
+  - ids:
+      - mdtoc
+    name: mdtoc
+    repository:
+      owner: rokath
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/rokath/mdtoc
+    description: Go-based Markdown Table of Contents manager with numbering and stable anchor links.
+    license: MIT
+    directory: Formula
+    commit_author:
+      name: github-actions[bot]
+      email: 41898282+github-actions[bot]@users.noreply.github.com
+    install: |
+      bin.install "mdtoc"
+    test: |
+      system "#{bin}/mdtoc", "--version"
+
 nfpms:
   - id: mdtoc-deb
     ids:

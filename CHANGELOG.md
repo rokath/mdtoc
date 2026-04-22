@@ -13,6 +13,10 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Repository testing guidance was tightened:
   * `AGENTS.md` now requires a file-level test by default for CLI file workflow and file-backed command changes
   * virtual filesystem test helpers should be preferred over OS-level files when feasible
+* Homebrew tap publishing was added:
+  * GoReleaser now publishes a formula for `mdtoc` into `rokath/homebrew-tap`
+  * the release workflow now documents the required `HOMEBREW_TAP_GITHUB_TOKEN` secret for cross-repository publishing
+  * the README now documents the intended install command `brew install rokath/tap/mdtoc`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

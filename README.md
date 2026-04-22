@@ -70,6 +70,12 @@ state=generated
 
 Download a prebuilt binary from [GitHub Releases](https://github.com/rokath/mdtoc/releases).
 
+Homebrew tap install:
+
+```bash
+brew install rokath/tap/mdtoc
+```
+
 ### 2.2. <a id="build-from-source"></a>Build from source
 
 ```bash
