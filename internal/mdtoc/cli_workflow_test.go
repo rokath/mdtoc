@@ -268,3 +268,46 @@ func TestRunnerFileWorkflowRawStripRejectsRegen(t *testing.T) {
 		t.Fatalf("regen after raw strip returned unexpected error: %v", err)
 	}
 }
+
+// TestRunnerFileWorkflowRawStripRecoversMalformedContainer verifies fallback raw stripping through the file-based CLI path.
+func TestRunnerFileWorkflowRawStripRecoversMalformedContainer(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: strings.Join([]string{
+			startMarker,
+			"* [1. Intro](#intro)",
+			configStart,
+			"container-version=v2",
+			"numbering=on",
+			"min-level=2",
+			"max-level=4",
+			"anchor=github",
+			"toc=on",
+			"bullets=auto",
+			"state=generated",
+			endMarker,
+			"",
+			"## 1. <a id=\"intro\"></a>Intro",
+		}, "\n") + "\n",
+	})
+
+	var stdout, stderr strings.Builder
+	runner := newRunnerWithFS(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true, fs)
+	exitCode, err := runner.Run([]string{"strip", "--raw", "--verbose", "-f", path})
+	if err != nil {
+		t.Fatalf("Run(strip --raw --verbose -f) error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("Run(strip --raw --verbose -f) exit code = %d, want 0", exitCode)
+	}
+	got := fs.fileString(path)
+	if strings.Contains(got, startMarker) || strings.Contains(got, endMarker) || strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
+		t.Fatalf("raw strip left malformed-container artifacts behind:\n%s", got)
+	}
+	if !strings.Contains(got, "## Intro") {
+		t.Fatalf("raw strip removed heading text:\n%s", got)
+	}
+	if !strings.Contains(stderr.String(), "fallback parsing") {
+		t.Fatalf("strip --raw did not report fallback parsing:\n%s", stderr.String())
+	}
+}

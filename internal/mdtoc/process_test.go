@@ -513,6 +513,108 @@ func TestStripRawRemovesContainerAndManagedArtifacts(t *testing.T) {
 	}
 }
 
+// TestStripRawRecoversFromFutureContainerVersion verifies raw stripping for a future container format.
+func TestStripRawRecoversFromFutureContainerVersion(t *testing.T) {
+	input := strings.Join([]string{
+		startMarker,
+		"+ [1. Intro](#intro)",
+		configStart,
+		"container-version=v2",
+		"numbering=on",
+		"min-level=2",
+		"max-level=4",
+		"anchors=on",
+		"toc=on",
+		"bullets=auto",
+		"state=generated",
+		configEnd,
+		endMarker,
+		"",
+		"## 1. <a id=\"intro\"></a>Intro",
+	}, "\n") + "\n"
+
+	got, warnings, err := StripRaw(input)
+	if err != nil {
+		t.Fatalf("StripRaw error: %v", err)
+	}
+	if !strings.Contains(strings.Join(warnings, "\n"), "fallback parsing") {
+		t.Fatalf("StripRaw did not report fallback parsing: %v", warnings)
+	}
+	if strings.Contains(got, startMarker) || strings.Contains(got, endMarker) || strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
+		t.Fatalf("raw strip left future-format managed artifacts behind:\n%s", got)
+	}
+	if !strings.Contains(got, "## Intro") {
+		t.Fatalf("raw strip removed heading text for future container:\n%s", got)
+	}
+}
+
+// TestStripRawRecoversFromUnknownConfigKey verifies raw stripping with a not-yet-known config key.
+func TestStripRawRecoversFromUnknownConfigKey(t *testing.T) {
+	input := strings.Join([]string{
+		startMarker,
+		"* [1. Intro](#intro)",
+		configStart,
+		"numbering=on",
+		"min-level=2",
+		"max-level=4",
+		"anchor=github",
+		"toc=on",
+		"bullets=auto",
+		"state=generated",
+		configEnd,
+		endMarker,
+		"",
+		"## 1. <a id=\"intro\"></a>Intro",
+	}, "\n") + "\n"
+
+	got, warnings, err := StripRaw(input)
+	if err != nil {
+		t.Fatalf("StripRaw error: %v", err)
+	}
+	if !strings.Contains(strings.Join(warnings, "\n"), "fallback parsing") {
+		t.Fatalf("StripRaw did not report fallback parsing: %v", warnings)
+	}
+	if strings.Contains(got, startMarker) || strings.Contains(got, endMarker) || strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
+		t.Fatalf("raw strip left unknown-key managed artifacts behind:\n%s", got)
+	}
+	if !strings.Contains(got, "## Intro") {
+		t.Fatalf("raw strip removed heading text for unknown-key container:\n%s", got)
+	}
+}
+
+// TestStripRawRecoversFromUnterminatedConfigBlock verifies raw stripping when the config block is malformed.
+func TestStripRawRecoversFromUnterminatedConfigBlock(t *testing.T) {
+	input := strings.Join([]string{
+		startMarker,
+		"* [1. Intro](#intro)",
+		configStart,
+		"numbering=on",
+		"min-level=2",
+		"max-level=4",
+		"anchors=on",
+		"toc=on",
+		"bullets=auto",
+		"state=generated",
+		endMarker,
+		"",
+		"## 1. <a id=\"intro\"></a>Intro",
+	}, "\n") + "\n"
+
+	got, warnings, err := StripRaw(input)
+	if err != nil {
+		t.Fatalf("StripRaw error: %v", err)
+	}
+	if !strings.Contains(strings.Join(warnings, "\n"), "fallback parsing") {
+		t.Fatalf("StripRaw did not report fallback parsing: %v", warnings)
+	}
+	if strings.Contains(got, startMarker) || strings.Contains(got, endMarker) || strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
+		t.Fatalf("raw strip left malformed-container artifacts behind:\n%s", got)
+	}
+	if !strings.Contains(got, "## Intro") {
+		t.Fatalf("raw strip removed heading text for malformed container:\n%s", got)
+	}
+}
+
 // TestCheckMatchesAndDetectsMismatch verifies both matching and mismatching check outcomes.
 func TestCheckMatchesAndDetectsMismatch(t *testing.T) {
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())

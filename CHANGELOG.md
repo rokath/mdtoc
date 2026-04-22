@@ -6,7 +6,10 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* None yet.
+* `strip --raw` was hardened:
+  * it now falls back to tolerant container removal when strict config parsing fails for malformed or future managed containers
+  * fallback stripping still removes managed numbering and inline anchors from headings after the container is removed
+  * new regression tests cover future-version config lines, unknown config keys, and malformed config blocks
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

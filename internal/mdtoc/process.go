@@ -73,12 +73,83 @@ func Strip(input string) (string, []string, error) {
 // StripRaw removes the entire container, managed numbering, and managed anchors.
 func StripRaw(input string) (string, []string, error) {
 	parsed, err := ParseDocument(input)
-	if err != nil {
+	if err == nil {
+		bodyLines, headings := removeContainerAndNormalizeHeadings(parsed)
+		bodyLines = rewriteHeadings(bodyLines, headings, Config{MinLevel: 1, MaxLevel: 0})
+		return joinLines(bodyLines), parsed.Warnings, nil
+	}
+	bodyLines, warnings, fallbackErr := stripRawFallback(input)
+	if fallbackErr != nil {
 		return "", nil, err
 	}
-	bodyLines, headings := removeContainerAndNormalizeHeadings(parsed)
+	headings, headingWarnings, headingErr := parseHeadings(bodyLines)
+	if headingErr != nil {
+		return "", nil, err
+	}
+	warnings = append(warnings, headingWarnings...)
 	bodyLines = rewriteHeadings(bodyLines, headings, Config{MinLevel: 1, MaxLevel: 0})
-	return joinLines(bodyLines), parsed.Warnings, nil
+	return joinLines(bodyLines), warnings, nil
+}
+
+// stripRawFallback removes the managed container without requiring strict config parsing.
+func stripRawFallback(input string) ([]string, []string, error) {
+	lines := splitLines(strings.ReplaceAll(input, "\r\n", "\n"))
+	startLine, endLine, warnings, err := findManagedContainerBounds(lines)
+	if err != nil {
+		return nil, nil, err
+	}
+	bodyLines := append([]string{}, lines[:startLine]...)
+	bodyLines = append(bodyLines, lines[endLine+1:]...)
+	return bodyLines, warnings, nil
+}
+
+// findManagedContainerBounds locates the outer managed container markers while
+// tolerating malformed config content inside the container.
+func findManagedContainerBounds(lines []string) (int, int, []string, error) {
+	startLine, endLine := -1, -1
+	inFence := false
+	fenceMarker := ""
+	inGenericComment := false
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if inFence {
+			if isFenceClose(trimmed, fenceMarker) {
+				inFence, fenceMarker = false, ""
+			}
+			continue
+		}
+		if inGenericComment {
+			if strings.Contains(line, "-->") {
+				inGenericComment = false
+			}
+			continue
+		}
+		if marker := fenceOpen(trimmed); marker != "" {
+			inFence, fenceMarker = true, marker
+			continue
+		}
+		switch trimmed {
+		case startMarker:
+			if startLine != -1 {
+				return 0, 0, nil, fmt.Errorf("duplicate %s marker", startMarker)
+			}
+			startLine = i
+			continue
+		case endMarker:
+			if endLine != -1 {
+				return 0, 0, nil, fmt.Errorf("duplicate %s marker", endMarker)
+			}
+			endLine = i
+			continue
+		}
+		if startsGenericHTMLComment(trimmed) && !strings.Contains(trimmed, "-->") {
+			inGenericComment = true
+		}
+	}
+	if startLine == -1 || endLine == -1 || startLine > endLine {
+		return 0, 0, nil, fmt.Errorf("incomplete mdtoc container")
+	}
+	return startLine, endLine, []string{"warning: strip --raw removed a managed container via fallback parsing"}, nil
 }
 
 // Check reconstructs the target state indicated by the stored config and
