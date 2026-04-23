@@ -54,11 +54,12 @@ A document managed by `mdtoc` uses exactly this container structure:
 <!-- mdtoc -->
 [TOC CONTENT]
 <!-- mdtoc-config
-numbering=on
+container-version=v2
+numbering=true
 min-level=2
 max-level=4
-anchors=on
-toc=on
+anchor=github
+toc=true
 state=generated
 -->
 <!-- /mdtoc -->
@@ -322,11 +323,13 @@ The config block has exactly this form:
 
 ```html
 <!-- mdtoc-config
-numbering=on
+container-version=v2
+numbering=true
 min-level=2
 max-level=4
-anchors=on
-toc=on
+anchor=github
+toc=true
+bullets=auto
 state=generated
 -->
 ```
@@ -337,21 +340,27 @@ Rules:
 * Each field appears on its own line.
 * All fields use `key=value`.
 * The field order is fixed:
-  1. `numbering`
-  2. `min-level`
-  3. `max-level`
-  4. `anchors`
-  5. `toc`
-  6. `state`
+  1. `container-version`
+  2. `numbering`
+  3. `min-level`
+  4. `max-level`
+  5. `anchor`
+  6. `toc`
+  7. `bullets`
+  8. `state`
 * Allowed values:
-  * `numbering=on|off`
-  * `anchors=on|off`
-  * `toc=on|off`
+  * `container-version=v2`
+  * `numbering=true|false`
+  * `anchor=github|gitlab|off`
+  * `toc=true|false`
+  * `bullets=auto|*|-|+`
   * `state=generated|stripped`
 * `min-level` and `max-level` are positive integers.
 * `min-level` must not be greater than `max-level`.
 * `max-level` must not be greater than 6.
 * `generate` writes all generator options into the config block; unspecified options are written with their default value.
+* Legacy config blocks without `container-version` remain readable and are treated as implicit `v1`.
+* New config-writing code emits `container-version=v2`.
 * `--file`, `--help`, `--version`, `--verbose`, and `--raw` are not persisted.
 * `strip` keeps the config block and only sets `state=stripped`.
 * `strip --raw` removes the config block completely.
@@ -387,8 +396,9 @@ _Note:_ `state` is intentionally also normalized to `key=value`. This makes the 
 | `--numbering <on\|off>` | `on`    | enable or disable heading numbering                                   |
 | `--min-level <N>`       | `2`     | minimum managed heading level (>=1)                                   |
 | `--max-level <N>`       | `4`     | maximum managed heading level (<=6)                                   |
-| `--anchors <on\|off>`   | `on`    | generate or disable inline anchors                                    |
+| `--anchor <github\|gitlab\|false>` | `github` | select the anchor profile or disable inline anchors             |
 | `--toc <on\|off>`       | `on`    | renders the managed ToC area when `on`, leaves it empty when `off`    |
+| `--bullets <auto\|*\|-\|+>` | `auto` | choose the generated unordered-list bullet style                     |
 | `--file <name>`         | –       | read and overwrite file                                               |
 | `--verbose`             | `off`   | diagnostic and progress messages on `stderr`                          |
 | `--help`                | –       | show help                                                             |
@@ -398,7 +408,8 @@ Short forms:
 | Option        | Short form |
 |---------------|------------|
 | `--numbering` | `-n`       |
-| `--anchors`   | `-a`       |
+| `--anchor`    | `-a`       |
+| `--bullets`   | `-b`       |
 | `--file`      | `-f`       |
 | `--verbose`   | `-v`       |
 | `--help`      | `-h`       |
@@ -424,10 +435,10 @@ Behavior:
    * managed heading numbers
    * managed inline anchors
 5. Determine relevant headings.
-6. Recalculate numbers if `numbering=on`.
+6. Recalculate numbers if `numbering=true`.
 7. Recalculate `anchor_id` for all relevant headings.
-8. Render managed inline anchors only if `anchors=on`.
-9. Re-render the ToC if `toc=on`; otherwise render the managed ToC area empty.
+8. Render managed inline anchors only if `anchor!=off`.
+9. Re-render the ToC if `toc=true`; otherwise render the managed ToC area empty.
 10. Re-render headings.
 11. Re-render config and set `state=generated`.
 12. Write the document back.
@@ -468,11 +479,11 @@ After `strip`, this structure is still valid:
 ```md
 <!-- mdtoc -->
 <!-- mdtoc-config
-numbering=on
+numbering=true
 min-level=2
 max-level=4
-anchors=on
-toc=on
+anchor=github
+toc=true
 state=stripped
 -->
 <!-- /mdtoc -->
@@ -549,23 +560,24 @@ Example:
 
 Displayed in the link text:
 
-* with `numbering=on`: `number + title`
-* with `numbering=off`: title only
+* with `numbering=true`: `number + title`
+* with `numbering=false`: title only
 
 Link target:
 
 * always `#` + `anchor_id`
 * `anchor_id` is computed exactly according to section 11
 
-Behavior of `anchors`:
+Behavior of `anchor`:
 
-* with `anchors=on`, `mdtoc` additionally renders a managed inline anchor with exactly the same `anchor_id`
-* with `anchors=off`, `mdtoc` does not render a managed inline anchor; the ToC links still remain `#anchor_id`
+* with `anchor=github`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitHub-compatible profile
+* with `anchor=gitlab`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitLab profile selection
+* with `anchor=off`, `mdtoc` does not render a managed inline anchor; the ToC links still remain `#anchor_id`
 
 _Explanation:_
 
-* `anchors=off` is therefore a renderer-dependent compatibility mode.
-* Fully portable and renderer-independent ToC links are guaranteed only with `anchors=on`.
+* `anchor=off` is therefore a renderer-dependent compatibility mode.
+* Fully portable and renderer-independent ToC links are guaranteed only with an inline-anchor profile such as `github` or `gitlab`.
 
 _Cross-reference:_
 
@@ -645,7 +657,7 @@ _Explanation:_
 
 ### 11.5 Relationship to inline anchor syntax
 
-If `anchors=on`, `mdtoc` renders exactly this form:
+If `anchor!=off`, `mdtoc` renders exactly this form:
 
 ```html
 <a id="anchor_id"></a>

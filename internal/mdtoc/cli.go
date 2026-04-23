@@ -158,8 +158,8 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	numberingS := fs.String("n", "", "")
 	minLevel := fs.Int("min-level", 2, "")
 	maxLevel := fs.Int("max-level", 4, "")
-	anchors := fs.String("anchors", "on", "")
-	anchorsS := fs.String("a", "", "")
+	anchor := fs.String("anchor", string(AnchorGitHub), "")
+	anchorS := fs.String("a", "", "")
 	toc := fs.String("toc", "on", "")
 	bullets := fs.String("bullets", "auto", "")
 	bulletsS := fs.String("b", "", "")
@@ -186,8 +186,8 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if *numberingS != "" {
 		*numbering = *numberingS
 	}
-	if *anchorsS != "" {
-		*anchors = *anchorsS
+	if *anchorS != "" {
+		*anchor = *anchorS
 	}
 	if *bulletsS != "" {
 		*bullets = *bulletsS
@@ -198,15 +198,15 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if err := r.requireInputSource(*file); err != nil {
 		return 1, err
 	}
-	numberingB, err := parseOnOff(*numbering)
+	numberingB, err := parseBoolValue(*numbering)
 	if err != nil {
 		return 1, err
 	}
-	anchorsB, err := parseOnOff(*anchors)
+	anchorMode, err := parseAnchorMode(*anchor)
 	if err != nil {
 		return 1, err
 	}
-	tocB, err := parseOnOff(*toc)
+	tocB, err := parseBoolValue(*toc)
 	if err != nil {
 		return 1, err
 	}
@@ -218,7 +218,7 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if err != nil {
 		return 1, err
 	}
-	result, warnings, err := Generate(input, Options{Numbering: numberingB, MinLevel: *minLevel, MaxLevel: *maxLevel, Anchors: anchorsB, TOC: tocB, Bullets: bulletMode})
+	result, warnings, err := Generate(input, Options{Numbering: numberingB, MinLevel: *minLevel, MaxLevel: *maxLevel, Anchor: anchorMode, TOC: tocB, Bullets: bulletMode})
 	if err != nil {
 		return 1, err
 	}
@@ -471,7 +471,7 @@ Generate options:
   --numbering=on  heading numbers on or off
   --min-level=2   minimum heading level (valid 1 to --max-level)
   --max-level=4   maximum heading level (valid --min-level to 6)
-  --anchors=on    link anchors in headings on or off
+  --anchor=github anchor profile: github, gitlab, or off
   --toc=on        table of contents on or off
   --bullets=auto  ToC bullets auto, *, -, or +
 
@@ -495,7 +495,7 @@ Options:
   --numbering, -n <on|off>
   --min-level <N>
   --max-level <N>
-  --anchors, -a <on|off>
+  --anchor, -a <github|gitlab|off>
   --toc <on|off>
   --bullets, -b <auto|*|-|+>
   --file, -f <name>
@@ -509,7 +509,7 @@ Options:
   --numbering, -n <on|off>
   --min-level <N>
   --max-level <N>
-  --anchors, -a <on|off>
+  --anchor, -a <github|gitlab|off>
   --toc <on|off>
   --bullets, -b <auto|*|-|+>
   --file, -f <name>

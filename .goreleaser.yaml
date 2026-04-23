@@ -172,7 +172,7 @@ release:
     ### macOS
 
     Install via Homebrew: `brew install rokath/tap/mdtoc`
-    - OR -
+    \- OR -
     Download and execute the appropriate binary. If Gatekeeper blocks the downloaded tool,
     remove the quarantine flag from the unpacked binary path, for example:
     `xattr -d com.apple.quarantine path/to/mdtoc`

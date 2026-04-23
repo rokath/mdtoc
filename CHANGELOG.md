@@ -6,6 +6,15 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* Release notes formatting was corrected:
+  * the GoReleaser footer now escapes the macOS `- OR -` separator so it renders as intended in published release notes
+* Managed config handling was versioned and normalized:
+  * new managed config blocks now write `container-version=v2`
+  * legacy config blocks without a version remain readable as implicit `v1`
+  * persisted boolean config values now normalize to `true|false`, while `anchor` normalizes to `github|gitlab|off`
+  * the CLI accepts `on|off|true|false` for boolean flags and accepts `false` as an alias for `--anchor off`
+  * the deprecated `--anchors` CLI flag was removed
+
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v0.1.8..HEAD`

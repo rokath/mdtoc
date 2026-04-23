@@ -110,7 +110,7 @@ func TestRunnerFileWorkflowRegenRestoresStoredFlags(t *testing.T) {
 		path: "# Title\n\n## Intro\n\n### API\n",
 	})
 
-	runFileCommand(t, fs, "generate", "-f", path, "--min-level=2", "--max-level=3", "--anchors=off", "--numbering=off")
+	runFileCommand(t, fs, "generate", "-f", path, "--min-level=2", "--max-level=3", "--anchor=false", "--numbering=off")
 	runFileCommand(t, fs, "strip", "-f", path)
 	runFileCommand(t, fs, "regen", "-f", path)
 
@@ -149,6 +149,85 @@ func TestRunnerFileWorkflowAutoBulletsAndForcedOverride(t *testing.T) {
 	}
 }
 
+// TestRunnerFileWorkflowPersistsExplicitAnchorProfile verifies the profile-based anchor setting.
+func TestRunnerFileWorkflowPersistsExplicitAnchorProfile(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n",
+	})
+
+	runFileCommand(t, fs, "generate", "-f", path, "--anchor", "gitlab")
+	got := fs.fileString(path)
+	if !strings.Contains(got, "anchor=gitlab") {
+		t.Fatalf("generate did not persist the explicit anchor profile:\n%s", got)
+	}
+	if !strings.Contains(got, `<a id="intro"></a>`) {
+		t.Fatalf("generate did not render inline anchors for the gitlab profile:\n%s", got)
+	}
+}
+
+// TestRunnerFileWorkflowNormalizesAnchorFalseVariants verifies canonical off persistence for accepted inputs.
+func TestRunnerFileWorkflowNormalizesAnchorFalseVariants(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{name: "anchor-false", args: []string{"generate", "-f", "doc.md", "--anchor", "false"}},
+		{name: "anchor-off", args: []string{"generate", "-f", "doc.md", "--anchor", "off"}},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fs := newMemoryFileSystem(map[string]string{
+				"doc.md": "# Title\n\n## Intro\n",
+			})
+
+			runFileCommand(t, fs, tc.args...)
+			got := fs.fileString("doc.md")
+			if !strings.Contains(got, "anchor=off") {
+				t.Fatalf("generate did not normalize %s to anchor=off:\n%s", tc.name, got)
+			}
+			if strings.Contains(got, "anchor=false") || strings.Contains(got, "<a id=") {
+				t.Fatalf("generate left a non-canonical false anchor state for %s:\n%s", tc.name, got)
+			}
+			if !strings.Contains(got, "* [1. Intro](#intro)") {
+				t.Fatalf("generate did not preserve ToC targets for %s:\n%s", tc.name, got)
+			}
+		})
+	}
+}
+
+// TestRunnerFileWorkflowNormalizesBooleanContainerValues verifies true/false persistence for bool settings.
+func TestRunnerFileWorkflowNormalizesBooleanContainerValues(t *testing.T) {
+	fs := newMemoryFileSystem(map[string]string{
+		"doc.md": "# Title\n\n## Intro\n",
+	})
+
+	runFileCommand(t, fs, "generate", "-f", "doc.md", "--numbering", "on", "--toc", "off")
+	got := fs.fileString("doc.md")
+	if !strings.Contains(got, "numbering=true") {
+		t.Fatalf("generate did not persist numbering=true:\n%s", got)
+	}
+	if !strings.Contains(got, "toc=false") {
+		t.Fatalf("generate did not persist toc=false:\n%s", got)
+	}
+	if strings.Contains(got, "numbering=on") || strings.Contains(got, "toc=off") {
+		t.Fatalf("generate left non-canonical boolean values in the container:\n%s", got)
+	}
+}
+
+// TestRunnerFileWorkflowRejectsRemovedLegacyAnchorsFlag verifies that --anchors is no longer accepted.
+func TestRunnerFileWorkflowRejectsRemovedLegacyAnchorsFlag(t *testing.T) {
+	fs := newMemoryFileSystem(map[string]string{
+		"doc.md": "# Title\n\n## Intro\n",
+	})
+
+	err := runFileCommandExpect(t, fs, 1, "generate", "-f", "doc.md", "--anchors", "off")
+	if err == nil {
+		t.Fatalf("generate unexpectedly accepted removed --anchors flag")
+	}
+}
+
 // TestRunnerFileWorkflowAutoBulletsIgnoreManagedTOC verifies that auto detection does not count the existing managed ToC.
 func TestRunnerFileWorkflowAutoBulletsIgnoreManagedTOC(t *testing.T) {
 	const path = "doc.md"
@@ -157,11 +236,11 @@ func TestRunnerFileWorkflowAutoBulletsIgnoreManagedTOC(t *testing.T) {
 			startMarker,
 			"* [1. Wrong](#wrong)",
 			configStart,
-			"numbering=on",
+			"numbering=true",
 			"min-level=2",
 			"max-level=4",
 			"anchors=on",
-			"toc=on",
+			"toc=true",
 			"bullets=auto",
 			"state=generated",
 			configEnd,
@@ -195,11 +274,11 @@ func TestRunnerFileWorkflowLegacyContainerKeepsStarBullets(t *testing.T) {
 			startMarker,
 			"* [1. Wrong](#wrong)",
 			configStart,
-			"numbering=on",
+			"numbering=true",
 			"min-level=2",
 			"max-level=4",
 			"anchors=on",
-			"toc=on",
+			"toc=true",
 			"state=generated",
 			configEnd,
 			endMarker,
@@ -278,11 +357,11 @@ func TestRunnerFileWorkflowRawStripRecoversMalformedContainer(t *testing.T) {
 			"* [1. Intro](#intro)",
 			configStart,
 			"container-version=v2",
-			"numbering=on",
+			"numbering=true",
 			"min-level=2",
 			"max-level=4",
 			"anchor=github",
-			"toc=on",
+			"toc=true",
 			"bullets=auto",
 			"state=generated",
 			endMarker,

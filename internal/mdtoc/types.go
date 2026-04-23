@@ -21,6 +21,14 @@ const (
 	StateStripped  State = "stripped"
 )
 
+// ContainerVersion identifies the managed config-block format.
+type ContainerVersion string
+
+const (
+	ContainerVersionV1 ContainerVersion = "v1"
+	ContainerVersionV2 ContainerVersion = "v2"
+)
+
 // BulletMode controls how unordered ToC bullets are selected.
 type BulletMode string
 
@@ -31,15 +39,30 @@ const (
 	BulletPlus BulletMode = "+"
 )
 
+// AnchorMode controls how anchor IDs are interpreted and whether inline anchors are rendered.
+type AnchorMode string
+
+const (
+	AnchorGitHub AnchorMode = "github"
+	AnchorGitLab AnchorMode = "gitlab"
+	AnchorOff    AnchorMode = "off"
+)
+
+// RendersInline reports whether the mode should emit inline anchor HTML.
+func (m AnchorMode) RendersInline() bool {
+	return m != AnchorOff
+}
+
 // Config mirrors the normalized config block managed by the tool.
 type Config struct {
-	Numbering bool
-	MinLevel  int
-	MaxLevel  int
-	Anchors   bool
-	TOC       bool
-	Bullets   BulletMode
-	State     State
+	ContainerVersion ContainerVersion
+	Numbering        bool
+	MinLevel         int
+	MaxLevel         int
+	Anchor           AnchorMode
+	TOC              bool
+	Bullets          BulletMode
+	State            State
 
 	// BulletsExplicit reports whether the parsed config block already contained
 	// an explicit bullets line. Legacy configs omit it.
@@ -48,7 +71,7 @@ type Config struct {
 
 // DefaultConfig returns the v1 defaults from the specification.
 func DefaultConfig() Config {
-	return Config{Numbering: true, MinLevel: 2, MaxLevel: 4, Anchors: true, TOC: true, Bullets: BulletAuto, State: StateGenerated}
+	return Config{ContainerVersion: ContainerVersionV2, Numbering: true, MinLevel: 2, MaxLevel: 4, Anchor: AnchorGitHub, TOC: true, Bullets: BulletAuto, State: StateGenerated}
 }
 
 // Validate checks the persisted configuration contract.
@@ -61,6 +84,12 @@ func (c Config) Validate() error {
 	}
 	if c.MinLevel > c.MaxLevel {
 		return fmt.Errorf("min-level must not be greater than max-level")
+	}
+	if c.ContainerVersion != ContainerVersionV1 && c.ContainerVersion != ContainerVersionV2 {
+		return fmt.Errorf("container-version must be v1 or v2")
+	}
+	if c.Anchor != AnchorGitHub && c.Anchor != AnchorGitLab && c.Anchor != AnchorOff {
+		return fmt.Errorf("anchor must be github, gitlab, or off")
 	}
 	if c.Bullets != BulletAuto && c.Bullets != BulletStar && c.Bullets != BulletDash && c.Bullets != BulletPlus {
 		return fmt.Errorf("bullets must be auto, *, -, or +")
@@ -76,7 +105,7 @@ type Options struct {
 	Numbering bool
 	MinLevel  int
 	MaxLevel  int
-	Anchors   bool
+	Anchor    AnchorMode
 	TOC       bool
 	Bullets   BulletMode
 }
@@ -84,7 +113,7 @@ type Options struct {
 // DefaultOptions mirrors the generator defaults from the spec.
 func DefaultOptions() Options {
 	d := DefaultConfig()
-	return Options{Numbering: d.Numbering, MinLevel: d.MinLevel, MaxLevel: d.MaxLevel, Anchors: d.Anchors, TOC: d.TOC, Bullets: d.Bullets}
+	return Options{Numbering: d.Numbering, MinLevel: d.MinLevel, MaxLevel: d.MaxLevel, Anchor: d.Anchor, TOC: d.TOC, Bullets: d.Bullets}
 }
 
 // ToConfig converts ephemeral generate options to a persisted config.
@@ -93,7 +122,11 @@ func (o Options) ToConfig() Config {
 	if bullets == "" {
 		bullets = BulletAuto
 	}
-	return Config{Numbering: o.Numbering, MinLevel: o.MinLevel, MaxLevel: o.MaxLevel, Anchors: o.Anchors, TOC: o.TOC, Bullets: bullets, State: StateGenerated}
+	anchor := o.Anchor
+	if anchor == "" {
+		anchor = AnchorGitHub
+	}
+	return Config{ContainerVersion: ContainerVersionV2, Numbering: o.Numbering, MinLevel: o.MinLevel, MaxLevel: o.MaxLevel, Anchor: anchor, TOC: o.TOC, Bullets: bullets, State: StateGenerated}
 }
 
 // Heading stores one heading candidate that mdtoc can manage.
