@@ -6,14 +6,26 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.1.8..HEAD`
+
+```txt
+```
+
+## <a id='v0.1.8-changes'></a>v0.1.8 Changes (2026-04-23)
+
+### <a id='v0.1.8-overview'></a>v0.1.8 Overview
+
 * Homebrew release auditing was corrected:
   * the version assertion now normalizes the release tag from `vX.Y.Z` to `X.Y.Z` before comparing it with `mdtoc --version`
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.1.8-git-log'></a>v0.1.8 Git Log
 
-Used git range: `v0.1.7..HEAD`
+Used git range: `v0.1.7..v0.1.8`
 
 ```txt
+* 048587c 2026-04-23 fix(ci): normalize Homebrew audit version check
 ```
 
 ## <a id='v0.1.7-changes'></a>v0.1.7 Changes (2026-04-23)
