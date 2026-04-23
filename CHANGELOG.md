@@ -6,6 +6,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* Release notes formatting was corrected:
+  * the GoReleaser footer now escapes the macOS `- OR -` separator so it renders as intended in published release notes
+
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v0.1.8..HEAD`
