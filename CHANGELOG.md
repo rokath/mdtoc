@@ -6,17 +6,34 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* Homebrew release auditing was corrected:
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.1.7..HEAD`
+
+```txt
+```
+
+## <a id='v0.1.7-changes'></a>v0.1.7 Changes (2026-04-23)
+
+### <a id='v0.1.7-overview'></a>v0.1.7 Overview
+
+* Homebrew release auditing was simplified:
   * the macOS Homebrew audit now uses the minimal user-facing path with `brew tap rokath/tap`
   * unnecessary cleanup steps were removed so the CI path stays aligned with `brew install rokath/tap/mdtoc`
 * Release notes were refined:
   * the GoReleaser release footer now includes the Homebrew install command `brew install rokath/tap/mdtoc`
+* Repository release-process guidance was tightened:
+  * `AGENTS.md` now requires changelog reconciliation with `origin/main` before continuing from a structurally older release-preparation state
+  * `CHANGELOG.md` was restored so `v0.1.5` and `v0.1.6` remain present as explicit version sections
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.1.7-git-log'></a>v0.1.7 Git Log
 
-Used git range: `v0.1.6..HEAD`
+Used git range: `v0.1.6..v0.1.7`
 
 ```txt
+* fb89a76 2026-04-23 docs(agents): require changelog sync with main
+* 3c606ce 2026-04-23 docs(changelog): restore v0.1.5 and v0.1.6 sections
+* 4229466 2026-04-23 fix(ci): simplify Homebrew release audit
 ```
 
 ## <a id='v0.1.6-changes'></a>v0.1.6 Changes (2026-04-23)
