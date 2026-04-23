@@ -6,6 +6,17 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.2.0..HEAD`
+
+```txt
+```
+
+## <a id='v0.2.0-changes'></a>v0.2.0 Changes (2026-04-23)
+
+### <a id='v0.2.0-overview'></a>v0.2.0 Overview
+
 * Release notes formatting was corrected:
   * the GoReleaser footer now escapes the macOS `- OR -` separator so it renders as intended in published release notes
 * Managed config handling was versioned and normalized:
@@ -15,11 +26,15 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * the CLI accepts `on|off|true|false` for boolean flags and accepts `false` as an alias for `--anchor off`
   * the deprecated `--anchors` CLI flag was removed
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.2.0-git-log'></a>v0.2.0 Git Log
 
-Used git range: `v0.1.8..HEAD`
+Used git range: `v0.1.8..v0.2.0`
 
 ```txt
+* 498156a 2026-04-23 docs(changelog): record config normalization changes
+* 579450c 2026-04-23 config: canonicalize bool and anchor values
+* 03f44f9 2026-04-23 format: version managed config and refine anchor mode
+* 74bddc1 2026-04-23 docs(release): escape footer separator
 ```
 
 ## <a id='v0.1.8-changes'></a>v0.1.8 Changes (2026-04-23)
