@@ -45,12 +45,12 @@ type AnchorMode string
 const (
 	AnchorGitHub AnchorMode = "github"
 	AnchorGitLab AnchorMode = "gitlab"
-	AnchorFalse  AnchorMode = "false"
+	AnchorOff    AnchorMode = "off"
 )
 
 // RendersInline reports whether the mode should emit inline anchor HTML.
 func (m AnchorMode) RendersInline() bool {
-	return m != AnchorFalse
+	return m != AnchorOff
 }
 
 // Config mirrors the normalized config block managed by the tool.
@@ -88,8 +88,8 @@ func (c Config) Validate() error {
 	if c.ContainerVersion != ContainerVersionV1 && c.ContainerVersion != ContainerVersionV2 {
 		return fmt.Errorf("container-version must be v1 or v2")
 	}
-	if c.Anchor != AnchorGitHub && c.Anchor != AnchorGitLab && c.Anchor != AnchorFalse {
-		return fmt.Errorf("anchor must be github, gitlab, or false")
+	if c.Anchor != AnchorGitHub && c.Anchor != AnchorGitLab && c.Anchor != AnchorOff {
+		return fmt.Errorf("anchor must be github, gitlab, or off")
 	}
 	if c.Bullets != BulletAuto && c.Bullets != BulletStar && c.Bullets != BulletDash && c.Bullets != BulletPlus {
 		return fmt.Errorf("bullets must be auto, *, -, or +")

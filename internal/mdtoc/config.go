@@ -45,7 +45,7 @@ func parseConfig(lines []string) (Config, error) {
 		return Config{}, fmt.Errorf("container-version v2 requires an explicit bullets line")
 	}
 	if err := parseConfigLine(lines[nextLine], "numbering", func(value string) error {
-		v, err := parseOnOff(value)
+		v, err := parseBoolValue(value)
 		if err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ func parseConfig(lines []string) (Config, error) {
 		return Config{}, err
 	}
 	if err := parseConfigLine(lines[nextLine+4], "toc", func(value string) error {
-		v, err := parseOnOff(value)
+		v, err := parseBoolValue(value)
 		if err != nil {
 			return err
 		}
@@ -157,24 +157,24 @@ func parseContainerVersion(s string) (ContainerVersion, error) {
 	}
 }
 
-// parseOnOff converts the persisted on/off syntax into a boolean.
-func parseOnOff(s string) (bool, error) {
+// parseBoolValue accepts both CLI-style on/off and canonical true/false booleans.
+func parseBoolValue(s string) (bool, error) {
 	switch s {
-	case "on":
+	case "on", "true":
 		return true, nil
-	case "off":
+	case "off", "false":
 		return false, nil
 	default:
-		return false, fmt.Errorf("invalid on/off value %q", s)
+		return false, fmt.Errorf("invalid boolean value %q", s)
 	}
 }
 
 func parseAnchorMode(s string) (AnchorMode, error) {
 	switch AnchorMode(s) {
-	case AnchorGitHub, AnchorGitLab, AnchorFalse:
+	case AnchorGitHub, AnchorGitLab, AnchorOff:
 		return AnchorMode(s), nil
-	case "off":
-		return AnchorFalse, nil
+	case "false":
+		return AnchorOff, nil
 	default:
 		return "", fmt.Errorf("invalid anchor value %q", s)
 	}
@@ -185,7 +185,7 @@ func parseLegacyAnchorValue(s string) (AnchorMode, error) {
 	case "on":
 		return AnchorGitHub, nil
 	case "off", "false":
-		return AnchorFalse, nil
+		return AnchorOff, nil
 	default:
 		return "", fmt.Errorf("invalid on/off value %q", s)
 	}
@@ -209,11 +209,11 @@ func RenderConfig(cfg Config) []string {
 	return []string{
 		configStart,
 		fmt.Sprintf("container-version=%s", cfg.ContainerVersion),
-		fmt.Sprintf("numbering=%s", onOff(cfg.Numbering)),
+		fmt.Sprintf("numbering=%s", boolString(cfg.Numbering)),
 		fmt.Sprintf("min-level=%d", cfg.MinLevel),
 		fmt.Sprintf("max-level=%d", cfg.MaxLevel),
 		fmt.Sprintf("anchor=%s", cfg.Anchor),
-		fmt.Sprintf("toc=%s", onOff(cfg.TOC)),
+		fmt.Sprintf("toc=%s", boolString(cfg.TOC)),
 		fmt.Sprintf("bullets=%s", cfg.Bullets),
 		fmt.Sprintf("state=%s", cfg.State),
 		configEnd,
@@ -221,9 +221,9 @@ func RenderConfig(cfg Config) []string {
 }
 
 // onOff converts a boolean back to the persisted on/off syntax.
-func onOff(v bool) string {
+func boolString(v bool) string {
 	if v {
-		return "on"
+		return "true"
 	}
-	return "off"
+	return "false"
 }

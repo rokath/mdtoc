@@ -150,7 +150,7 @@ func TestRunnerRegenFromStdin(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorFalse,
+		Anchor:    AnchorOff,
 		TOC:       true,
 	})
 	if err != nil {
@@ -262,7 +262,7 @@ func TestRunnerRegenWithFileDoesNotRequireStdin(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorFalse,
+		Anchor:    AnchorOff,
 		TOC:       true,
 	})
 	if err != nil {

@@ -263,7 +263,7 @@ func rewriteHeadings(lines []string, headings []Heading, cfg Config) []string {
 
 func newSluggerForAnchorMode(mode AnchorMode) *Slugger {
 	switch mode {
-	case AnchorGitHub, AnchorGitLab, AnchorFalse, "":
+	case AnchorGitHub, AnchorGitLab, AnchorOff, "":
 		return NewSlugger()
 	default:
 		return NewSlugger()

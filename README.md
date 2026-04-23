@@ -41,11 +41,11 @@
 * [7. Status](#status)
 <!-- mdtoc-config
 container-version=v2
-numbering=on
+numbering=true
 min-level=2
 max-level=4
 anchor=github
-toc=on
+toc=true
 bullets=auto
 state=generated
 -->
@@ -118,11 +118,11 @@ mdtoc check -f README.md                         # fail in CI when README.md dif
 * [About](#about)
 <!-- mdtoc-config
 container-version=v2
-numbering=on
+numbering=true
 min-level=2
 max-level=4
 anchor=github
-toc=on
+toc=true
 bullets=auto
 state=generated
 -->

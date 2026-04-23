@@ -193,11 +193,11 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	valid := []string{
 		configStart,
 		"container-version=v2",
-		"numbering=on",
+		"numbering=true",
 		"min-level=2",
 		"max-level=4",
-		"anchor=false",
-		"toc=on",
+		"anchor=off",
+		"toc=true",
 		"bullets=auto",
 		"state=stripped",
 		configEnd,
@@ -206,7 +206,7 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseConfig(valid) error: %v", err)
 	}
-	if cfg.Anchor != AnchorFalse || cfg.State != StateStripped || cfg.Bullets != BulletAuto {
+	if cfg.Anchor != AnchorOff || cfg.State != StateStripped || cfg.Bullets != BulletAuto {
 		t.Fatalf("parseConfig(valid) returned unexpected config: %+v", cfg)
 	}
 	if cfg.ContainerVersion != ContainerVersionV2 {
@@ -241,12 +241,12 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 		{"badLength", valid[:8]},
 		{"badDelimiters", append([]string{"<!-- wrong -->"}, valid[1:]...)},
 		{"badKeyOrder", []string{configStart, "anchors=on", "min-level=2", "max-level=4", "numbering=on", "toc=on", "bullets=auto", "state=generated", configEnd}},
-		{"badVersion", []string{configStart, "container-version=v3", "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "bullets=auto", "state=generated", configEnd}},
-		{"badState", []string{configStart, "container-version=v2", "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "bullets=auto", "state=weird", configEnd}},
-		{"badMin", []string{configStart, "container-version=v2", "numbering=on", "min-level=x", "max-level=4", "anchor=github", "toc=on", "bullets=auto", "state=generated", configEnd}},
-		{"badMax", []string{configStart, "container-version=v2", "numbering=on", "min-level=2", "max-level=x", "anchor=github", "toc=on", "bullets=auto", "state=generated", configEnd}},
-		{"badBullets", []string{configStart, "container-version=v2", "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "bullets=x", "state=generated", configEnd}},
-		{"missingV2Bullets", []string{configStart, "container-version=v2", "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "state=generated", configEnd}},
+		{"badVersion", []string{configStart, "container-version=v3", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", configEnd}},
+		{"badState", []string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=weird", configEnd}},
+		{"badMin", []string{configStart, "container-version=v2", "numbering=true", "min-level=x", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", configEnd}},
+		{"badMax", []string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=x", "anchor=github", "toc=true", "bullets=auto", "state=generated", configEnd}},
+		{"badBullets", []string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=x", "state=generated", configEnd}},
+		{"missingV2Bullets", []string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "state=generated", configEnd}},
 	}
 	for _, tc := range cases {
 		if _, err := parseConfig(tc.lines); err == nil {
@@ -254,19 +254,22 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 		}
 	}
 
-	if _, err := parseOnOff("maybe"); err == nil {
-		t.Fatalf("parseOnOff should reject invalid values")
+	if _, err := parseBoolValue("maybe"); err == nil {
+		t.Fatalf("parseBoolValue should reject invalid values")
 	}
-	if v, err := parseOnOff("off"); err != nil || v {
-		t.Fatalf("parseOnOff(off) = %v, %v", v, err)
+	if v, err := parseBoolValue("off"); err != nil || v {
+		t.Fatalf("parseBoolValue(off) = %v, %v", v, err)
+	}
+	if v, err := parseBoolValue("true"); err != nil || !v {
+		t.Fatalf("parseBoolValue(true) = %v, %v", v, err)
 	}
 	if mode, err := parseAnchorMode("gitlab"); err != nil || mode != AnchorGitLab {
 		t.Fatalf("parseAnchorMode(gitlab) = %q, %v", mode, err)
 	}
-	if mode, err := parseAnchorMode("off"); err != nil || mode != AnchorFalse {
+	if mode, err := parseAnchorMode("off"); err != nil || mode != AnchorOff {
 		t.Fatalf("parseAnchorMode(off) = %q, %v", mode, err)
 	}
-	if mode, err := parseAnchorMode("false"); err != nil || mode != AnchorFalse {
+	if mode, err := parseAnchorMode("false"); err != nil || mode != AnchorOff {
 		t.Fatalf("parseAnchorMode(false) = %q, %v", mode, err)
 	}
 	if version, err := parseContainerVersion("v2"); err != nil || version != ContainerVersionV2 {
@@ -278,8 +281,8 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	if _, err := parseAnchorMode("maybe"); err == nil {
 		t.Fatalf("parseAnchorMode should reject invalid values")
 	}
-	if onOff(false) != "off" {
-		t.Fatalf("onOff(false) must return off")
+	if boolString(false) != "false" {
+		t.Fatalf("boolString(false) must return false")
 	}
 	if mode, err := parseBulletMode("-"); err != nil || mode != BulletDash {
 		t.Fatalf("parseBulletMode(-) = %q, %v", mode, err)
@@ -395,7 +398,7 @@ func TestParserAndContainerHelpers(t *testing.T) {
 		t.Fatalf("findConfigEnd missing terminator = %d, want -1", end)
 	}
 
-	lines := []string{startMarker, configStart, "container-version=v2", "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "bullets=auto", "state=generated", configEnd, endMarker}
+	lines := []string{startMarker, configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", configEnd, endMarker}
 	if _, err := buildContainer(lines, -1, 1, -1, -1); err == nil {
 		t.Fatalf("buildContainer should reject incomplete container")
 	}
@@ -426,11 +429,11 @@ func TestProcessHelperBranches(t *testing.T) {
 		startMarker,
 		configStart,
 		"container-version=v2",
-		"numbering=on",
+		"numbering=true",
 		"min-level=2",
 		"max-level=4",
 		"anchor=github",
-		"toc=on",
+		"toc=true",
 		"bullets=auto",
 		"state=stripped",
 		configEnd,
@@ -456,11 +459,11 @@ func TestProcessHelperBranches(t *testing.T) {
 		"* [1. Intro](#intro)",
 		configStart,
 		"container-version=v2",
-		"numbering=on",
+		"numbering=true",
 		"min-level=2",
 		"max-level=4",
 		"anchor=github",
-		"toc=on",
+		"toc=true",
 		"bullets=auto",
 		"state=generated",
 		configEnd,

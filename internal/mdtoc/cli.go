@@ -198,7 +198,7 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if err := r.requireInputSource(*file); err != nil {
 		return 1, err
 	}
-	numberingB, err := parseOnOff(*numbering)
+	numberingB, err := parseBoolValue(*numbering)
 	if err != nil {
 		return 1, err
 	}
@@ -206,7 +206,7 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	if err != nil {
 		return 1, err
 	}
-	tocB, err := parseOnOff(*toc)
+	tocB, err := parseBoolValue(*toc)
 	if err != nil {
 		return 1, err
 	}
@@ -471,7 +471,7 @@ Generate options:
   --numbering=on  heading numbers on or off
   --min-level=2   minimum heading level (valid 1 to --max-level)
   --max-level=4   maximum heading level (valid --min-level to 6)
-  --anchor=github anchor profile: github, gitlab, or false
+  --anchor=github anchor profile: github, gitlab, or off
   --toc=on        table of contents on or off
   --bullets=auto  ToC bullets auto, *, -, or +
 
@@ -495,7 +495,7 @@ Options:
   --numbering, -n <on|off>
   --min-level <N>
   --max-level <N>
-  --anchor, -a <github|gitlab|false>
+  --anchor, -a <github|gitlab|off>
   --toc <on|off>
   --bullets, -b <auto|*|-|+>
   --file, -f <name>
@@ -509,7 +509,7 @@ Options:
   --numbering, -n <on|off>
   --min-level <N>
   --max-level <N>
-  --anchor, -a <github|gitlab|false>
+  --anchor, -a <github|gitlab|off>
   --toc <on|off>
   --bullets, -b <auto|*|-|+>
   --file, -f <name>

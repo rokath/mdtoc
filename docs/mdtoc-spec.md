@@ -55,11 +55,11 @@ A document managed by `mdtoc` uses exactly this container structure:
 [TOC CONTENT]
 <!-- mdtoc-config
 container-version=v2
-numbering=on
+numbering=true
 min-level=2
 max-level=4
 anchor=github
-toc=on
+toc=true
 state=generated
 -->
 <!-- /mdtoc -->
@@ -324,11 +324,11 @@ The config block has exactly this form:
 ```html
 <!-- mdtoc-config
 container-version=v2
-numbering=on
+numbering=true
 min-level=2
 max-level=4
 anchor=github
-toc=on
+toc=true
 bullets=auto
 state=generated
 -->
@@ -350,9 +350,9 @@ Rules:
   8. `state`
 * Allowed values:
   * `container-version=v2`
-  * `numbering=on|off`
-  * `anchor=github|gitlab|false`
-  * `toc=on|off`
+  * `numbering=true|false`
+  * `anchor=github|gitlab|off`
+  * `toc=true|false`
   * `bullets=auto|*|-|+`
   * `state=generated|stripped`
 * `min-level` and `max-level` are positive integers.
@@ -435,10 +435,10 @@ Behavior:
    * managed heading numbers
    * managed inline anchors
 5. Determine relevant headings.
-6. Recalculate numbers if `numbering=on`.
+6. Recalculate numbers if `numbering=true`.
 7. Recalculate `anchor_id` for all relevant headings.
 8. Render managed inline anchors only if `anchor!=off`.
-9. Re-render the ToC if `toc=on`; otherwise render the managed ToC area empty.
+9. Re-render the ToC if `toc=true`; otherwise render the managed ToC area empty.
 10. Re-render headings.
 11. Re-render config and set `state=generated`.
 12. Write the document back.
@@ -479,11 +479,11 @@ After `strip`, this structure is still valid:
 ```md
 <!-- mdtoc -->
 <!-- mdtoc-config
-numbering=on
+numbering=true
 min-level=2
 max-level=4
 anchor=github
-toc=on
+toc=true
 state=stripped
 -->
 <!-- /mdtoc -->
@@ -560,8 +560,8 @@ Example:
 
 Displayed in the link text:
 
-* with `numbering=on`: `number + title`
-* with `numbering=off`: title only
+* with `numbering=true`: `number + title`
+* with `numbering=false`: title only
 
 Link target:
 
@@ -572,11 +572,11 @@ Behavior of `anchor`:
 
 * with `anchor=github`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitHub-compatible profile
 * with `anchor=gitlab`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitLab profile selection
-* with `anchor=false`, `mdtoc` does not render a managed inline anchor; the ToC links still remain `#anchor_id`
+* with `anchor=off`, `mdtoc` does not render a managed inline anchor; the ToC links still remain `#anchor_id`
 
 _Explanation:_
 
-* `anchor=false` is therefore a renderer-dependent compatibility mode.
+* `anchor=off` is therefore a renderer-dependent compatibility mode.
 * Fully portable and renderer-independent ToC links are guaranteed only with an inline-anchor profile such as `github` or `gitlab`.
 
 _Cross-reference:_
