@@ -60,6 +60,7 @@ min-level=2
 max-level=4
 anchor=github
 toc=true
+bullets=auto
 state=generated
 -->
 <!-- /mdtoc -->
@@ -91,6 +92,7 @@ The specification describes managed behavior in a line- and position-oriented wa
 An implementation MAY internally use a Markdown parser as long as the external behavior matches this specification exactly.
 
 _Explanation:_ For implementation in Go, an internal parser such as `goldmark` is useful, even though the managed rewrite rules remain described in a line-oriented way.
+_Current implementation note:_ The current implementation uses a self-contained line parser plus a small inline-text extractor; an alternative parser is still allowed as long as the external behavior remains identical.
 
 ### 4.2 Ignored regions
 
@@ -262,10 +264,9 @@ Derived from these are:
 
 _Explanation:_
 
-* The distinction between `title_markup` and `title_text` remains useful even though `mdtoc` does not specify the derivation of `title_text` itself.
-* In v1, `title_text` is fully delegated to `goldmark`.
-* The authoritative value is the plain-text interpretation of the heading content provided by `goldmark`.
-* In v1, `mdtoc` defines no own diverging text derivation logic for this.
+* The distinction between `title_markup` and `title_text` remains useful even though `title_text` is derived separately from the raw line.
+* In the current implementation, `title_text` is derived by a self-contained inline-text extraction step.
+* The authoritative value is the deterministic result of that extraction logic, not the output of an external Markdown renderer.
 
 ### 6.2 Document state
 
@@ -339,7 +340,7 @@ Rules:
 * The config block is line-based.
 * Each field appears on its own line.
 * All fields use `key=value`.
-* The field order is fixed:
+* For normalized `v2` config blocks, the field order is fixed:
   1. `container-version`
   2. `numbering`
   3. `min-level`
@@ -360,7 +361,17 @@ Rules:
 * `max-level` must not be greater than 6.
 * `generate` writes all generator options into the config block; unspecified options are written with their default value.
 * Legacy config blocks without `container-version` remain readable and are treated as implicit `v1`.
-* New config-writing code emits `container-version=v2`.
+* Legacy `v1` blocks use these differences:
+  * they omit `container-version`
+  * they omit `bullets`
+  * they persist `anchors=on|off|false` instead of `anchor=...`
+* New config-writing code emits normalized `v2`.
+* Normalized `v2` output always uses:
+  * `numbering=true|false`
+  * `anchor=github|gitlab|off`
+  * `toc=true|false`
+  * `bullets=auto|*|-|+`
+* If `generate` rewrites a legacy `v1` container and the active bullet mode remains `auto`, the persisted `v2` output normalizes `bullets=*` instead of keeping an implicit legacy default.
 * `--file`, `--help`, `--version`, `--verbose`, and `--raw` are not persisted.
 * `strip` keeps the config block and only sets `state=stripped`.
 * `strip --raw` removes the config block completely.
@@ -383,6 +394,9 @@ _Note:_ `state` is intentionally also normalized to `key=value`. This makes the 
 | `mdtoc generate [--verbose] [OPTIONS]`  | generates/updates ToC, numbers, anchors.        |
 | `mdtoc generate  --help`                | Prints long help text specifically for generate.|
 |                                         |                                                 |
+| `mdtoc regen    [--verbose]`            | regenerates from the persisted container config.|
+| `mdtoc regen     --help`                | Prints long help text specifically for regen.   |
+|                                         |                                                 |
 | `mdtoc strip    [--verbose] [--raw]`    | removes ToC, numbers, anchors and optionally config. |
 | `mdtoc strip     --help`                | Prints long help text specifically for strip.   |
 |                                         |                                                 |
@@ -393,11 +407,11 @@ _Note:_ `state` is intentionally also normalized to `key=value`. This makes the 
 
 | Option                  | Default | Meaning                                                               |
 |-------------------------|---------|-----------------------------------------------------------------------|
-| `--numbering <on\|off>` | `on`    | enable or disable heading numbering                                   |
+| `--numbering <on\|off\|true\|false>` | `on`    | enable or disable heading numbering                        |
 | `--min-level <N>`       | `2`     | minimum managed heading level (>=1)                                   |
 | `--max-level <N>`       | `4`     | maximum managed heading level (<=6)                                   |
-| `--anchor <github\|gitlab\|false>` | `github` | select the anchor profile or disable inline anchors             |
-| `--toc <on\|off>`       | `on`    | renders the managed ToC area when `on`, leaves it empty when `off`    |
+| `--anchor <github\|gitlab\|off\|false>` | `github` | select the anchor profile or disable inline anchors         |
+| `--toc <on\|off\|true\|false>`       | `on`    | renders the managed ToC area when `on`, leaves it empty when `off` |
 | `--bullets <auto\|*\|-\|+>` | `auto` | choose the generated unordered-list bullet style                     |
 | `--file <name>`         | –       | read and overwrite file                                               |
 | `--verbose`             | `off`   | diagnostic and progress messages on `stderr`                          |
@@ -418,8 +432,10 @@ Short forms:
 
 * With `--file`, the file is read and overwritten.
 * Without `--file`, input comes from `stdin` and document output goes to `stdout`.
+* If neither `--file` nor piped `stdin` is provided, the command fails with an input-source error.
 * Successful commands produce no output except for `--help`, `--version`, or `--verbose`.
 * Errors and diagnostic messages are written exclusively to `stderr`.
+* Collected warnings are only printed in verbose mode.
 
 ## 9. Commands
 
@@ -449,6 +465,7 @@ Additional rules:
 * Anchor IDs are computed only from the unnumbered title.
 * Duplicate IDs are resolved deterministically.
 * Foreign content in the ToC area is not deleted, but preserved as an HTML comment.
+* `--anchor false` is accepted as an alias for `--anchor off`, but normalized persistence uses `anchor=off`.
 * On success, the result is idempotent.
 
 Example of a rendered heading:
@@ -479,11 +496,13 @@ After `strip`, this structure is still valid:
 ```md
 <!-- mdtoc -->
 <!-- mdtoc-config
+container-version=v2
 numbering=true
 min-level=2
 max-level=4
 anchor=github
 toc=true
+bullets=auto
 state=stripped
 -->
 <!-- /mdtoc -->
@@ -498,19 +517,22 @@ Error case:
 
 Behavior:
 
-* ignores the config block
-* removes the complete managed container, if present:
+* first attempts the normal structural parse
+* if that succeeds, it removes the complete managed container, if present:
   * `<!-- mdtoc -->`
   * ToC content
   * `mdtoc-config`
   * `<!-- /mdtoc -->`
 * additionally removes managed heading numbers
 * additionally removes managed inline anchors
+* if strict parsing fails, it falls back to locating only the outer managed markers and removes the container by marker bounds
+* after fallback container removal, heading normalization is attempted again on the remaining body text
 
 Conservative rule:
 
 * If it cannot be determined with certainty whether a number or an inline anchor is managed, the content remains unchanged.
-* In every such case, a diagnostic message should be emitted.
+* If fallback parsing was needed, a warning is collected; this warning is only emitted in verbose mode.
+* If fallback container removal succeeds but heading parsing still fails afterward, `strip --raw` returns the original parsing error.
 
 Use cases:
 
@@ -519,7 +541,22 @@ Use cases:
 * complete removal of `mdtoc` management
 * tests
 
-### 9.4 `check`
+### 9.4 `regen`
+
+Behavior:
+
+* requires a valid config block
+* reads the persisted normalized config from the existing managed container
+* accepts only `state=generated` or `state=stripped`
+* in both supported states, it regenerates the document into the `generated` target state
+* writes the updated normalized config back with `state=generated`
+
+Error case:
+
+* no valid config block -> error
+* unsupported `state` -> error
+
+### 9.5 `check`
 
 Behavior:
 
@@ -550,6 +587,7 @@ Render rules:
 * The hierarchy follows the heading level.
 * Each additional level relative to `min-level` is indented by two spaces.
 * Every entry is a Markdown list item with a link.
+* The list marker is chosen according to `bullets`.
 
 Example:
 
@@ -557,6 +595,14 @@ Example:
 * [1. Introduction](#introduction)
   * [1.1. API](#api)
 ```
+
+Bullet selection:
+
+* with `bullets=*`, `-`, or `+`, the configured marker is used exactly
+* with `bullets=auto`, `mdtoc` counts unordered-list markers in the body text outside fences, generic HTML comments, and excluded regions
+* recognized body list markers are `*`, `-`, and `+` followed by one space
+* if one marker has the highest count, it is used
+* ties are resolved in the fixed order `*` > `-` > `+`
 
 Displayed in the link text:
 
@@ -571,7 +617,7 @@ Link target:
 Behavior of `anchor`:
 
 * with `anchor=github`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitHub-compatible profile
-* with `anchor=gitlab`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitLab profile selection
+* with `anchor=gitlab`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitLab profile
 * with `anchor=off`, `mdtoc` does not render a managed inline anchor; the ToC links still remain `#anchor_id`
 
 _Explanation:_
@@ -615,12 +661,16 @@ The following also applies:
 * `title_text` is **not** the raw title string from the line.
 * `title_text` is the plain-text interpretation of `title_markup`.
 * Managed numbering and the managed inline anchor are **not** part of `title_text`.
+* The current implementation derives `title_text` with these inline rules:
+  * backtick code spans contribute only their visible content
+  * Markdown links and images contribute only their visible label or alt text
+  * HTML tags are removed
+  * inline formatting markers `*`, `_`, and `~` are removed
+  * whitespace is collapsed to single spaces and trimmed at the ends
 
 _Explanation:_
 
-* In v1, the derivation of `title_text` is fully delegated to `goldmark`.
-* The authoritative value is the plain-text interpretation of the heading content provided by `goldmark`.
-* In v1, `mdtoc` defines no own diverging text derivation logic for this.
+* The current implementation intentionally keeps this extraction logic small and self-contained.
 * Only this keeps slug/anchor generation, ToC link text, and GitHub-like behavior consistent.
 
 ### 11.3 GitHub-compatible basic rules
@@ -697,6 +747,50 @@ open-source
 
 ```text
 thisll-be-a-helpful-section-about-the-greek-letter-θ
+```
+
+### 11.7. <a id="gitlab-anchor-id-profile"></a>GitLab anchor ID profile
+
+If `anchor=gitlab`, `mdtoc` MUST derive `anchor_id` according to the GitLab heading-ID rules documented for GLFM.
+
+The GitLab profile applies these steps:
+
+1. Input is `title_text`.
+2. All text is converted to lowercase.
+3. All non-word text is removed.
+4. Spaces are converted to `-`.
+5. Two or more adjacent hyphens are collapsed to one.
+6. If the resulting ID already exists in the same document, `-1`, `-2`, `-3`, ... is appended.
+
+For `mdtoc`, the GitLab profile is interpreted as follows:
+
+* Unicode letters and Unicode decimal digits are preserved.
+* `_` is preserved as part of a word.
+* Existing `-` characters are preserved and then normalized by the hyphen-collapse step.
+* Punctuation between preserved text parts is removed, not converted to a separator.
+* Leading and trailing hyphens are trimmed after normalization.
+* If the normalized ID becomes empty, `mdtoc` uses the fallback `section`.
+
+The GitLab profile therefore differs from the GitHub-compatible profile in important edge cases:
+
+* `3.5` becomes `35` in GitLab mode, but `3-5` in GitHub mode.
+* `A+B` becomes `ab` in GitLab mode, but `a-b` in GitHub mode.
+* `foo_bar` stays `foo_bar` in GitLab mode, but becomes `foo-bar` in GitHub mode.
+
+Examples:
+
+```md
+## Version 3.5
+## A+B
+## foo_bar baz
+```
+
+In GitLab mode, these headings yield:
+
+```text
+version-35
+ab
+foo_bar-baz
 ```
 
 #### Example 3
@@ -809,30 +903,37 @@ Possible later extensions:
 
 _Note:_ These points are explicitly extensions. They should not make v1 unnecessarily complex.
 
-## 15. Recommended Go implementation basis: `goldmark` (informative)
+## 15. Current implementation basis (informative)
 
-Using `goldmark` is sensible for a Go implementation.
+The current Go implementation is intentionally self-contained.
 
-Recommended setup:
+Current basis:
 
-* module: `github.com/yuin/goldmark`
-* target range: current stable `1.x` version
-* concrete reference for this specification: `v1.8.x`
-* recommended extension: `extension.GFM`
+* a line-oriented parser for
+  * the managed container
+  * fenced code blocks
+  * generic HTML comments
+  * exclusion regions
+  * heading candidates
+* a small inline-text extractor for deriving `title_text`
+* an internal slugger implementation for the GitHub and GitLab anchor profiles
 
-Recommendation for `mdtoc`:
+Current implementation notes:
 
-* `goldmark` SHOULD be used for parsing, heading recognition, deriving `title_text` from headings, and robust handling of fenced code blocks.
-* In v1, the derivation of `title_text` is fully delegated to `goldmark`.
-* The authoritative value is the plain-text interpretation of the heading content provided by `goldmark`.
-* In v1, `mdtoc` defines no own diverging text derivation logic for this.
-* The normative slug/anchor ID from section 11 SHOULD still be computed by `mdtoc` itself according to this specification.
-* `parser.WithAutoHeadingID()` SHOULD therefore not be the normative source of `anchor_id`.
-* If a `goldmark`-specific ID generation is still used in code, it MUST use a custom `parser.IDs` implementation that matches section 11 exactly.
+* heading recognition is intentionally restricted to the explicit ATX subset from section 5
+* the normative slug and anchor rules from section 11 are implemented directly in `mdtoc`
+* no external Markdown renderer is the normative source of `anchor_id`
+* the current code does not require a full Markdown AST to preserve the documented behavior
+
+Alternative implementations:
+
+* Another implementation MAY use a Markdown parser library internally.
+* Such an implementation MUST still preserve the external behavior defined by this specification.
+* In particular, `title_text`, slug generation, collision handling, ignored regions, and marker/config handling must remain behavior-compatible with the current implementation.
 
 _Explanation:_
 
-* `goldmark` significantly reduces implementation effort because heading structure, fences, inline markup, and source positions do not have to be rebuilt with regexes.
-* The actual domain logic of `mdtoc` still remains small and self-contained: finding containers, normalizing managed headings, deriving numbers/IDs, and rendering deterministically.
+* The current implementation favors a narrow, deterministic parser over a full Markdown dependency.
+* The actual domain logic of `mdtoc` remains small and explicit: finding containers, normalizing managed headings, deriving numbers and IDs, and rendering deterministically.
 
 ---

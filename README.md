@@ -62,6 +62,7 @@ state=generated
 * exclusion regions: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
 * explicit anchor profiles: `github` (default), `gitlab`, or `off`
 * slug link anchors from heading titles, not numbers
+* `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab anchor profile](docs/mdtoc-spec.md#gitlab-anchor-id-profile).
 * works with repeated headings
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
@@ -157,7 +158,7 @@ This means:
 
 ### 6.2. <a id="comparison"></a>Comparison
 
-* [mdtoc tools comparison](./docs/mdtoc-tools-comparison.md)
+* [mdtoc alternatives](./docs/mdtoc-alternatives.md)
 
 ## 7. <a id="status"></a>Status
 
