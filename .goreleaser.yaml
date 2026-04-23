@@ -171,16 +171,15 @@ release:
   footer: |
     ### macOS
 
-    If Gatekeeper blocks the downloaded tool, remove the quarantine flag from
-    the unpacked binary path, for example:
-
+    Install via Homebrew: `brew install rokath/tap/mdtoc`
+    - OR -
+    Download and execute the appropriate binary. If Gatekeeper blocks the downloaded tool,
+    remove the quarantine flag from the unpacked binary path, for example:
     `xattr -d com.apple.quarantine path/to/mdtoc`
 
     ### Windows
 
     If SmartScreen or the file block flag gets in the way, unblock the unpacked
-    binary path, for example:
-
-    `Unblock-File path\to\mdtoc.exe`
+    binary path, for example: `Unblock-File path\to\mdtoc.exe`
 
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
