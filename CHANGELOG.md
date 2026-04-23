@@ -6,7 +6,11 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* None yet.
+* Homebrew release auditing was corrected:
+  * the macOS Homebrew audit now uses the minimal user-facing path with `brew tap rokath/tap`
+  * unnecessary cleanup steps were removed so the CI path stays aligned with `brew install rokath/tap/mdtoc`
+* Release notes were refined:
+  * the GoReleaser release footer now includes the Homebrew install command `brew install rokath/tap/mdtoc`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

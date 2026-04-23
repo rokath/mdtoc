@@ -79,8 +79,6 @@ jobs:
         run: |
           set -euo pipefail
           tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
-          brew uninstall --force mdtoc || true
-          brew untap rokath/tap || true
           brew tap rokath/tap
           brew install rokath/tap/mdtoc
           version_output="$(mdtoc --version)"
