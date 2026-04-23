@@ -79,12 +79,13 @@ jobs:
         run: |
           set -euo pipefail
           tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          expected_version="${tag#v}"
           brew tap rokath/tap
           brew install rokath/tap/mdtoc
           version_output="$(mdtoc --version)"
           printf '%s\n' "$version_output"
           case "$version_output" in
-            *"mdtoc $tag"*) ;;
+            *"mdtoc $expected_version"*) ;;
             *)
               echo "installed Homebrew version does not match latest release tag $tag"
               exit 1
