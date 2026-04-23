@@ -40,10 +40,11 @@
   * [6.2. Comparison](#comparison)
 * [7. Status](#status)
 <!-- mdtoc-config
+container-version=v2
 numbering=on
 min-level=2
 max-level=4
-anchors=on
+anchor=github
 toc=on
 bullets=auto
 state=generated
@@ -59,6 +60,7 @@ state=generated
 * targets ATX headings (`#` to `######`)
 * ignores headings inside fenced code blocks safely
 * exclusion regions: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
+* explicit anchor profiles: `github` (default), `gitlab`, or `off`
 * slug link anchors from heading titles, not numbers
 * works with repeated headings
 * generated content stays clearly separated from authored content
@@ -96,7 +98,8 @@ mdtoc <command> -v  # show the long help for one command
 
 ```bash
 cat MY_IMPORTANT_DOCUMENT.md | mdtoc generate    # do a dry-run
-mdtoc generate -f README.md -a off -toc off      # rewrite headings only, keep anchors and ToC disabled
+mdtoc generate -f README.md -a false -toc off    # rewrite headings only, keep inline anchors and ToC disabled
+mdtoc generate -f README.md -a gitlab            # persist the GitLab anchor profile explicitly
 cat README.md | mdtoc strip > README.stripped.md # remove managed artifacts via Unix pipe and write to a different file 
 mdtoc regen -f README.md                         # rebuild the generated state from the stored container config
 mdtoc generate -f README.md                      # generate with current CLI flags or defaults and rewrite the config block
@@ -114,10 +117,11 @@ mdtoc check -f README.md                         # fail in CI when README.md dif
 <!-- mdtoc -->
 * [About](#about)
 <!-- mdtoc-config
+container-version=v2
 numbering=on
 min-level=2
 max-level=4
-anchors=on
+anchor=github
 toc=on
 bullets=auto
 state=generated

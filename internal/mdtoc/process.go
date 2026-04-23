@@ -165,7 +165,7 @@ func Check(input string) (bool, []string, error) {
 	var expected string
 	switch parsed.Container.Config.State {
 	case StateGenerated:
-		expected, _, err = Generate(input, Options{Numbering: parsed.Container.Config.Numbering, MinLevel: parsed.Container.Config.MinLevel, MaxLevel: parsed.Container.Config.MaxLevel, Anchors: parsed.Container.Config.Anchors, TOC: parsed.Container.Config.TOC, Bullets: parsed.Container.Config.Bullets})
+		expected, _, err = Generate(input, Options{Numbering: parsed.Container.Config.Numbering, MinLevel: parsed.Container.Config.MinLevel, MaxLevel: parsed.Container.Config.MaxLevel, Anchor: parsed.Container.Config.Anchor, TOC: parsed.Container.Config.TOC, Bullets: parsed.Container.Config.Bullets})
 	case StateStripped:
 		expected, _, err = Strip(input)
 	default:
@@ -212,7 +212,7 @@ func removeContainerAndNormalizeHeadings(parsed *ParsedDocument) ([]string, []He
 
 // assignDerivedArtifacts computes managed numbers and anchors for eligible headings.
 func assignDerivedArtifacts(headings []Heading, cfg Config) {
-	slugger := NewSlugger()
+	slugger := newSluggerForAnchorMode(cfg.Anchor)
 	counters := make([]int, 7)
 	for i := range headings {
 		h := &headings[i]
@@ -252,13 +252,22 @@ func rewriteHeadings(lines []string, headings []Heading, cfg Config) []string {
 		if h.InManagedRange(cfg) && h.ManagedNumber != "" {
 			line += h.ManagedNumber + " "
 		}
-		if h.InManagedRange(cfg) && cfg.Anchors && h.ManagedAnchor != "" {
+		if h.InManagedRange(cfg) && cfg.Anchor.RendersInline() && h.ManagedAnchor != "" {
 			line += h.ManagedAnchor
 		}
 		line += h.TitleMarkup
 		out[h.LineIndex] = line
 	}
 	return out
+}
+
+func newSluggerForAnchorMode(mode AnchorMode) *Slugger {
+	switch mode {
+	case AnchorGitHub, AnchorGitLab, AnchorFalse, "":
+		return NewSlugger()
+	default:
+		return NewSlugger()
+	}
 }
 
 // renderTOC converts managed headings into Markdown list entries.

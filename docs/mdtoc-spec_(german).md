@@ -54,10 +54,11 @@ Ein von `mdtoc` verwaltetes Dokument verwendet genau diese Container-Struktur:
 <!-- mdtoc -->
 [TOC CONTENT]
 <!-- mdtoc-config
+container-version=v2
 numbering=on
 min-level=2
 max-level=4
-anchors=on
+anchor=github
 toc=on
 state=generated
 -->
@@ -322,10 +323,11 @@ Der Config-Block hat genau diese Form:
 
 ```html
 <!-- mdtoc-config
+container-version=v2
 numbering=on
 min-level=2
 max-level=4
-anchors=on
+anchor=github
 toc=on
 state=generated
 -->
@@ -337,21 +339,27 @@ Regeln:
 * Jedes Feld steht in einer eigenen Zeile.
 * Alle Felder verwenden `key=value`.
 * Die Feldreihenfolge ist fest:
-  1. `numbering`
-  2. `min-level`
-  3. `max-level`
-  4. `anchors`
-  5. `toc`
-  6. `state`
+  1. `container-version`
+  2. `numbering`
+  3. `min-level`
+  4. `max-level`
+  5. `anchor`
+  6. `toc`
+  7. `bullets`
+  8. `state`
 * Zulässige Werte:
+  * `container-version=v2`
   * `numbering=on|off`
-  * `anchors=on|off`
+  * `anchor=github|gitlab|false`
   * `toc=on|off`
+  * `bullets=auto|*|-|+`
   * `state=generated|stripped`
 * `min-level` und `max-level` sind positive ganze Zahlen.
 * `min-level` darf nicht größer als `max-level` sein.
 * `max-level` darf nicht größer als 6 sein.
 * `generate` schreibt alle Generator-Optionen in den Config-Block; nicht angegebene Optionen mit Default-Wert.
+* Legacy-Config-Blöcke ohne `container-version` bleiben lesbar und werden als implizites `v1` behandelt.
+* Neuer Code zum Schreiben von Config-Blöcken erzeugt `container-version=v2`.
 * `--file`, `--help`, `--version`, `--verbose` und `--raw` werden nicht persistiert.
 * `strip` behält den Config-Block und setzt nur `state=stripped`.
 * `strip --raw` entfernt den Config-Block vollständig.
@@ -387,7 +395,7 @@ _Anmerkung:_ `state` ist hier bewusst ebenfalls auf `key=value` vereinheitlicht.
 | `--numbering <on\|off>` | `on`    | Kapitelnummern aktivieren oder deaktivieren                            |
 | `--min-level <N>`       | `2`     | minimale verwaltete Heading-Ebene (>=1)                                |
 | `--max-level <N>`       | `4`     | maximale verwaltete Heading-Ebene (<=6)                                |
-| `--anchors <on\|off>`   | `on`    | Inline-Anker erzeugen oder deaktivieren                                |
+| `--anchor <github\|gitlab\|false>` | `github` | Anchor-Profil wählen oder Inline-Anker deaktivieren            |
 | `--toc <on\|off>`       | `on`    | rendert den verwalteten ToC-Bereich bei `on`, lässt ihn bei `off` leer |
 | `--file <name>`         | –       | Datei lesen und überschreiben                                          |
 | `--verbose`             | `off`   | Diagnose- und Ablaufmeldungen auf `stderr`                             |
@@ -398,7 +406,7 @@ Kurzformen:
 | Option        | Kurzform |
 |---------------|----------|
 | `--numbering` | `-n`     |
-| `--anchors`   | `-a`     |
+| `--anchor`    | `-a`     |
 | `--file`      | `-f`     |
 | `--verbose`   | `-v`     |
 | `--help`      | `-h`     |
@@ -426,7 +434,7 @@ Verhalten:
 5. Relevante Überschriften bestimmen.
 6. Nummern neu berechnen, falls `numbering=on`.
 7. `anchor_id` für alle relevanten Überschriften neu berechnen.
-8. Verwaltete Inline-Anker nur rendern, falls `anchors=on`.
+8. Verwaltete Inline-Anker nur rendern, falls `anchor!=off`.
 9. ToC neu rendern, falls `toc=on`; andernfalls den verwalteten ToC-Bereich leer rendern.
 10. Überschriften neu rendern.
 11. Config neu rendern und `state=generated` setzen.
@@ -471,7 +479,7 @@ Nach `strip` ist damit diese Struktur weiterhin gültig:
 numbering=on
 min-level=2
 max-level=4
-anchors=on
+anchor=github
 toc=on
 state=stripped
 -->
@@ -557,15 +565,16 @@ Linkziel:
 * grundsätzlich `#` + `anchor_id`
 * `anchor_id` wird exakt nach Abschnitt 11 berechnet
 
-Verhalten von `anchors`:
+Verhalten von `anchor`:
 
-* bei `anchors=on` rendert `mdtoc` zusätzlich einen verwalteten Inline-Anker mit genau derselben `anchor_id`
-* bei `anchors=off` rendert `mdtoc` keinen verwalteten Inline-Anker; die ToC-Links bleiben trotzdem `#anchor_id`
+* bei `anchor=github` rendert `mdtoc` zusätzlich einen verwalteten Inline-Anker und berechnet `anchor_id` mit dem GitHub-kompatiblen Profil
+* bei `anchor=gitlab` rendert `mdtoc` zusätzlich einen verwalteten Inline-Anker und verwendet die GitLab-Profilauswahl
+* bei `anchor=false` rendert `mdtoc` keinen verwalteten Inline-Anker; die ToC-Links bleiben trotzdem `#anchor_id`
 
 _Erklärung:_
 
-* `anchors=off` ist damit ein rendererabhängiger Kompatibilitätsmodus.
-* Vollständig portable und rendererunabhängige ToC-Links sind nur mit `anchors=on` garantiert.
+* `anchor=false` ist damit ein rendererabhängiger Kompatibilitätsmodus.
+* Vollständig portable und rendererunabhängige ToC-Links sind nur mit einem Inline-Anchor-Profil wie `github` oder `gitlab` garantiert.
 
 _Verweis:_
 
@@ -645,7 +654,7 @@ _Erklärung:_
 
 ### 11.5 Beziehung zur Inline-Anker-Syntax
 
-Wenn `anchors=on`, rendert `mdtoc` exakt diese Form:
+Wenn `anchor!=off`, rendert `mdtoc` exakt diese Form:
 
 ```html
 <a id="anchor_id"></a>

@@ -133,7 +133,7 @@ func TestGenerateIsIdempotentWithStarBullets(t *testing.T) {
 		Numbering: true,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchors:   true,
+		Anchor:    AnchorGitHub,
 		TOC:       true,
 		Bullets:   BulletStar,
 	})
@@ -148,7 +148,7 @@ func TestGenerateIsIdempotentWithStarBullets(t *testing.T) {
 		Numbering: true,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchors:   true,
+		Anchor:    AnchorGitHub,
 		TOC:       true,
 		Bullets:   BulletStar,
 	})
@@ -170,7 +170,7 @@ func TestGenerateIsIdempotentWithStarBullets(t *testing.T) {
 
 // TestGeneratePreservesForeignTOCContentAsComment verifies preservation of handwritten managed-area content.
 func TestGeneratePreservesForeignTOCContentAsComment(t *testing.T) {
-	input := strings.Join([]string{startMarker, "Some handwritten note", configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n"
+	input := strings.Join([]string{startMarker, "Some handwritten note", configStart, "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n"
 	got, _, err := Generate(input, DefaultOptions())
 	if err != nil {
 		t.Fatalf("Generate error: %v", err)
@@ -187,7 +187,7 @@ func TestRegenReusesPersistedContainerConfig(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  3,
-		Anchors:   false,
+		Anchor:    AnchorFalse,
 		TOC:       true,
 	})
 	if err != nil {
@@ -222,7 +222,7 @@ func TestRegenRestoresGeneratedStateFromStrippedInput(t *testing.T) {
 		Numbering: true,
 		MinLevel:  1,
 		MaxLevel:  4,
-		Anchors:   true,
+		Anchor:    AnchorGitHub,
 		TOC:       true,
 	})
 	if err != nil {
@@ -426,7 +426,7 @@ func TestGenerateForcedBulletModeOverridesAutoDetection(t *testing.T) {
 		Numbering: true,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchors:   true,
+		Anchor:    AnchorGitHub,
 		TOC:       true,
 		Bullets:   BulletPlus,
 	})
@@ -513,17 +513,17 @@ func TestStripRawRemovesContainerAndManagedArtifacts(t *testing.T) {
 	}
 }
 
-// TestStripRawRecoversFromFutureContainerVersion verifies raw stripping for a future container format.
+// TestStripRawRecoversFromFutureContainerVersion verifies raw stripping for an unsupported future container format.
 func TestStripRawRecoversFromFutureContainerVersion(t *testing.T) {
 	input := strings.Join([]string{
 		startMarker,
 		"+ [1. Intro](#intro)",
 		configStart,
-		"container-version=v2",
+		"container-version=v3",
 		"numbering=on",
 		"min-level=2",
 		"max-level=4",
-		"anchors=on",
+		"anchor-profile=github",
 		"toc=on",
 		"bullets=auto",
 		"state=generated",
@@ -548,6 +548,39 @@ func TestStripRawRecoversFromFutureContainerVersion(t *testing.T) {
 	}
 }
 
+// TestGenerateNormalizesLegacyContainerToExplicitV2 verifies that rewrites upgrade legacy containers.
+func TestGenerateNormalizesLegacyContainerToExplicitV2(t *testing.T) {
+	input := strings.Join([]string{
+		startMarker,
+		"* [1. Intro](#intro)",
+		configStart,
+		"numbering=on",
+		"min-level=2",
+		"max-level=4",
+		"anchors=on",
+		"toc=on",
+		"state=generated",
+		configEnd,
+		endMarker,
+		"",
+		"## 1. <a id=\"intro\"></a>Intro",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if !strings.Contains(got, "container-version=v2") {
+		t.Fatalf("legacy container was not upgraded to explicit v2:\n%s", got)
+	}
+	if !strings.Contains(got, "anchor=github") {
+		t.Fatalf("legacy anchor config was not normalized:\n%s", got)
+	}
+	if !strings.Contains(got, "bullets=*") {
+		t.Fatalf("legacy bullets were not normalized into explicit v2 output:\n%s", got)
+	}
+}
+
 // TestStripRawRecoversFromUnknownConfigKey verifies raw stripping with a not-yet-known config key.
 func TestStripRawRecoversFromUnknownConfigKey(t *testing.T) {
 	input := strings.Join([]string{
@@ -557,7 +590,7 @@ func TestStripRawRecoversFromUnknownConfigKey(t *testing.T) {
 		"numbering=on",
 		"min-level=2",
 		"max-level=4",
-		"anchor=github",
+		"anchor-profile=github",
 		"toc=on",
 		"bullets=auto",
 		"state=generated",
@@ -591,7 +624,7 @@ func TestStripRawRecoversFromUnterminatedConfigBlock(t *testing.T) {
 		"numbering=on",
 		"min-level=2",
 		"max-level=4",
-		"anchors=on",
+		"anchor=github",
 		"toc=on",
 		"bullets=auto",
 		"state=generated",

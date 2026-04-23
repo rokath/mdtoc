@@ -150,7 +150,7 @@ func TestRunnerRegenFromStdin(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchors:   false,
+		Anchor:    AnchorFalse,
 		TOC:       true,
 	})
 	if err != nil {
@@ -262,7 +262,7 @@ func TestRunnerRegenWithFileDoesNotRequireStdin(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchors:   false,
+		Anchor:    AnchorFalse,
 		TOC:       true,
 	})
 	if err != nil {
@@ -347,7 +347,7 @@ func TestRunnerGenerateThenCheckWithFixtureFile(t *testing.T) {
 
 // TestRunnerCheckExitCodeOnMismatch verifies the special mismatch exit code from check.
 func TestRunnerCheckExitCodeOnMismatch(t *testing.T) {
-	stdin := strings.NewReader(strings.Join([]string{startMarker, "* [1. Wrong](#wrong)", configStart, "numbering=on", "min-level=2", "max-level=4", "anchors=on", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n")
+	stdin := strings.NewReader(strings.Join([]string{startMarker, "* [1. Wrong](#wrong)", configStart, "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n")
 	var stdout, stderr strings.Builder
 	runner := NewRunner(stdin, &stdout, &stderr)
 	exitCode, err := runner.Run([]string{"check"})
