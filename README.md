@@ -159,7 +159,6 @@ This means:
 ### 6.2. <a id="comparison"></a>Comparison
 
 * [mdtoc alternatives](./docs/mdtoc-alternatives.md)
-* [mdtoc tools comparison](./docs/mdtoc-tools-comparison.md)
 
 ## 7. <a id="status"></a>Status
 

@@ -12,7 +12,8 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * `README.md` and `docs/mdtoc-spec.md` now document the GitLab profile and link to a stable reference section
 * Alternatives documentation was condensed:
   * new `docs/mdtoc-alternatives.md` now provides a table-centric overview of relevant alternatives relative to `mdtoc`
-  * `README.md` now links to that new overview while keeping the longer comparison document as supporting material
+  * `README.md` now links to that new overview as the primary alternatives page
+  * remaining useful scope and exclusion notes were moved into the alternatives page so the older source document no longer needs to be referenced
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
