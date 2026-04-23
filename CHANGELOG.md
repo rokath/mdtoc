@@ -6,6 +6,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* Homebrew release auditing was corrected:
+  * the version assertion now normalizes the release tag from `vX.Y.Z` to `X.Y.Z` before comparing it with `mdtoc --version`
+
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v0.1.7..HEAD`
