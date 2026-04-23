@@ -6,6 +6,14 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* GitLab anchor generation was implemented:
+  * `--anchor gitlab` now derives heading IDs with a GitLab-specific profile instead of behaving like `github`
+  * tests now cover documented GitHub/GitLab differences and a file-level generate workflow for a punctuation-sensitive heading
+  * `README.md` and `docs/mdtoc-spec.md` now document the GitLab profile and link to a stable reference section
+* Alternatives documentation was condensed:
+  * new `docs/mdtoc-alternatives.md` now provides a table-centric overview of relevant alternatives relative to `mdtoc`
+  * `README.md` now links to that new overview while keeping the longer comparison document as supporting material
+
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v0.2.0..HEAD`

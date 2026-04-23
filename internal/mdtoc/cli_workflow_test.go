@@ -166,6 +166,35 @@ func TestRunnerFileWorkflowPersistsExplicitAnchorProfile(t *testing.T) {
 	}
 }
 
+// TestRunnerFileWorkflowGitLabAnchorProfileDiffersFromGitHub verifies a heading where GitLab and GitHub anchor IDs differ.
+func TestRunnerFileWorkflowGitLabAnchorProfileDiffersFromGitHub(t *testing.T) {
+	const path = "doc.md"
+	gitlabFS := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Version 3.5\n",
+	})
+	githubFS := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Version 3.5\n",
+	})
+
+	runFileCommand(t, gitlabFS, "generate", "-f", path, "--anchor", "gitlab")
+	gotGitLab := gitlabFS.fileString(path)
+	if !strings.Contains(gotGitLab, "anchor=gitlab") || !strings.Contains(gotGitLab, `<a id="version-35"></a>`) {
+		t.Fatalf("generate did not render the GitLab-specific anchor ID:\n%s", gotGitLab)
+	}
+	if !strings.Contains(gotGitLab, "* [1. Version 3.5](#version-35)") {
+		t.Fatalf("generate did not render the GitLab-specific ToC target:\n%s", gotGitLab)
+	}
+
+	runFileCommand(t, githubFS, "generate", "-f", path, "--anchor", "github")
+	gotGitHub := githubFS.fileString(path)
+	if !strings.Contains(gotGitHub, `<a id="version-3-5"></a>`) {
+		t.Fatalf("generate did not render the GitHub-specific anchor ID:\n%s", gotGitHub)
+	}
+	if strings.Contains(gotGitHub, `<a id="version-35"></a>`) {
+		t.Fatalf("generate unexpectedly rendered the GitLab anchor ID under the GitHub profile:\n%s", gotGitHub)
+	}
+}
+
 // TestRunnerFileWorkflowNormalizesAnchorFalseVariants verifies canonical off persistence for accepted inputs.
 func TestRunnerFileWorkflowNormalizesAnchorFalseVariants(t *testing.T) {
 	tests := []struct {

@@ -571,7 +571,7 @@ Link target:
 Behavior of `anchor`:
 
 * with `anchor=github`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitHub-compatible profile
-* with `anchor=gitlab`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitLab profile selection
+* with `anchor=gitlab`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitLab profile
 * with `anchor=off`, `mdtoc` does not render a managed inline anchor; the ToC links still remain `#anchor_id`
 
 _Explanation:_
@@ -697,6 +697,50 @@ open-source
 
 ```text
 thisll-be-a-helpful-section-about-the-greek-letter-θ
+```
+
+### 11.7. <a id="gitlab-anchor-id-profile"></a>GitLab anchor ID profile
+
+If `anchor=gitlab`, `mdtoc` MUST derive `anchor_id` according to the GitLab heading-ID rules documented for GLFM.
+
+The GitLab profile applies these steps:
+
+1. Input is `title_text`.
+2. All text is converted to lowercase.
+3. All non-word text is removed.
+4. Spaces are converted to `-`.
+5. Two or more adjacent hyphens are collapsed to one.
+6. If the resulting ID already exists in the same document, `-1`, `-2`, `-3`, ... is appended.
+
+For `mdtoc`, the GitLab profile is interpreted as follows:
+
+* Unicode letters and Unicode decimal digits are preserved.
+* `_` is preserved as part of a word.
+* Existing `-` characters are preserved and then normalized by the hyphen-collapse step.
+* Punctuation between preserved text parts is removed, not converted to a separator.
+* Leading and trailing hyphens are trimmed after normalization.
+* If the normalized ID becomes empty, `mdtoc` uses the fallback `section`.
+
+The GitLab profile therefore differs from the GitHub-compatible profile in important edge cases:
+
+* `3.5` becomes `35` in GitLab mode, but `3-5` in GitHub mode.
+* `A+B` becomes `ab` in GitLab mode, but `a-b` in GitHub mode.
+* `foo_bar` stays `foo_bar` in GitLab mode, but becomes `foo-bar` in GitHub mode.
+
+Examples:
+
+```md
+## Version 3.5
+## A+B
+## foo_bar baz
+```
+
+In GitLab mode, these headings yield:
+
+```text
+version-35
+ab
+foo_bar-baz
 ```
 
 #### Example 3
