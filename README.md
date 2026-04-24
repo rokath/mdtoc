@@ -54,6 +54,7 @@ state=generated
 
 ## 1. <a id="features"></a>Features
 
+* very easy to use: `mdtoc generate -f README.md`
 * single binary, no external tools required
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
