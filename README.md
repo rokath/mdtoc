@@ -54,6 +54,7 @@ state=generated
 
 ## 1. <a id="features"></a>Features
 
+* very easy to use: `mdtoc generate -f README.md`
 * single binary, no external tools required
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
@@ -62,7 +63,6 @@ state=generated
 * exclusion regions: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
 * explicit anchor profiles: `github` (default), `gitlab`, or `off`
 * slug link anchors from heading titles, not numbers
-* `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab anchor profile](docs/mdtoc-spec.md#gitlab-anchor-id-profile).
 * works with repeated headings
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
@@ -106,6 +106,8 @@ mdtoc regen -f README.md                         # rebuild the generated state f
 mdtoc generate -f README.md                      # generate with current CLI flags or defaults and rewrite the config block
 mdtoc check -f README.md                         # fail in CI when README.md differs from the reconstructed target state
 ```
+
+* `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab anchor profile](docs/mdtoc-spec.md#gitlab-anchor-id-profile).
 
 ## 4. <a id="managed-structure"></a>Managed Structure
 
