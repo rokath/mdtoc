@@ -101,7 +101,9 @@ type Runner struct {
 	buildInfo BuildInfo
 	stdinTTY  bool
 	fs        fileSystem
+	// stdinPeek preserves probed stdin bytes so a later stdin read sees the full stream.
 	stdinPeek []byte
+	// stdinSeen reports whether stdinHasContent already probed the stream state.
 	stdinSeen bool
 }
 
