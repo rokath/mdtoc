@@ -383,6 +383,9 @@ func (r *Runner) readInput(file string) (string, error) {
 
 // requireInputSource rejects interactive invocations that forgot both -f and piped stdin.
 func (r *Runner) requireInputSource(file string) error {
+	if file != "" && !r.stdinTTY {
+		return errors.New("cannot use --file together with piped stdin")
+	}
 	if file != "" || !r.stdinTTY {
 		return nil
 	}

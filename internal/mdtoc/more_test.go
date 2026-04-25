@@ -253,6 +253,9 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 			t.Fatalf("parseConfig(%s) unexpectedly succeeded", tc.name)
 		}
 	}
+	if _, err := parseConfig([]string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", "extra=line", configEnd}); err == nil || !strings.Contains(err.Error(), "please update mdtoc") {
+		t.Fatalf("parseConfig should hint about newer mdtoc versions for versioned length mismatches: %v", err)
+	}
 
 	if _, err := parseBoolValue("maybe"); err == nil {
 		t.Fatalf("parseBoolValue should reject invalid values")

@@ -54,7 +54,7 @@ state=generated
 
 ## 1. <a id="features"></a>Features
 
-* very easy to use: `mdtoc generate -f README.md`
+* very easy to use: `mdtoc generate -f MY_IMPORTANT_DOCUMENT.md`
 * single binary, no external tools required
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
@@ -98,8 +98,8 @@ mdtoc <command> -v  # show the long help for one command
 ### 3.2. <a id="use-this-readme-as-example"></a>Use this README as example
 
 ```bash
-cat MY_IMPORTANT_DOCUMENT.md | mdtoc generate    # do a dry-run
-mdtoc generate -f README.md -a false -toc off    # rewrite headings only, keep inline anchors and ToC disabled
+cat README.md | mdtoc generate -n off -a off     # do a dry-run to generate only table of contence
+mdtoc generate -f README.md -a off -toc off      # rewrite headings with numbers
 mdtoc generate -f README.md -a gitlab            # persist the GitLab anchor profile explicitly
 cat README.md | mdtoc strip > README.stripped.md # remove managed artifacts via Unix pipe and write to a different file 
 mdtoc regen -f README.md                         # rebuild the generated state from the stored container config
@@ -141,7 +141,7 @@ This means:
 * the stored config is persisted output state
 * `regen` rebuilds the generated state from that persisted config
 * `check` uses that persisted state
-* changing generation settings currently goes through `generate`, not through manual config edits
+* changing generation settings must go through generate, not through manual config edits
 
 </details>
 

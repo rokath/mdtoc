@@ -6,6 +6,13 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* CLI input validation and upgrade guidance were tightened:
+  * commands now reject mixed input from piped stdin together with `--file/-f` instead of silently ignoring stdin
+  * config length errors now hint that the document may require a newer `mdtoc` version when a versioned container format is detected
+  * tests now cover mixed-input rejection for `generate`, `regen`, `strip`, and `check`
+* README usage wording was clarified:
+  * the example command block now better distinguishes dry-run pipe usage from file-rewrite usage
+  * the managed-configuration note now states that generation settings must be changed through `generate`, not through manual config edits
 * GitLab anchor generation was implemented:
   * `--anchor gitlab` now derives heading IDs with a GitLab-specific profile instead of behaving like `github`
   * tests now cover documented GitHub/GitLab differences and a file-level generate workflow for a punctuation-sensitive heading
