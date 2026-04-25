@@ -9,7 +9,7 @@ import (
 // TestRunnerRunAndHelpHelpers covers root CLI helper behavior and simple help builders.
 func TestRunnerRunAndHelpHelpers(t *testing.T) {
 	var stdout, stderr strings.Builder
-	runner := NewRunner(strings.NewReader(""), &stdout, &stderr)
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
 
 	exitCode, err := runner.Run(nil)
 	if err != nil {
@@ -120,7 +120,7 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	if got := stdout.String(); !strings.Contains(got, "mdtoc <command> --help [--verbose]") {
 		t.Fatalf("verbose root help missing subcommand help hint:\n%s", got)
 	}
-	if got := stdout.String(); !strings.Contains(got, "check    [--file <name>] [--verbose]") {
+	if got := stdout.String(); !strings.Contains(got, "check    [--file <name> | <name>] [--verbose]") {
 		t.Fatalf("verbose root help missing reordered check usage:\n%s", got)
 	}
 
