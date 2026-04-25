@@ -54,7 +54,7 @@ state=generated
 
 ## 1. <a id="features"></a>Features
 
-* very easy to use: `mdtoc generate -f README.md`
+* very easy to use: `mdtoc MY_IMPORTANT_DOCUMENT.md`
 * single binary, no external tools required
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
@@ -98,16 +98,19 @@ mdtoc <command> -v  # show the long help for one command
 ### 3.2. <a id="use-this-readme-as-example"></a>Use this README as example
 
 ```bash
-cat MY_IMPORTANT_DOCUMENT.md | mdtoc generate    # do a dry-run
-mdtoc generate -f README.md -a false -toc off    # rewrite headings only, keep inline anchors and ToC disabled
-mdtoc generate -f README.md -a gitlab            # persist the GitLab anchor profile explicitly
-cat README.md | mdtoc strip > README.stripped.md # remove managed artifacts via Unix pipe and write to a different file 
-mdtoc regen -f README.md                         # rebuild the generated state from the stored container config
-mdtoc generate -f README.md                      # generate with current CLI flags or defaults and rewrite the config block
-mdtoc check -f README.md                         # fail in CI when README.md differs from the reconstructed target state
+mdtoc README.md                                  # root mode: regen if managed, otherwise generate
+cat README.md | mdtoc -n off -a off              # root mode on stdin: generate a dry-run ToC-only view
+mdtoc README.md -a off --toc off                 # root mode: explicit generate because flags override regen
+mdtoc generate README.md -a gitlab               # explicit command with positional file input
+cat README.md | mdtoc strip > README.stripped.md # remove managed artifacts via Unix pipe and write to a different file
+mdtoc regen README.md                            # rebuild the generated state from the stored container config
+mdtoc generate README.md                         # generate with current CLI flags or defaults and rewrite the config block
+mdtoc check README.md                            # fail in CI when README.md differs from the reconstructed target state
 ```
 
 * `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab anchor profile](docs/mdtoc-spec.md#gitlab-anchor-id-profile).
+* Exactly one input source is allowed per invocation: positional file, `--file/-f`, or piped `stdin`.
+* Small CLI note: the Go-style one-dash long form such as `-toc off` is currently tolerated, but `--toc off` remains the documented form.
 
 ## 4. <a id="managed-structure"></a>Managed Structure
 
@@ -141,7 +144,7 @@ This means:
 * the stored config is persisted output state
 * `regen` rebuilds the generated state from that persisted config
 * `check` uses that persisted state
-* changing generation settings currently goes through `generate`, not through manual config edits
+* changing generation settings must go through generate, not through manual config edits
 
 </details>
 

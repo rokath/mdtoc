@@ -55,14 +55,22 @@ func (m AnchorMode) RendersInline() bool {
 
 // Config mirrors the normalized config block managed by the tool.
 type Config struct {
+	// ContainerVersion selects the persisted config-block layout.
 	ContainerVersion ContainerVersion
-	Numbering        bool
-	MinLevel         int
-	MaxLevel         int
-	Anchor           AnchorMode
-	TOC              bool
-	Bullets          BulletMode
-	State            State
+	// Numbering controls managed heading numbering inside the active range.
+	Numbering bool
+	// MinLevel is the smallest heading depth managed by mdtoc.
+	MinLevel int
+	// MaxLevel is the largest heading depth managed by mdtoc.
+	MaxLevel int
+	// Anchor selects the anchor-ID profile and inline-anchor rendering mode.
+	Anchor AnchorMode
+	// TOC controls whether the managed container includes a rendered ToC block.
+	TOC bool
+	// Bullets selects the unordered-list marker used for rendered ToC entries.
+	Bullets BulletMode
+	// State records whether the managed container currently holds generated or stripped content.
+	State State
 
 	// BulletsExplicit reports whether the parsed config block already contained
 	// an explicit bullets line. Legacy configs omit it.
@@ -102,12 +110,18 @@ func (c Config) Validate() error {
 
 // Options contains only the persisted generate options.
 type Options struct {
+	// Numbering controls managed heading numbering inside the active range.
 	Numbering bool
-	MinLevel  int
-	MaxLevel  int
-	Anchor    AnchorMode
-	TOC       bool
-	Bullets   BulletMode
+	// MinLevel is the smallest heading depth managed by mdtoc.
+	MinLevel int
+	// MaxLevel is the largest heading depth managed by mdtoc.
+	MaxLevel int
+	// Anchor selects the anchor-ID profile and inline-anchor rendering mode.
+	Anchor AnchorMode
+	// TOC controls whether generation renders a ToC block.
+	TOC bool
+	// Bullets selects the unordered-list marker used for rendered ToC entries.
+	Bullets BulletMode
 }
 
 // DefaultOptions mirrors the generator defaults from the spec.
@@ -131,12 +145,19 @@ func (o Options) ToConfig() Config {
 
 // Heading stores one heading candidate that mdtoc can manage.
 type Heading struct {
-	LineIndex     int
-	Level         int
-	Hashes        string
-	TitleMarkup   string
-	TitleText     string
+	// LineIndex points to the heading line in ParsedDocument.Lines.
+	LineIndex int
+	// Level is the ATX heading depth from 1 to 6.
+	Level int
+	// Hashes stores the literal leading hash run, such as "##".
+	Hashes string
+	// TitleMarkup is the heading content as parsed from the Markdown line.
+	TitleMarkup string
+	// TitleText is the normalized plain-text title used for slugging and ToC text.
+	TitleText string
+	// ManagedNumber is the computed numbering prefix, or empty when numbering is off/out of range.
 	ManagedNumber string
+	// ManagedAnchor is the computed anchor ID for this heading under the active anchor mode.
 	ManagedAnchor string
 }
 
@@ -149,19 +170,30 @@ func (h Heading) InManagedRange(cfg Config) bool {
 // ParsedDocument stores the structural information gathered during the parse
 // pass.
 type ParsedDocument struct {
-	Lines      []string
-	Container  *Container
-	Headings   []Heading
-	Warnings   []string
+	// Lines stores the original document split into logical lines.
+	Lines []string
+	// Container points to the managed mdtoc region when present.
+	Container *Container
+	// Headings holds all parsed heading candidates in document order.
+	Headings []Heading
+	// Warnings collects non-fatal parse findings for verbose diagnostics.
+	Warnings []string
+	// TrailingLF reports whether the original document ended with a newline byte.
 	TrailingLF bool
 }
 
 // Container identifies the managed area and stores the parsed config.
 type Container struct {
-	StartLine       int
+	// StartLine is the line index of the opening `<!-- mdtoc -->` marker.
+	StartLine int
+	// ConfigStartLine is the line index of the opening config marker.
 	ConfigStartLine int
-	ConfigEndLine   int
-	EndLine         int
-	Config          Config
-	TOCArea         []string
+	// ConfigEndLine is the line index of the closing `-->` for the config block.
+	ConfigEndLine int
+	// EndLine is the line index of the closing `<!-- /mdtoc -->` marker.
+	EndLine int
+	// Config is the parsed normalized config stored inside the container.
+	Config Config
+	// TOCArea stores the managed lines between the config block and closing marker.
+	TOCArea []string
 }

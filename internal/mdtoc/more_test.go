@@ -9,7 +9,7 @@ import (
 // TestRunnerRunAndHelpHelpers covers root CLI helper behavior and simple help builders.
 func TestRunnerRunAndHelpHelpers(t *testing.T) {
 	var stdout, stderr strings.Builder
-	runner := NewRunner(strings.NewReader(""), &stdout, &stderr)
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
 
 	exitCode, err := runner.Run(nil)
 	if err != nil {
@@ -120,7 +120,7 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	if got := stdout.String(); !strings.Contains(got, "mdtoc <command> --help [--verbose]") {
 		t.Fatalf("verbose root help missing subcommand help hint:\n%s", got)
 	}
-	if got := stdout.String(); !strings.Contains(got, "check    [--file <name>] [--verbose]") {
+	if got := stdout.String(); !strings.Contains(got, "check    [--file <name> | <name>] [--verbose]") {
 		t.Fatalf("verbose root help missing reordered check usage:\n%s", got)
 	}
 
@@ -252,6 +252,9 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 		if _, err := parseConfig(tc.lines); err == nil {
 			t.Fatalf("parseConfig(%s) unexpectedly succeeded", tc.name)
 		}
+	}
+	if _, err := parseConfig([]string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", "extra=line", configEnd}); err == nil || !strings.Contains(err.Error(), "please update mdtoc") {
+		t.Fatalf("parseConfig should hint about newer mdtoc versions for versioned length mismatches: %v", err)
 	}
 
 	if _, err := parseBoolValue("maybe"); err == nil {
