@@ -55,6 +55,7 @@ state=generated
 ## 1. <a id="features"></a>Features
 
 * very easy to use: `mdtoc MY_IMPORTANT_DOCUMENT.md`
+* highly configurable
 * single binary, no external tools required
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
