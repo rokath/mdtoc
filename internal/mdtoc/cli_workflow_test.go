@@ -116,6 +116,34 @@ func TestRunnerFileWorkflowGenerateStripRegenCheck(t *testing.T) {
 	}
 }
 
+// TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin verifies that file
+// workflows still run when CI provides non-interactive stdin that is already at EOF.
+func TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin(t *testing.T) {
+	const path = "README.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n",
+	})
+
+	stdout, stderr, exitCode, err := runCommandWithFS(t, fs, strings.NewReader(""), false, "generate", "-f", path)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("Run exit code = %d, want 0", exitCode)
+	}
+	if stdout != "" {
+		t.Fatalf("Run wrote unexpected stdout:\n%s", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("Run wrote unexpected stderr:\n%s", stderr)
+	}
+
+	got := fs.fileString(path)
+	if !strings.Contains(got, startMarker) || !strings.Contains(got, "state=generated") {
+		t.Fatalf("generate did not create managed state:\n%s", got)
+	}
+}
+
 // TestRunnerRootFileWorkflowGenerateFromPositional verifies root-mode generate
 // dispatch for unmanaged files passed positionally.
 func TestRunnerRootFileWorkflowGenerateFromPositional(t *testing.T) {

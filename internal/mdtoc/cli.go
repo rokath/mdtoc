@@ -1,6 +1,7 @@
 package mdtoc
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -100,6 +101,8 @@ type Runner struct {
 	buildInfo BuildInfo
 	stdinTTY  bool
 	fs        fileSystem
+	stdinPeek []byte
+	stdinSeen bool
 }
 
 // NewRunner creates a testable CLI runner with default build metadata.
@@ -541,10 +544,16 @@ func buildGenerateOptions(numbering string, minLevel, maxLevel int, anchor strin
 func (r *Runner) resolveRequestedInput(requested inputSource) (inputSource, error) {
 	if requested.kind == inputSourceFile {
 		if !r.stdinTTY {
-			if requested.viaFlag {
-				return inputSource{}, errors.New("cannot use --file together with piped stdin")
+			hasContent, err := r.stdinHasContent()
+			if err != nil {
+				return inputSource{}, err
 			}
-			return inputSource{}, errors.New("provide exactly one input source: positional file, --file, or stdin")
+			if hasContent {
+				if requested.viaFlag {
+					return inputSource{}, errors.New("cannot use --file together with piped stdin")
+				}
+				return inputSource{}, errors.New("provide exactly one input source: positional file, --file, or stdin")
+			}
 		}
 		return requested, nil
 	}
@@ -642,8 +651,38 @@ func (r *Runner) readInput(source inputSource) (string, error) {
 		b, err := r.fs.ReadFile(source.file)
 		return string(b), err
 	}
-	b, err := io.ReadAll(r.stdin)
+	reader := r.stdin
+	if len(r.stdinPeek) > 0 {
+		reader = io.MultiReader(bytes.NewReader(r.stdinPeek), r.stdin)
+		r.stdinPeek = nil
+	}
+	b, err := io.ReadAll(reader)
 	return string(b), err
+}
+
+// stdinHasContent probes one byte from non-interactive stdin so file-backed
+// commands can distinguish actual mixed input from CI environments where stdin
+// is merely redirected and already at EOF.
+func (r *Runner) stdinHasContent() (bool, error) {
+	if r.stdinTTY {
+		return false, nil
+	}
+	if r.stdinSeen {
+		return len(r.stdinPeek) > 0, nil
+	}
+
+	var probe [1]byte
+	n, err := r.stdin.Read(probe[:])
+	r.stdinSeen = true
+
+	if n > 0 {
+		r.stdinPeek = append(r.stdinPeek[:0], probe[:n]...)
+		return true, nil
+	}
+	if err == nil || errors.Is(err, io.EOF) {
+		return false, nil
+	}
+	return false, err
 }
 
 // writeOutput routes the transformed content back to the matching destination

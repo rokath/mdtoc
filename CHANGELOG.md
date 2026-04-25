@@ -10,6 +10,7 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * positional file arguments are now accepted alongside `--file/-f` for `generate`, `regen`, `strip`, and `check`
   * root mode now dispatches automatically to `regen` for valid managed input without generate overrides and to `generate` otherwise
   * root mode and explicit subcommands now reject conflicting input sources such as positional file plus `--file`, or file input plus piped stdin
+  * file-backed commands now tolerate empty redirected `stdin` so CI shells can run `-f/--file` workflows without false mixed-input failures
   * new CLI workflow tests cover root-mode dispatch, positional file support, and input-source conflict handling with the virtual filesystem helpers
 * CLI input validation and upgrade guidance were tightened:
   * commands now reject mixed input from piped stdin together with `--file/-f` instead of silently ignoring stdin
