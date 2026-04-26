@@ -152,6 +152,7 @@ This means:
 ## 5. <a id="limits"></a>Limits
 
 * no Setext heading support (`Heading` followed by `===` or `---`)
+* no HTML heading support (`<h2>Example</h2>`)
 * repeated-heading links depend on occurrence order ([issue #8](https://github.com/rokath/mdtoc/issues/8))
 * not a site generator
 * not a Markdown formatter

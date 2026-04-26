@@ -6,28 +6,51 @@
 
 Das Ziel ist nicht, beliebige kaputte Markdown-Dateien heuristisch zu "reparieren". Ziel ist eine klar definierte, testbare und für Anwender nachvollziehbare Behandlung von Dokumenten, die erkennbar einen `mdtoc`-Container enthalten oder enthalten sollten.
 
+Ein Hauptziel ist: Die Implementierung darf niemals riskieren, möglichen Nutzerinhalt zu löschen, der versehentlich irgendwo innerhalb des Containers geschrieben wurde, einschließlich innerhalb eines beschädigten Config-Blocks.
+
+Daraus folgen zwei weitere Leitlinien:
+
+* Möglicher Nutzerinhalt darf während Wiederherstellung oder Bereinigung nicht stillschweigend verloren gehen.
+* Das Verhalten soll einfach, deterministisch und leicht erklärbar bleiben.
+
+Das bedeutet:
+
+* sicher als generiert erkannte ToC-Zeilen dürfen verworfen werden
+* sicher als generiert erkannte Config-Zeilen dürfen verworfen werden
+* Leerzeilen dürfen normalisiert oder verworfen werden
+* alle anderen Zeilen innerhalb eines beschädigten Containers müssen die Wiederherstellung überleben
+
+Wenn nicht generierter Inhalt irgendwo innerhalb eines beschädigten Containers gefunden wird, soll `generate`:
+
+* einen neuen normalisierten Container aufbauen
+* den erhaltenen nicht generierten Inhalt außerhalb des neu aufgebauten Containers platzieren
+* die erhaltenen Zeilen in ihrer ursprünglichen Reihenfolge belassen
+* eine Warnung ausgeben, die diesen Vorgang erklärt
+
+So wird stiller Datenverlust vermieden, während der neue Container sauber bleibt.
+
 ## Problem
 
 Aktuell ist das Verhalten zwischen den Kommandos nicht ausreichend vereinheitlicht:
 
 * `check` soll nur reporten und niemals schreiben.
-* `regen` und `strip` sollen nur dann aktiv schreiben, wenn der Config-Block konsistent und verwertbar ist.
-* `generate` soll robuster mit bereits vorhandenem Container-Zustand umgehen können, insbesondere wenn generierte Reste oder beschädigte Config-Strukturen im Dokument liegen.
+* `regen` und `strip` sollen nur dann aktiv schreiben, wenn der Config-Block vorhanden, konsistent und verwertbar ist und der Container intakt ist.
+* `generate` soll robuster mit bereits vorhandenem Container-Zustand umgehen können, insbesondere wenn generierte Reste und/oder beschädigte Container- und/oder Config-Strukturen im Dokument liegen.
 * `strip --raw` soll generierte Inhalte möglichst vollständig entfernen, solange keine klar definierte Abbruchbedingung vorliegt.
 
 Dafür braucht `mdtoc` vor jeder eigentlichen Aktion eine gemeinsame Container-Analyse mit eindeutig benannten Zuständen.
 
-Diese Analyse bzw. Integritätsprüfung soll als gemeinsame Funktion implementiert und von allen Subcommands verpflichtend verwendet werden.
+Diese Analyse bzw. Integritätsprüfung soll als gemeinsame Funktion implementiert und von allen Unterkommandos verpflichtend verwendet werden.
 
 ## Begriffe
 
-### Ignored und Excluded Regions
+### Ignorierte und ausgeschlossene Bereiche
 
-In diesem Kontext werden die bisher verwendeten Begriffe `ignored` und `excluded` nicht unterschiedlich verwendet, sondern gemeinsam behandelt: Gemeint sind alle Bereiche, die von der Container- und Config-Analyse im ersten Lauf ausgespart werden müssen.
+In diesem Kontext werden die bisher verwendeten Begriffe `ignored` und `excluded` nicht unterschiedlich verwendet, sondern gemeinsam behandelt. Gemeint sind alle Bereiche, die von der Container- und Config-Analyse im ersten Lauf ausgespart werden müssen.
 
 Dazu gehören mindestens:
 
-* fenced code blocks
+* Fence-Codeblöcke
 * ausgeschlossene `mdtoc off` / `mdtoc on`-Bereiche
 * andere bereits definierte ignorierte Bereiche gemäß aktueller Parser-Logik
 
@@ -37,7 +60,10 @@ Für diese Issue gilt daher:
 * `mdtoc off` / `mdtoc on`-Bereiche sind `excluded`
 * für die Analyse-Regeln dieser Issue werden beide Klassen gemeinsam als auszusparende Bereiche behandelt
 
-Wichtig ist: Alle Erkennungen von Container-Markern, Config-Block-Strukturen und relevanten Zeilen müssen zunächst nur außerhalb dieser ignored bzw. excluded regions stattfinden.
+Wichtig ist:
+
+* Alle Erkennungen von Container-Markern, Config-Block-Strukturen und relevanten Zeilen müssen zunächst nur außerhalb dieser ignorierten bzw. ausgeschlossenen Bereiche stattfinden.
+* Sind äußere Container-Strukturen sicher erkannt, ist zu prüfen, ob innerhalb der festgestellten Containergrenzen ausgeschlossene oder ignorierte Bereiche existieren. Falls ja, sind diese unabhängig von ihrem Inhalt vollständig, also mit Markern, als nicht generierter Inhalt zu behandeln und dürfen daher nicht gelöscht werden.
 
 ### Container
 
@@ -54,11 +80,13 @@ Ein Container ist die äußere, von `mdtoc` verwaltete Struktur:
 
 Zum Container gehören:
 
-* Startmarker
+* Startmarker (`<!-- mdtoc -->`)
 * ToC-Bereich
-* Config-Block
-* Endmarker
+* Config-Block (`<!-- mdtoc-config ... -->`)
+* Endmarker (`<!-- /mdtoc -->`)
 * gegebenenfalls zusätzliche Zeilen, die versehentlich innerhalb dieses Bereichs gelandet sind
+
+Diese zusätzlichen Zeilen bewirken zwar, dass der Container inhaltlich nicht intakt ist, aber die äußere Container-Struktur besteht weiterhin.
 
 ### Intakte äußere Container-Struktur
 
@@ -68,8 +96,22 @@ Die äußere Container-Struktur ist intakt, wenn:
 * genau ein Endmarker erkannt wird
 * beide Marker außerhalb von Excluded Regions liegen
 * der Startmarker vor dem Endmarker liegt
+* zusätzliche eindeutig nicht generierte Zeilen die äußere Markerstruktur nicht mehrdeutig machen
+
+Zusätzliche nicht generierte Zeilen zerstören also nicht den Status "äußerlich intakt", wohl aber gegebenenfalls den Status "inhaltlich intakt".
 
 Diese Aussage betrifft zunächst nur die äußere Klammerung, noch nicht die Gültigkeit oder Position des Config-Blocks.
+
+Wenn keine intakte äußere Container-Struktur eindeutig erkennbar ist, ist dies eine harte Abbruchbedingung. Die Fehlermeldung soll Zeilennummern und Zeileninhalt ausgeben.
+
+Beispiel:
+
+```text
+Mehrdeutige mdtoc-Containermarker; bitte manuell korrigieren oder entfernen:
+1: <!-- mdtoc -->
+17: <!-- /mdtoc -->
+42: <!-- /mdtoc -->
+```
 
 ### Intakter Container
 
@@ -81,6 +123,8 @@ Ein Container gilt nur dann als intakt, wenn zusätzlich zur intakten äußeren 
 
 Die Existenz eines generierten ToC ist dabei für sich genommen kein Intaktheitskriterium, weil der ToC inhaltlich veraltet sein kann. Maßgeblich ist nicht die Aktualität des ToC, sondern die eindeutige Identifizierbarkeit des Container-Inhalts als von `mdtoc` generierter Inhalt.
 
+Ein Container kann also äußerlich intakt sein, inhaltlich aber nicht. Wenn der Container äußerlich und inhaltlich intakt ist, gilt er kurz als intakt. Ein Container, der äußerlich nicht intakt ist, ist eine harte Abbruchbedingung mit Zeilenausgabe im Format `Zeile:Inhalt`, die die relevanten Marker aufführt.
+
 ### ToC-Bereich
 
 Der ToC-Bereich ist der Bereich zwischen Container-Start und Beginn des Config-Blocks.
@@ -90,7 +134,7 @@ Er kann enthalten:
 * eindeutig generierte ToC-Zeilen
 * zusätzliche Zeilen, die nicht von `mdtoc` generiert wurden, aber im Container gelandet sind
 
-Solche zusätzlichen nicht generierten Zeilen machen den Container jedoch nicht intakt.
+Solche zusätzlichen nicht generierten Zeilen bewirken, dass der Container als nicht intakt beurteilt wird.
 
 ### Eindeutig generierte ToC-Zeilen
 
@@ -105,10 +149,11 @@ Praktische Anforderungen an die Erkennung:
 * führende und abschließende Whitespaces dürfen toleriert werden
 * es muss ein Bullet folgen
 * danach muss eine `[]()`-Struktur folgen
-* der Link im `()`-Teil muss zum Slug des Textes im `[]`-Teil passen
+* der Link im `()`-Teil muss zum Slug des Textes im `[]`-Teil passen; dabei muss auch der Fall doppelter Überschriften berücksichtigt werden
 * wenn kein intakter Config-Block vorliegt, ist für diese Plausibilisierung standardmäßig das GitHub-Slug-Verhalten anzunehmen
 
 Die Toleranz für Whitespaces am Zeilenende ist wichtig, damit unsichtbare Editorreste nicht fälschlich als fremde Zeilen behandelt werden.
+Es wird nicht verlangt, dass der Text der ToC-Zeile noch zu einer aktuell vorhandenen Überschrift im Markdown-Dokument passt; der Dokumentinhalt kann zwischenzeitlich verändert worden sein.
 
 ### Config-Block
 
@@ -116,9 +161,9 @@ Der Config-Block ist der von `mdtoc` verwaltete Konfigurationsbereich innerhalb 
 
 Er besteht aus:
 
-* Config-Startmarker
+* Config-Startmarker (`<!-- mdtoc-config`)
 * Config-Zeilen
-* Config-Endmarker
+* Config-Endmarker (`-->`)
 * gegebenenfalls zusätzlichen Zeilen, die versehentlich innerhalb des Blocks gelandet sind
 
 ### Config-Zeilen
@@ -158,11 +203,13 @@ Zusätzliche Zeilen sind Zeilen, die innerhalb des Containers oder innerhalb des
 
 Für diese Zeilen gilt:
 
-* sie sollen grundsätzlich erhalten bleiben
+* sie sollen grundsätzlich erhalten bleiben, außer sie sind leer oder enthalten nur Whitespace
 * ihre Reihenfolge soll erhalten bleiben
 * sie sollen räumlich in der Nähe des Containers erhalten bleiben
 * sie dürfen nicht innerhalb eines als intakt behandelten Containers verbleiben
 * bei toleranter Bereinigung sollen sie aus dem Container herausgenommen und standardmäßig direkt nach dem Container wieder ausgegeben werden
+
+Die Gefahr, dass nicht generierte Zeilen im Config-Block gelandet sind, ist geringer als im ToC-Bereich, da der Config-Block im gerenderten Output unsichtbar ist und viele moderne Editoren HTML-auskommentierte Bereiche anders einfärben.
 
 ## Grundprinzip für alle Kommandos
 
@@ -250,7 +297,7 @@ Die definierten Abbruchbedingungen dieses Bereinigungsrahmens sind in dieser Iss
 
 Die Analyse muss mindestens die folgenden Fälle unterscheiden.
 
-### 1. Äußere Container-Struktur defekt
+### Äußere Container-Struktur defekt
 
 Beispiele:
 
@@ -266,9 +313,9 @@ Erwartetes Verhalten:
 * die Fehlermeldung soll die betroffenen Zeilen als Liste im Format `Zeile:Inhalt` ausgeben
 * keine schreibende Aktion, auch nicht für `generate` oder `strip --raw`
 
-### 2. Excluded Region innerhalb des Containers
+### Ausgeschlossene oder ignorierte Bereiche innerhalb des Containers
 
-Wenn innerhalb des erkannten Containers Excluded Regions vorkommen, soll dies nicht stillschweigend akzeptiert werden.
+Wenn innerhalb des erkannten Containers ausgeschlossene oder ignorierte Bereiche vorkommen, soll dies nicht stillschweigend akzeptiert werden.
 
 Erwartetes Verhalten:
 
@@ -278,9 +325,9 @@ Erwartetes Verhalten:
 Begründung:
 
 * Ein verwalteter Bereich muss strukturell klar und vollständig analysierbar bleiben.
-* Ignorierte Regionen innerhalb des Containers machen die Zuordnung zwischen generiertem und fremdem Inhalt unnötig unsicher.
+* Ignorierte oder ausgeschlossene Bereiche innerhalb des Containers machen die Zuordnung zwischen generiertem und fremdem Inhalt unnötig unsicher.
 
-### 2a. Zusätzliche nicht generierte Zeilen innerhalb des Containers
+### Zusätzliche nicht generierte Zeilen innerhalb des Containers
 
 Wenn innerhalb des Containers zusätzliche nicht generierte Zeilen vorkommen, ist die äußere Container-Struktur zwar nicht zwingend defekt, der Container selbst ist aber nicht intakt.
 
@@ -290,7 +337,7 @@ Erwartetes Verhalten:
 * `check` reportet nur
 * `generate` und `strip --raw` sollen die zusätzlichen Zeilen erhalten, aus dem Container herausnehmen und standardmäßig direkt nach dem Container wieder ausgeben
 
-### 3. Äußere Config-Block-Struktur defekt
+### Äußere Config-Block-Struktur defekt
 
 Beispiele:
 
@@ -308,7 +355,7 @@ Erwartetes Verhalten:
 * `check` reportet nur
 * `generate` und `strip --raw` dürfen nur dann tolerant fortfahren, wenn keine defekte äußere Container-Struktur vorliegt
 
-### 4. Config-Block außerhalb des Containers
+### Config-Block außerhalb des Containers
 
 Hier ist die äußere Config-Block-Struktur zwar grundsätzlich erkennbar, der Block liegt aber ganz oder teilweise außerhalb des Containers.
 
@@ -317,10 +364,10 @@ Erwartetes Verhalten:
 * die generierten Config-Zeilen dieses Blocks gelten als entfernbar
 * nicht generierte Zusatzzeilen sollen nicht pauschal gelöscht werden
 * `generate` und `strip --raw` sollen diesen Block aktiv bereinigen
-* nicht generierte Zusatzzeilen sollen dabei erhalten bleiben und in gleicher Reihenfolge möglichst direkt nach dem Container ausgegeben werden
+* nicht generierte Zusatzzeilen sollen dabei erhalten bleiben und in gleicher Reihenfolge standardmäßig direkt nach dem Container ausgegeben werden
 * `regen`, `strip` und `check` sollen diesen Zustand reporten statt von einem gültigen Managed State auszugehen
 
-### 5. Config-Block-Struktur äußerlich intakt, aber inhaltlich inkonsistent
+### Config-Block-Struktur äußerlich intakt, aber inhaltlich inkonsistent
 
 Beispiele:
 
@@ -336,7 +383,7 @@ Erwartetes Verhalten:
 * `regen` und `strip` brechen reportend ab
 * `check` reportet nur
 * `generate` und `strip --raw` dürfen den Zielzustand aus einer bereinigten Sicht neu aufbauen
-* zusätzliche nicht generierte Zeilen innerhalb dieses Config-Kontexts sollen erhalten bleiben und nach Entfernung des generierten Blocks möglichst direkt nach dem Container wieder erscheinen
+* zusätzliche nicht generierte Zeilen innerhalb dieses Config-Kontexts sollen erhalten bleiben und nach Entfernung des generierten Blocks standardmäßig direkt nach dem Container wieder erscheinen
 
 ## Gewünschte Normalform der Verarbeitung
 
@@ -400,8 +447,8 @@ Die Issue ist erst dann abgeschlossen, wenn mindestens die folgenden Punkte erf�
 ### Analyse und Modell
 
 * Es gibt eine gemeinsame Container-Analyse vor der eigentlichen Aktion.
-* Diese gemeinsame Analyse bzw. Integritätsprüfung wird verpflichtend von allen Subcommands verwendet.
-* Diese Analyse überspringt Excluded Regions im ersten Lauf.
+* Diese gemeinsame Analyse bzw. Integritätsprüfung wird verpflichtend von allen Unterkommandos verwendet.
+* Diese Analyse überspringt ausgeschlossene bzw. ignorierte Bereiche im ersten Lauf.
 * Die Analyse unterscheidet äußere Strukturfehler, fehlende Container-Intaktheit, Lagefehler und inhaltliche Inkonsistenzen.
 
 ### Kommandoverhalten
@@ -469,9 +516,3 @@ Die hier definierte Logik ist nicht nur Implementierungsdetail. Sie sollte nach 
 * Kommandoverhalten bei inkonsistenten Managed-Strukturen
 * tolerante Bereinigung durch `strip --raw`
 * Verhältnis zwischen strukturellem Scan und semantischer Validierung
-
-## Nächste Schritte
-
-* `codex resume 019dc480-4401-7342-9c65-3d1cf953c9be`
-* Erstelle einen Umsetzungsplan, der die Aufgabe in kleinere testbare Schritte aufteilt, die ggf. als separate Issues abgearbeitet werden können.
-* Move to English
