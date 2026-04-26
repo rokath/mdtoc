@@ -469,3 +469,9 @@ Die hier definierte Logik ist nicht nur Implementierungsdetail. Sie sollte nach 
 * Kommandoverhalten bei inkonsistenten Managed-Strukturen
 * tolerante Bereinigung durch `strip --raw`
 * Verhältnis zwischen strukturellem Scan und semantischer Validierung
+
+## Nächste Schritte
+
+* `codex resume 019dc480-4401-7342-9c65-3d1cf953c9be`
+* Erstelle einen Umsetzungsplan, der die Aufgabe in kleinere testbare Schritte aufteilt, die ggf. als separate Issues abgearbeitet werden können.
+* Move to English
