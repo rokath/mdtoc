@@ -1,5 +1,3 @@
-> Anweisung: Alle aktuell mit ">" beginneneden Zeilen kommen von mir und sind einzuarbeiten und dann zu entfernen. Deine neuen Kommentare und Fragen mit ">" einleiten.
-
 # Issue #54: Robustere Analyse und Behandlung fehlerhafter `mdtoc`-Container
 
 ## Ziel
@@ -19,17 +17,27 @@ Aktuell ist das Verhalten zwischen den Kommandos nicht ausreichend vereinheitlic
 
 Dafür braucht `mdtoc` vor jeder eigentlichen Aktion eine gemeinsame Container-Analyse mit eindeutig benannten Zuständen.
 
+Diese Analyse bzw. Integritätsprüfung soll als gemeinsame Funktion implementiert und von allen Subcommands verpflichtend verwendet werden.
+
 ## Begriffe
 
-### Excluded Regions
+### Ignored und Excluded Regions
 
-Excluded Regions sind Bereiche, die von der Container- und Config-Analyse im ersten Lauf ignoriert werden müssen. Dazu gehören:
+In diesem Kontext werden die bisher verwendeten Begriffe `ignored` und `excluded` nicht unterschiedlich verwendet, sondern gemeinsam behandelt: Gemeint sind alle Bereiche, die von der Container- und Config-Analyse im ersten Lauf ausgespart werden müssen.
+
+Dazu gehören mindestens:
 
 * fenced code blocks
 * ausgeschlossene `mdtoc off` / `mdtoc on`-Bereiche
-* andere bereits definierte ignorierte Regionen gemäß aktueller Parser-Logik
+* andere bereits definierte ignorierte Bereiche gemäß aktueller Parser-Logik
 
-Wichtig ist: Alle Erkennungen von Container-Markern, Config-Block-Strukturen und relevanten Zeilen müssen zunächst nur außerhalb solcher Regionen stattfinden.
+Für diese Issue gilt daher:
+
+* Code-Fences sind `ignored`
+* `mdtoc off` / `mdtoc on`-Bereiche sind `excluded`
+* für die Analyse-Regeln dieser Issue werden beide Klassen gemeinsam als auszusparende Bereiche behandelt
+
+Wichtig ist: Alle Erkennungen von Container-Markern, Config-Block-Strukturen und relevanten Zeilen müssen zunächst nur außerhalb dieser ignored bzw. excluded regions stattfinden.
 
 ### Container
 
@@ -63,6 +71,16 @@ Die äußere Container-Struktur ist intakt, wenn:
 
 Diese Aussage betrifft zunächst nur die äußere Klammerung, noch nicht die Gültigkeit oder Position des Config-Blocks.
 
+### Intakter Container
+
+Ein Container gilt nur dann als intakt, wenn zusätzlich zur intakten äußeren Container-Struktur gilt:
+
+* sein ToC-Bereich vollständig und zuverlässig als generierter Inhalt identifizierbar ist
+* sein Config-Kontext vollständig und zuverlässig als generierter Inhalt identifizierbar ist
+* keine zusätzlichen nicht generierten Zeilen innerhalb des Containers liegen
+
+Die Existenz eines generierten ToC ist dabei für sich genommen kein Intaktheitskriterium, weil der ToC inhaltlich veraltet sein kann. Maßgeblich ist nicht die Aktualität des ToC, sondern die eindeutige Identifizierbarkeit des Container-Inhalts als von `mdtoc` generierter Inhalt.
+
 ### ToC-Bereich
 
 Der ToC-Bereich ist der Bereich zwischen Container-Start und Beginn des Config-Blocks.
@@ -71,6 +89,8 @@ Er kann enthalten:
 
 * eindeutig generierte ToC-Zeilen
 * zusätzliche Zeilen, die nicht von `mdtoc` generiert wurden, aber im Container gelandet sind
+
+Solche zusätzlichen nicht generierten Zeilen machen den Container jedoch nicht intakt.
 
 ### Eindeutig generierte ToC-Zeilen
 
@@ -132,14 +152,29 @@ Ein Config-Block ist konsistent, wenn zusätzlich zur intakten äußeren Config-
 * die Anzahl der relevanten Zeilen passt
 * alle Werte sind gültig
 
+### Zusätzliche Zeilen
+
+Zusätzliche Zeilen sind Zeilen, die innerhalb des Containers oder innerhalb des Config-Kontexts liegen, aber weder eindeutig generierte ToC-Zeilen noch eindeutig generierte Config-Zeilen sind.
+
+Für diese Zeilen gilt:
+
+* sie sollen grundsätzlich erhalten bleiben
+* ihre Reihenfolge soll erhalten bleiben
+* sie sollen räumlich in der Nähe des Containers erhalten bleiben
+* sie dürfen nicht innerhalb eines als intakt behandelten Containers verbleiben
+* bei toleranter Bereinigung sollen sie aus dem Container herausgenommen und standardmäßig direkt nach dem Container wieder ausgegeben werden
+
 ## Grundprinzip für alle Kommandos
 
 Alle Kommandos müssen zunächst denselben Analyse-Lauf durchführen und dabei den Container-Zustand klassifizieren, bevor sie schreiben, vergleichen oder abbrechen.
+
+Diese Validierung ist nicht optional und darf nicht je Kommando unterschiedlich umgangen oder abgeschwächt werden.
 
 Dieser erste Analyse-Lauf muss:
 
 * Excluded Regions überspringen
 * die äußere Container-Struktur bewerten
+* die Intaktheit des Containers bewerten
 * die äußere Config-Block-Struktur bewerten
 * die Lage des Config-Blocks relativ zum Container bewerten
 * den Inhalt des ToC-Bereichs grob in generierte und nicht generierte Zeilen einordnen
@@ -165,28 +200,33 @@ Dieser erste Analyse-Lauf muss:
 
 ### `regen`
 
-`regen` darf nur dann schreiben, wenn ein konsistenter, verwertbarer Config-Block vorliegt.
+`regen` darf nur dann schreiben, wenn ein konsistenter, verwertbarer Config-Block vorliegt und der Container als intakt validiert wurde.
 
-Wenn der Config-Block nicht konsistent ist, muss `regen` reporten und abbrechen.
+Wenn der Config-Block nicht konsistent ist oder der Container nicht intakt ist, muss `regen` reporten und abbrechen.
 
 ### `strip`
 
-`strip` darf nur dann schreiben, wenn ein konsistenter, verwertbarer Config-Block vorliegt.
+`strip` darf nur dann schreiben, wenn ein konsistenter, verwertbarer Config-Block vorliegt und der Container als intakt validiert wurde.
 
-Wenn der Config-Block nicht konsistent ist, muss `strip` reporten und abbrechen.
+Wenn der Config-Block nicht konsistent ist oder der Container nicht intakt ist, muss `strip` reporten und abbrechen.
 
 ### `generate`
 
-`generate` ist das toleranteste schreibende Kommando. Es soll versuchen, vorhandene Struktur soweit sinnvoll auszuwerten und anschließend den Zielzustand vollständig neu aufzubauen.
+`generate` ist ein tolerant schreibendes Kommando. Es soll versuchen, vorhandene Struktur soweit sinnvoll auszuwerten und anschließend den Zielzustand vollständig neu aufzubauen.
 
 Konzeptionell soll `generate` so gedacht werden:
 
 1. vorhandene Container-Informationen analysieren
 2. falls ein intakter Config-Block vorliegt, dessen Werte mit CLI-Werten mergen, wobei CLI-Werte Vorrang haben
-3. vorhandenen generierten Inhalt entfernen
+3. falls der vorhandene Zustand nicht intakt oder inkonsistent ist, gedanklich zunächst denselben Bereinigungsschritt wie `strip --raw` anwenden, um den Ausgangszustand zu normalisieren
 4. Zielzustand vollständig neu rendern
 
 Praktisch darf die interne Implementierung anders aussehen, solange das externe Verhalten diesem Modell entspricht und bestehende, bereits korrekte Tests nicht unnötig destabilisiert werden.
+
+Für beschädigte Managed-Strukturen soll `generate` dieselben strukturellen Toleranz- und Abbruchregeln wie `strip --raw` verwenden. Der Unterschied zwischen beiden Kommandos liegt nicht im Bereinigungslevel, sondern nur im Zielzustand:
+
+* `generate` bereinigt zunächst mit denselben Strukturregeln wie `strip --raw` und baut anschließend einen neuen gültigen Managed-Zustand auf
+* `strip --raw` bereinigt mit denselben Strukturregeln und entfernt anschließend den Managed-Zustand vollständig
 
 ### `strip --raw`
 
@@ -196,10 +236,15 @@ Dabei gilt:
 
 * generierte ToC-Zeilen sollen entfernt werden
 * generierte Config-Zeilen sollen entfernt werden
-* zusätzliche, nicht generierte Zeilen im Container sollen erhalten bleiben
+* zusätzliche, nicht generierte Zeilen im Container sollen erhalten bleiben, aber nicht im Container verbleiben
 * verwaltete Heading-Artefakte wie Nummerierung und generierte Inline-Anker sollen entfernt werden
 
-`strip --raw` ist ausdrücklich der toleranteste Bereinigungsmodus.
+`strip --raw` ist kein toleranterer Modus als `generate`, sondern nutzt denselben Bereinigungsrahmen für beschädigte Managed-Strukturen. Es endet nur in einem anderen Zielzustand.
+
+Die definierten Abbruchbedingungen dieses Bereinigungsrahmens sind in dieser Issue mindestens:
+
+* defekte äußere Container-Struktur
+* Excluded bzw. Ignored Regions innerhalb des Containers
 
 ## Zu behandelnde Container-Zustände
 
@@ -218,7 +263,8 @@ Erwartetes Verhalten:
 
 * Abbruch
 * Meldung mit Zeilennummern bzw. betroffenen Markerpositionen
-* keine schreibende Aktion außer dort, wo ein ausdrücklich definierter Fallback für `strip --raw` erlaubt ist
+* die Fehlermeldung soll die betroffenen Zeilen als Liste im Format `Zeile:Inhalt` ausgeben
+* keine schreibende Aktion, auch nicht für `generate` oder `strip --raw`
 
 ### 2. Excluded Region innerhalb des Containers
 
@@ -234,6 +280,16 @@ Begründung:
 * Ein verwalteter Bereich muss strukturell klar und vollständig analysierbar bleiben.
 * Ignorierte Regionen innerhalb des Containers machen die Zuordnung zwischen generiertem und fremdem Inhalt unnötig unsicher.
 
+### 2a. Zusätzliche nicht generierte Zeilen innerhalb des Containers
+
+Wenn innerhalb des Containers zusätzliche nicht generierte Zeilen vorkommen, ist die äußere Container-Struktur zwar nicht zwingend defekt, der Container selbst ist aber nicht intakt.
+
+Erwartetes Verhalten:
+
+* `regen` und `strip` brechen reportend ab
+* `check` reportet nur
+* `generate` und `strip --raw` sollen die zusätzlichen Zeilen erhalten, aus dem Container herausnehmen und standardmäßig direkt nach dem Container wieder ausgeben
+
 ### 3. Äußere Config-Block-Struktur defekt
 
 Beispiele:
@@ -247,9 +303,10 @@ Beispiele:
 Erwartetes Verhalten:
 
 * Abbruch mit Zeilennummerninfo
+* die Fehlermeldung soll die betroffenen Zeilen als Liste im Format `Zeile:Inhalt` ausgeben
 * `regen` und `strip` schreiben nicht
 * `check` reportet nur
-* `generate` und `strip --raw` dürfen nur dann tolerant fortfahren, wenn das definierte Bereinigungsmodell dies erlaubt
+* `generate` und `strip --raw` dürfen nur dann tolerant fortfahren, wenn keine defekte äußere Container-Struktur vorliegt
 
 ### 4. Config-Block außerhalb des Containers
 
@@ -259,7 +316,8 @@ Erwartetes Verhalten:
 
 * die generierten Config-Zeilen dieses Blocks gelten als entfernbar
 * nicht generierte Zusatzzeilen sollen nicht pauschal gelöscht werden
-* das Verhalten muss für `generate` und `strip --raw` klar definiert und testbar sein
+* `generate` und `strip --raw` sollen diesen Block aktiv bereinigen
+* nicht generierte Zusatzzeilen sollen dabei erhalten bleiben und in gleicher Reihenfolge möglichst direkt nach dem Container ausgegeben werden
 * `regen`, `strip` und `check` sollen diesen Zustand reporten statt von einem gültigen Managed State auszugehen
 
 ### 5. Config-Block-Struktur äußerlich intakt, aber inhaltlich inkonsistent
@@ -278,6 +336,7 @@ Erwartetes Verhalten:
 * `regen` und `strip` brechen reportend ab
 * `check` reportet nur
 * `generate` und `strip --raw` dürfen den Zielzustand aus einer bereinigten Sicht neu aufbauen
+* zusätzliche nicht generierte Zeilen innerhalb dieses Config-Kontexts sollen erhalten bleiben und nach Entfernung des generierten Blocks möglichst direkt nach dem Container wieder erscheinen
 
 ## Gewünschte Normalform der Verarbeitung
 
@@ -312,12 +371,10 @@ Diese Zweiteilung reduziert Sonderfälle und erlaubt einheitliche Entscheidungen
 Die Kommandos sollen nach derselben Analyse zu unterschiedlichen Aktionsrechten kommen:
 
 * `check`: analysieren und reporten
-* `regen`: nur bei konsistentem Config-Block schreiben
-* `strip`: nur bei konsistentem Config-Block schreiben
-* `generate`: bereinigen und neu aufbauen
-* `strip --raw`: maximal tolerant bereinigen
-
-> Frage: Was bedeutet die Unterscheidung zwischen "bereinigen" und "maximal tolerant bereinigen hier? Ich vermute der Bereinigungslevel bei generate und strip --raw sollte gleich sein, oder? Anpassen.
+* `regen`: nur bei konsistentem Config-Block und intaktem Container schreiben
+* `strip`: nur bei konsistentem Config-Block und intaktem Container schreiben
+* `generate`: mit denselben Strukturregeln bereinigen wie `strip --raw` und anschließend neu aufbauen
+* `strip --raw`: mit denselben Strukturregeln bereinigen wie `generate` und anschließend den Managed-Zustand vollständig entfernen
 
 Dadurch wird vermieden, dass jedes Kommando eigene heuristische Sonderfälle pflegt.
 
@@ -343,23 +400,23 @@ Die Issue ist erst dann abgeschlossen, wenn mindestens die folgenden Punkte erf�
 ### Analyse und Modell
 
 * Es gibt eine gemeinsame Container-Analyse vor der eigentlichen Aktion.
+* Diese gemeinsame Analyse bzw. Integritätsprüfung wird verpflichtend von allen Subcommands verwendet.
 * Diese Analyse überspringt Excluded Regions im ersten Lauf.
-* Die Analyse unterscheidet äußere Strukturfehler, Lagefehler und inhaltliche Inkonsistenzen.
+* Die Analyse unterscheidet äußere Strukturfehler, fehlende Container-Intaktheit, Lagefehler und inhaltliche Inkonsistenzen.
 
 ### Kommandoverhalten
 
 * `check` schreibt nie.
-* `regen` schreibt nur bei konsistentem Config-Block.
-* `strip` schreibt nur bei konsistentem Config-Block.
-* `generate` kann verwertbare Altzustände toleranter bereinigen und den Zielzustand vollständig neu erzeugen.
+* `regen` schreibt nur bei konsistentem Config-Block und intaktem Container.
+* `strip` schreibt nur bei konsistentem Config-Block und intaktem Container.
+* `generate` verwendet für beschädigte Managed-Strukturen denselben Bereinigungsrahmen wie `strip --raw` und erzeugt danach den Zielzustand vollständig neu.
 * `strip --raw` entfernt generierte Inhalte auch dann, wenn der Config-Block nicht mehr vollständig parsebar ist, solange keine definierte Abbruchbedingung greift.
 
 ### Erhaltung nicht generierter Inhalte
 
-* Zusätzliche Zeilen im Container bleiben erhalten, sofern sie nicht eindeutig generiert sind.
+* Zusätzliche Zeilen im Container bleiben erhalten, sofern sie nicht eindeutig generiert sind, machen den Container aber nicht intakt.
 * Zusätzliche Zeilen im Config-Block werden nicht pauschal als frei löschbar behandelt, außer soweit sie eindeutig als generierte Config-Zeilen klassifizierbar sind oder die konkrete Regel dies erlaubt.
-
-> Hinweis: Die zusätzlichen Zeilen sollen räumlich in der Nähe und gleicher Reihenfolge erhlten bleiben, am einfachsten wohl direkt nach dem Container. Einarbeiten.
+* Solche zusätzlichen Zeilen bleiben in gleicher Reihenfolge erhalten und sollen nach einer Bereinigung standardmäßig direkt nach dem Container ausgegeben werden.
 
 ### Fehlermeldungen
 
@@ -384,6 +441,7 @@ Zusätzlich sollen Tests enthalten:
 * inkonsistente Config-Inhalte
 * zusätzliche nicht generierte Zeilen im ToC-Bereich
 * zusätzliche nicht generierte Zeilen im Config-Kontext, soweit deren Behandlung definiert ist
+* zusätzliche nicht generierte Zeilen innerhalb eines ansonsten äußerlich intakten Containers
 
 ## Umsetzungshinweis
 
@@ -395,29 +453,13 @@ Die Umsetzung erscheint grundsätzlich machbar, wenn sie als Erweiterung der bes
 
 So kann die bestehende, bereits getestete Logik für den Normalfall weitgehend stabil bleiben, während die Sonderfälle systematischer behandelt werden.
 
-## Offene Präzisierungen vor der Umsetzung
+## Weitere Festlegungen für die Umsetzung
 
-Folgende Punkte sollten vor oder während der Umsetzung noch endgültig festgezogen werden:
+Die folgenden Punkte gelten für diese Issue als festgelegt:
 
-* Welche Excluded Regions gelten exakt für die Container-Analyse, und sollen sie vollständig mit den bisherigen ignorierten Regionen übereinstimmen?
-
-> Die Begriffe "excluded" und "ignored" müssen in diesem Kontext sauber definiert werden. Code-Fences sind ignored und excluded sind geklammert, richtig? Also sollte "excluded und ignored" geschrieben werden, oder? Ja, und kein Unterschied in der bisherigen Bedeutung.
-
-* Soll ein Config-Block außerhalb des Containers nur reportet oder in toleranten Modi aktiv bereinigt werden, wenn daneben noch ein regulärer Container existiert?
-
-> aktiv bereinigen unter Beibehaltung nicht-generierter Zeilen.
-
-* Wie weit darf `generate` bei beschädigter Struktur gehen, bevor ebenfalls zwingend abgebrochen wird?
-
-> Ich halte gleiche Regeln für für strip --raw für sinnvoll.
-
-* Sollen zusätzliche Zeilen innerhalb eines Config-Blocks grundsätzlich erhalten bleiben, wenn sie nicht eindeutig generiert sind, oder soll bereits die Existenz solcher Zeilen den gesamten Block als unbrauchbar markieren?
-
-> Die Zeilen sollen grundsätzlich erhalten bleiben, aber der generierte Block verschwinden und neu aufgebaut werden.
-
-* Welche konkreten Abbruchbedingungen gelten für `strip --raw`, damit der Modus tolerant bleibt, aber nicht in mehrdeutigen Strukturen destruktiv wird?
-
-> strip --raw bricht, wie besprochen bei defekter äußerer Container Struktur ab mit einer Liste Zeile:Inhalt. Diese bereits erarbeitete Festlegung vermisse ich in diesem Dokument.
+* Das Fehlerformat `Zeile:Inhalt` gilt sowohl für defekte äußere Container-Strukturen als auch für defekte äußere Config-Block-Strukturen.
+* Falls zusätzlich zu einem defekten Bereich noch ein vollständig gültiger Container existiert, sollen `generate` und `strip --raw` nur den defekten Bereich bereinigen, sofern die äußere Container-Struktur des gültigen Containers selbst nicht defekt ist.
+* Nicht generierte Zusatzzeilen sollen nach einer Bereinigung standardmäßig direkt nach dem Container ausgegeben werden; diese Position gilt hier nicht nur als Beispiel, sondern als gewünschte Standardregel.
 
 ## Bedeutung für die Spezifikation
 
