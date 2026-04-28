@@ -61,6 +61,7 @@ state=generated
 * works with files and Unix pipes
 * targets ATX headings (`#` to `######`)
 * ignores headings inside fenced code blocks safely
+* ignores headings inside HTML comments: `<!-- ... ## Example -->`
 * exclusion regions: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
 * explicit anchor profiles: `github` (default), `gitlab`, or `off`
 * slug link anchors from heading titles, not numbers
