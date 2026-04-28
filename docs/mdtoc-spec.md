@@ -391,6 +391,9 @@ _Note:_ `state` is intentionally also normalized to `key=value`. This makes the 
 | `mdtoc --help`                          | Prints short help text.                         |
 | `mdtoc --help --verbose`                | Prints long help text.                          |
 |                                         |                                                 |
+| `mdtoc [--file <name>\|<name>] [GENERATE OPTIONS]` | root mode: uses `regen` for valid managed input without generate overrides, otherwise `generate`. |
+| `mdtoc [GENERATE OPTIONS] < INPUT.md`   | root mode on `stdin`; same dispatch rule as above. |
+|                                         |                                                 |
 | `mdtoc generate [--verbose] [OPTIONS]`  | generates/updates ToC, numbers, anchors.        |
 | `mdtoc generate  --help`                | Prints long help text specifically for generate.|
 |                                         |                                                 |
@@ -417,6 +420,12 @@ _Note:_ `state` is intentionally also normalized to `key=value`. This makes the 
 | `--verbose`             | `off`   | diagnostic and progress messages on `stderr`                          |
 | `--help`                | –       | show help                                                             |
 
+Input form rules:
+
+* File-backed commands accept either a positional file argument or `--file <name>`.
+* The positional-file shorthand applies both to explicit subcommands and to root mode.
+* Exactly one input source is allowed per invocation.
+
 Short forms:
 
 | Option        | Short form |
@@ -428,14 +437,36 @@ Short forms:
 | `--verbose`   | `-v`       |
 | `--help`      | `-h`       |
 
+Compatibility note:
+
+* The current CLI also tolerates the Go `flag` package's one-dash long-option spellings such as `-toc`, `-anchor`, or `-numbering`.
+* These are accepted as compatibility aliases for the documented `--toc`, `--anchor`, and `--numbering` forms.
+* Documentation and examples should still prefer the canonical double-dash form.
+
 ### 8.3 I/O and logging behavior
 
-* With `--file`, the file is read and overwritten.
-* Without `--file`, input comes from `stdin` and document output goes to `stdout`.
-* If neither `--file` nor piped `stdin` is provided, the command fails with an input-source error.
+* With a positional file or `--file`, the file is read and overwritten.
+* Without file input, document input comes from `stdin` and document output goes to `stdout`.
+* If neither file input nor piped `stdin` is provided, the command fails with an input-source error.
+* If more than one input source is provided, the command fails with an input-source conflict error.
 * Successful commands produce no output except for `--help`, `--version`, or `--verbose`.
 * Errors and diagnostic messages are written exclusively to `stderr`.
 * Collected warnings are only printed in verbose mode.
+
+Root-mode dispatch rules:
+
+* If the input contains a valid managed container and no generate-control flags are explicitly set, root mode behaves like `regen`.
+* If the input does not contain a valid managed container, root mode behaves like `generate`.
+* If at least one generate-control flag is explicitly set, root mode behaves like `generate` even when a valid managed container exists.
+
+Generate-control flags:
+
+* `--numbering`, `-n`
+* `--min-level`
+* `--max-level`
+* `--anchor`, `-a`
+* `--toc`
+* `--bullets`, `-b`
 
 ## 9. Commands
 

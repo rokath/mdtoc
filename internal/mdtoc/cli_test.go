@@ -69,7 +69,7 @@ func TestRunnerRootVersionVerboseWithoutCommand(t *testing.T) {
 // TestRunnerSubcommandVerboseHelpIsNotIgnored verifies verbose subcommand help text selection.
 func TestRunnerSubcommandVerboseHelpIsNotIgnored(t *testing.T) {
 	var stdout, stderr strings.Builder
-	runner := NewRunner(strings.NewReader(""), &stdout, &stderr)
+	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
 	exitCode, err := runner.Run([]string{"generate", "--help", "--verbose"})
 	if err != nil {
 		t.Fatalf("Run error: %v", err)
@@ -96,7 +96,7 @@ func TestRunnerSubcommandVerboseWithoutHelpPrintsLongHelp(t *testing.T) {
 
 	for _, tc := range tests {
 		var stdout, stderr strings.Builder
-		runner := NewRunner(strings.NewReader(""), &stdout, &stderr)
+		runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
 		exitCode, err := runner.Run(tc.args)
 		if err != nil {
 			t.Fatalf("Run(%v) error: %v", tc.args, err)
@@ -107,6 +107,71 @@ func TestRunnerSubcommandVerboseWithoutHelpPrintsLongHelp(t *testing.T) {
 		if got := stdout.String(); !strings.Contains(got, tc.want) {
 			t.Fatalf("Run(%v) did not print long help:\n%s", tc.args, got)
 		}
+	}
+}
+
+// TestRunnerRootConvenienceGenerateFromStdin verifies root-mode generate
+// dispatch for unmanaged stdin input.
+func TestRunnerRootConvenienceGenerateFromStdin(t *testing.T) {
+	stdin := strings.NewReader("# Title\n\n## Intro\n")
+	var stdout, stderr strings.Builder
+	runner := NewRunner(stdin, &stdout, &stderr)
+	exitCode, err := runner.Run(nil)
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+	if !strings.Contains(stdout.String(), startMarker) || !strings.Contains(stdout.String(), "* [1. Intro](#intro)") {
+		t.Fatalf("root stdin generate did not create managed output:\n%s", stdout.String())
+	}
+}
+
+// TestRunnerRootConvenienceGenerateFromStdinWithFlags verifies that explicit
+// generate-control flags force root-mode generate on stdin.
+func TestRunnerRootConvenienceGenerateFromStdinWithFlags(t *testing.T) {
+	stdin := strings.NewReader("# Title\n\n## Intro\n")
+	var stdout, stderr strings.Builder
+	runner := NewRunner(stdin, &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"-a", "off", "-n", "off"})
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+	if got := stdout.String(); strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
+		t.Fatalf("root stdin generate ignored explicit override flags:\n%s", got)
+	}
+}
+
+// TestRunnerRootConvenienceRegenFromStdin verifies root-mode regen dispatch for
+// already managed stdin input without override flags.
+func TestRunnerRootConvenienceRegenFromStdin(t *testing.T) {
+	input, _, err := Generate("# Title\n\n## Intro\n", Options{
+		Numbering: false,
+		MinLevel:  2,
+		MaxLevel:  4,
+		Anchor:    AnchorOff,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	input = strings.Replace(input, "* [Intro](#intro)", "* [BROKEN](#intro)", 1)
+
+	var stdout, stderr strings.Builder
+	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
+	exitCode, err := runner.Run(nil)
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+	if got := stdout.String(); !strings.Contains(got, "* [Intro](#intro)") || strings.Contains(got, "* [BROKEN](#intro)") {
+		t.Fatalf("root stdin regen did not rebuild the managed output:\n%s", got)
 	}
 }
 
@@ -254,6 +319,51 @@ func TestRunnerGenerateWithFileDoesNotRequireStdin(t *testing.T) {
 	}
 }
 
+// TestRunnerRejectsMixedFileAndStdinGenerate verifies that generate rejects simultaneous file and stdin input.
+func TestRunnerRejectsMixedFileAndStdinGenerate(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.md")
+	if err := os.WriteFile(path, []byte("# Title\n\n## Intro\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	var stdout, stderr strings.Builder
+	runner := NewRunner(strings.NewReader("# From stdin\n\n## Ignored?\n"), &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"generate", "-f", path})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if got := err.Error(); !strings.Contains(got, "cannot use --file together with piped stdin") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// TestRunnerRejectsMixedPositionalFileAndStdinGenerate verifies that positional
+// files participate in the same mixed-input rejection rule as --file.
+func TestRunnerRejectsMixedPositionalFileAndStdinGenerate(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.md")
+	if err := os.WriteFile(path, []byte("# Title\n\n## Intro\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	var stdout, stderr strings.Builder
+	runner := NewRunner(strings.NewReader("# From stdin\n\n## Ignored?\n"), &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"generate", path})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if got := err.Error(); !strings.Contains(got, "provide exactly one input source") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 // TestRunnerRegenWithFileDoesNotRequireStdin verifies that regen honors -f input files.
 func TestRunnerRegenWithFileDoesNotRequireStdin(t *testing.T) {
 	dir := t.TempDir()
@@ -289,6 +399,90 @@ func TestRunnerRegenWithFileDoesNotRequireStdin(t *testing.T) {
 	}
 	if s := string(got); !strings.Contains(s, "* [Intro](#intro)") || strings.Contains(s, "<a id=") {
 		t.Fatalf("regen file output does not honor stored config:\n%s", s)
+	}
+}
+
+// TestRunnerRejectsMixedFileAndStdinRegen verifies that regen rejects simultaneous file and stdin input.
+func TestRunnerRejectsMixedFileAndStdinRegen(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.md")
+	input, _, err := Generate("# Title\n\n## Intro\n", Options{
+		Numbering: false,
+		MinLevel:  2,
+		MaxLevel:  4,
+		Anchor:    AnchorOff,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	var stdout, stderr strings.Builder
+	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"regen", "-f", path})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if got := err.Error(); !strings.Contains(got, "cannot use --file together with piped stdin") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// TestRunnerRejectsMixedFileAndStdinStrip verifies that strip rejects simultaneous file and stdin input.
+func TestRunnerRejectsMixedFileAndStdinStrip(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.md")
+	input, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	var stdout, stderr strings.Builder
+	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"strip", "-f", path})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if got := err.Error(); !strings.Contains(got, "cannot use --file together with piped stdin") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// TestRunnerRejectsMixedFileAndStdinCheck verifies that check rejects simultaneous file and stdin input.
+func TestRunnerRejectsMixedFileAndStdinCheck(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "doc.md")
+	input, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	var stdout, stderr strings.Builder
+	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"check", "-f", path})
+	if err == nil {
+		t.Fatalf("Run returned nil error")
+	}
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if got := err.Error(); !strings.Contains(got, "cannot use --file together with piped stdin") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

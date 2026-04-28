@@ -59,6 +59,12 @@
 
 * Add or update tests when behavior changes.
 * When a behavior change affects CLI file workflows, file mutation, or file-backed command paths, add or update at least one file-level test by default. Prefer the existing virtual filesystem test helpers over OS-level files when feasible.
+* When changing CLI parsing, dispatch, or accepted flag forms, add explicit tests for:
+  * the intended success path
+  * conflicting or invalid input forms
+  * argument-order variants that the active parser accepts
+  * alternative spellings that the active parser accepts, including tolerated single-dash long options when applicable
+* Do not claim CLI behavior is covered unless the relevant accepted spellings and argument orders are exercised by tests.
 * For Go tests in this repository, the standard library `testing` package is the default.
 
 ## Safety

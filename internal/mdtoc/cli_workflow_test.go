@@ -2,6 +2,7 @@ package mdtoc
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -73,6 +74,18 @@ func runFileCommandExpect(t *testing.T, fs *memoryFileSystem, wantExit int, args
 	return err
 }
 
+// runCommandWithFS executes one CLI invocation with explicit stdin metadata so
+// tests can cover root convenience mode, positional files, and mixed-input
+// conflicts against the virtual filesystem.
+func runCommandWithFS(t *testing.T, fs *memoryFileSystem, stdin io.Reader, stdinTTY bool, args ...string) (string, string, int, error) {
+	t.Helper()
+
+	var stdout, stderr strings.Builder
+	runner := newRunnerWithFS(stdin, &stdout, &stderr, BuildInfo{}, stdinTTY, fs)
+	exitCode, err := runner.Run(args)
+	return stdout.String(), stderr.String(), exitCode, err
+}
+
 // TestRunnerFileWorkflowGenerateStripRegenCheck verifies the full file-based state cycle.
 func TestRunnerFileWorkflowGenerateStripRegenCheck(t *testing.T) {
 	const path = "README.md"
@@ -100,6 +113,351 @@ func TestRunnerFileWorkflowGenerateStripRegenCheck(t *testing.T) {
 
 	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
 		t.Fatalf("check unexpectedly failed after regen: %v", err)
+	}
+}
+
+// TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin verifies that file
+// workflows still run when CI provides non-interactive stdin that is already at EOF.
+func TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin(t *testing.T) {
+	const path = "README.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n",
+	})
+
+	stdout, stderr, exitCode, err := runCommandWithFS(t, fs, strings.NewReader(""), false, "generate", "-f", path)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("Run exit code = %d, want 0", exitCode)
+	}
+	if stdout != "" {
+		t.Fatalf("Run wrote unexpected stdout:\n%s", stdout)
+	}
+	if stderr != "" {
+		t.Fatalf("Run wrote unexpected stderr:\n%s", stderr)
+	}
+
+	got := fs.fileString(path)
+	if !strings.Contains(got, startMarker) || !strings.Contains(got, "state=generated") {
+		t.Fatalf("generate did not create managed state:\n%s", got)
+	}
+}
+
+// TestRunnerRootFileWorkflowGenerateFromPositional verifies root-mode generate
+// dispatch for unmanaged files passed positionally.
+func TestRunnerRootFileWorkflowGenerateFromPositional(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n",
+	})
+
+	runFileCommand(t, fs, path)
+	got := fs.fileString(path)
+	if !strings.Contains(got, startMarker) || !strings.Contains(got, "state=generated") {
+		t.Fatalf("root generate did not create managed state:\n%s", got)
+	}
+}
+
+// TestRunnerRootFileWorkflowRegenFromPositional verifies root-mode regen
+// dispatch for already managed files passed positionally.
+func TestRunnerRootFileWorkflowRegenFromPositional(t *testing.T) {
+	const path = "doc.md"
+	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	broken := strings.Replace(generated, "* [1. Intro](#intro)", "* [BROKEN](#intro)", 1)
+	fs := newMemoryFileSystem(map[string]string{
+		path: broken,
+	})
+
+	runFileCommand(t, fs, path)
+	got := fs.fileString(path)
+	if !strings.Contains(got, "* [1. Intro](#intro)") || strings.Contains(got, "* [BROKEN](#intro)") {
+		t.Fatalf("root regen did not rebuild the managed state:\n%s", got)
+	}
+}
+
+// TestRunnerRootFileWorkflowGenerateOverridesForceGenerate verifies that root
+// mode switches to generate when explicit generate-control flags are present.
+func TestRunnerRootFileWorkflowGenerateOverridesForceGenerate(t *testing.T) {
+	const path = "doc.md"
+	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	fs := newMemoryFileSystem(map[string]string{
+		path: generated,
+	})
+
+	runFileCommand(t, fs, path, "-a", "off", "-n", "off")
+	got := fs.fileString(path)
+	if !strings.Contains(got, "anchor=off") || !strings.Contains(got, "numbering=false") {
+		t.Fatalf("root generate did not honor explicit override flags:\n%s", got)
+	}
+	if strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
+		t.Fatalf("root generate did not disable managed artifacts as requested:\n%s", got)
+	}
+}
+
+// TestRunnerRootFileWorkflowSingleDashGenerateOverrides verifies that the
+// tolerated one-dash long generate-control flags all force root mode to run
+// generate instead of regen.
+func TestRunnerRootFileWorkflowSingleDashGenerateOverrides(t *testing.T) {
+	const path = "doc.md"
+	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	tests := []struct {
+		name  string
+		args  []string
+		check func(t *testing.T, got string)
+	}{
+		{
+			name: "numbering",
+			args: []string{path, "-numbering", "off"},
+			check: func(t *testing.T, got string) {
+				t.Helper()
+				if !strings.Contains(got, "numbering=false") {
+					t.Fatalf("root generate did not persist numbering=false:\n%s", got)
+				}
+				if strings.Contains(got, "## 1. ") {
+					t.Fatalf("root generate left numbering enabled:\n%s", got)
+				}
+			},
+		},
+		{
+			name: "anchor",
+			args: []string{path, "-anchor", "off"},
+			check: func(t *testing.T, got string) {
+				t.Helper()
+				if !strings.Contains(got, "anchor=off") {
+					t.Fatalf("root generate did not persist anchor=off:\n%s", got)
+				}
+				if strings.Contains(got, "<a id=") {
+					t.Fatalf("root generate left anchors enabled:\n%s", got)
+				}
+			},
+		},
+		{
+			name: "min-level",
+			args: []string{path, "-min-level", "3"},
+			check: func(t *testing.T, got string) {
+				t.Helper()
+				if !strings.Contains(got, "min-level=3") {
+					t.Fatalf("root generate did not persist min-level=3:\n%s", got)
+				}
+				if strings.Contains(got, "* [1. Intro](#intro)") {
+					t.Fatalf("root generate still included the level-2 heading in the ToC:\n%s", got)
+				}
+			},
+		},
+		{
+			name: "max-level",
+			args: []string{path, "-max-level", "2"},
+			check: func(t *testing.T, got string) {
+				t.Helper()
+				if !strings.Contains(got, "max-level=2") {
+					t.Fatalf("root generate did not persist max-level=2:\n%s", got)
+				}
+				if strings.Contains(got, "### 1.1. ") {
+					t.Fatalf("root generate did not stop numbering at level 2:\n%s", got)
+				}
+			},
+		},
+		{
+			name: "bullets",
+			args: []string{path, "-bullets", "+"},
+			check: func(t *testing.T, got string) {
+				t.Helper()
+				if !strings.Contains(got, "bullets=+") {
+					t.Fatalf("root generate did not persist bullets=+:\n%s", got)
+				}
+				if !strings.Contains(got, "+ [1. Intro](#intro)") {
+					t.Fatalf("root generate did not render plus bullets:\n%s", got)
+				}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fs := newMemoryFileSystem(map[string]string{
+				path: generated,
+			})
+			runFileCommand(t, fs, tc.args...)
+			tc.check(t, fs.fileString(path))
+		})
+	}
+}
+
+// TestRunnerRootFileWorkflowTOCOverrideOrders verifies that root mode honors
+// both canonical and one-dash `toc` overrides regardless of whether the
+// positional file appears before or after the flag pair.
+func TestRunnerRootFileWorkflowTOCOverrideOrders(t *testing.T) {
+	const path = "doc.md"
+	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		args       []string
+		enableArgs []string
+	}{
+		{name: "double-dash-file-first", args: []string{path, "--toc", "off"}, enableArgs: []string{path, "--toc", "on"}},
+		{name: "double-dash-flag-first", args: []string{"--toc", "off", path}, enableArgs: []string{"--toc", "on", path}},
+		{name: "single-dash-file-first", args: []string{path, "-toc", "off"}, enableArgs: []string{path, "-toc", "on"}},
+		{name: "single-dash-flag-first", args: []string{"-toc", "off", path}, enableArgs: []string{"-toc", "on", path}},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fs := newMemoryFileSystem(map[string]string{
+				path: generated,
+			})
+
+			runFileCommand(t, fs, tc.args...)
+			got := fs.fileString(path)
+			if !strings.Contains(got, "toc=false") {
+				t.Fatalf("root generate did not persist toc=false for %s:\n%s", tc.name, got)
+			}
+			if strings.Contains(got, "* [1. Intro](#intro)") {
+				t.Fatalf("root generate left ToC content behind for %s:\n%s", tc.name, got)
+			}
+
+			runFileCommand(t, fs, tc.enableArgs...)
+			regenerated := fs.fileString(path)
+			if !strings.Contains(regenerated, "toc=true") || !strings.Contains(regenerated, "* [1. Intro](#intro)") {
+				t.Fatalf("root generate did not restore toc=true after override for %s:\n%s", tc.name, regenerated)
+			}
+		})
+	}
+}
+
+// TestRunnerGenerateSubcommandAcceptsPositionalFile verifies that the explicit
+// generate command accepts the file path without --file.
+func TestRunnerGenerateSubcommandAcceptsPositionalFile(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n",
+	})
+
+	runFileCommand(t, fs, "generate", path, "--min-level=1")
+	got := fs.fileString(path)
+	if !strings.Contains(got, "<a id=\"title\"></a>") || !strings.Contains(got, "state=generated") {
+		t.Fatalf("generate positional file did not rewrite the document:\n%s", got)
+	}
+}
+
+// TestRunnerRegenSubcommandAcceptsPositionalFile verifies that the explicit
+// regen command accepts the file path without --file.
+func TestRunnerRegenSubcommandAcceptsPositionalFile(t *testing.T) {
+	const path = "doc.md"
+	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	broken := strings.Replace(generated, "* [1. Intro](#intro)", "* [BROKEN](#intro)", 1)
+	fs := newMemoryFileSystem(map[string]string{
+		path: broken,
+	})
+
+	runFileCommand(t, fs, "regen", path)
+	got := fs.fileString(path)
+	if strings.Contains(got, "* [BROKEN](#intro)") || !strings.Contains(got, "* [1. Intro](#intro)") {
+		t.Fatalf("regen positional file did not rebuild the managed state:\n%s", got)
+	}
+}
+
+// TestRunnerStripSubcommandAcceptsPositionalFile verifies that the explicit
+// strip command accepts the file path without --file.
+func TestRunnerStripSubcommandAcceptsPositionalFile(t *testing.T) {
+	const path = "doc.md"
+	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	fs := newMemoryFileSystem(map[string]string{
+		path: generated,
+	})
+
+	runFileCommand(t, fs, "strip", path)
+	got := fs.fileString(path)
+	if !strings.Contains(got, "state=stripped") || strings.Contains(got, "<a id=") {
+		t.Fatalf("strip positional file did not produce stripped state:\n%s", got)
+	}
+}
+
+// TestRunnerCheckSubcommandAcceptsPositionalFile verifies that the explicit
+// check command accepts the file path without --file.
+func TestRunnerCheckSubcommandAcceptsPositionalFile(t *testing.T) {
+	const path = "doc.md"
+	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	fs := newMemoryFileSystem(map[string]string{
+		path: generated,
+	})
+
+	if err := runFileCommandExpect(t, fs, 0, "check", path); err != nil {
+		t.Fatalf("check positional file unexpectedly failed: %v", err)
+	}
+}
+
+// TestRunnerRootRejectsConflictingFileSources verifies that root mode rejects
+// simultaneous positional and --file input sources.
+func TestRunnerRootRejectsConflictingFileSources(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n",
+	})
+
+	_, _, exitCode, err := runCommandWithFS(t, fs, strings.NewReader(""), true, path, "--file", path)
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if err == nil || !strings.Contains(err.Error(), "provide exactly one input source") {
+		t.Fatalf("root conflict returned unexpected error: %v", err)
+	}
+}
+
+// TestRunnerGenerateRejectsConflictingFileSources verifies that explicit
+// subcommands reject simultaneous positional and --file input sources.
+func TestRunnerGenerateRejectsConflictingFileSources(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n",
+	})
+
+	_, _, exitCode, err := runCommandWithFS(t, fs, strings.NewReader(""), true, "generate", path, "--file", path)
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if err == nil || !strings.Contains(err.Error(), "provide exactly one input source") {
+		t.Fatalf("generate conflict returned unexpected error: %v", err)
+	}
+}
+
+// TestRunnerRootRejectsMultiplePositionalFiles verifies that root mode keeps
+// the single-file contract even after positional files are accepted.
+func TestRunnerRootRejectsMultiplePositionalFiles(t *testing.T) {
+	fs := newMemoryFileSystem(map[string]string{
+		"a.md": "# A\n",
+		"b.md": "# B\n",
+	})
+
+	_, _, exitCode, err := runCommandWithFS(t, fs, strings.NewReader(""), true, "a.md", "b.md")
+	if exitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", exitCode)
+	}
+	if err == nil || !strings.Contains(err.Error(), "provide exactly one input source") {
+		t.Fatalf("multiple positional files returned unexpected error: %v", err)
 	}
 }
 
