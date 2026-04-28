@@ -55,6 +55,7 @@ state=generated
 ## 1. <a id="features"></a>Features
 
 * very easy to use: `mdtoc MY_IMPORTANT_DOCUMENT.md`
+* highly configurable
 * single binary, no external tools required
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
@@ -151,6 +152,7 @@ This means:
 ## 5. <a id="limits"></a>Limits
 
 * no Setext heading support (`Heading` followed by `===` or `---`)
+* no HTML heading support (`<h2>Example</h2>`)
 * repeated-heading links depend on occurrence order ([issue #8](https://github.com/rokath/mdtoc/issues/8))
 * not a site generator
 * not a Markdown formatter
