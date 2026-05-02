@@ -398,7 +398,9 @@ _Note:_ `state` is intentionally also normalized to `key=value`. This makes the 
 | `mdtoc generate  --help`                | Prints long help text specifically for generate.|
 |                                         |                                                 |
 | `mdtoc regen    [--verbose]`            | regenerates from the persisted container config.|
+| `mdtoc refresh  [--verbose]`            | alias for `regen`.                              |
 | `mdtoc regen     --help`                | Prints long help text specifically for regen.   |
+| `mdtoc refresh   --help`                | Prints the same help text as `regen`.           |
 |                                         |                                                 |
 | `mdtoc strip    [--verbose] [--raw]`    | removes ToC, numbers, anchors and optionally config. |
 | `mdtoc strip     --help`                | Prints long help text specifically for strip.   |
@@ -581,6 +583,7 @@ Behavior:
 * accepts only `state=generated` or `state=stripped`
 * in both supported states, it regenerates the document into the `generated` target state
 * writes the updated normalized config back with `state=generated`
+* `refresh` is a supported command alias with the same behavior
 
 Error case:
 

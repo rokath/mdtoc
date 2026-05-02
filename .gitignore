@@ -36,6 +36,11 @@ go.work.sum
 
 # goreleaser
 dist/
+.gocache/
+
+# VS Code extension build artifacts
+extension/bin/
+extension/out/
 
 # backup
 docs/backup/

@@ -116,6 +116,25 @@ func TestRunnerFileWorkflowGenerateStripRegenCheck(t *testing.T) {
 	}
 }
 
+// TestRunnerFileWorkflowRefreshAlias verifies that refresh works as a file-based alias for regen.
+func TestRunnerFileWorkflowRefreshAlias(t *testing.T) {
+	const path = "README.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n",
+	})
+
+	runFileCommand(t, fs, "generate", "-f", path, "--min-level=1")
+	generated := fs.fileString(path)
+	broken := strings.Replace(generated, "* [1. Intro](#intro)", "* [BROKEN](#intro)", 1)
+	fs.files[path] = []byte(broken)
+
+	runFileCommand(t, fs, "refresh", "-f", path)
+	regenerated := fs.fileString(path)
+	if !strings.Contains(regenerated, "state=generated") || !strings.Contains(regenerated, "<a id=\"title\"></a>") || strings.Contains(regenerated, "* [BROKEN](#intro)") {
+		t.Fatalf("refresh alias did not restore generated state:\n%s", regenerated)
+	}
+}
+
 // TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin verifies that file
 // workflows still run when CI provides non-interactive stdin that is already at EOF.
 func TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin(t *testing.T) {

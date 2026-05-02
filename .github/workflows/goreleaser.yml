@@ -45,6 +45,29 @@ jobs:
           # Alternatively you could hard-code a version:
           # go-version: '1.22'
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install extension dependencies
+        working-directory: extension
+        run: npm ci
+
+      - name: Align extension version with release tag
+        shell: bash
+        working-directory: extension
+        run: |
+          tag="$(git describe --tags --exact-match)"
+          version="${tag#v}"
+          npm version --no-git-tag-version "$version"
+
+      - name: Build extension
+        working-directory: extension
+        run: npm run build
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
@@ -66,3 +89,15 @@ jobs:
           # with contents:write on rokath/homebrew-tap. Configure it as a
           # repository secret in this repo before running release publishing.
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
+      - name: Package VSIX release assets
+        working-directory: extension
+        run: npm run package:release
+
+      - name: Upload VSIX assets to GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="$(git describe --tags --exact-match)"
+          gh release upload "$tag" extension/out/*.vsix --clobber

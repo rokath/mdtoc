@@ -90,6 +90,7 @@ func TestRunnerSubcommandVerboseWithoutHelpPrintsLongHelp(t *testing.T) {
 	}{
 		{args: []string{"generate", "--verbose"}, want: "Generate or update ToC, heading numbers, and anchors."},
 		{args: []string{"regen", "--verbose"}, want: "Regenerate using the persisted config from an existing managed container."},
+		{args: []string{"refresh", "--verbose"}, want: "Regenerate using the persisted config from an existing managed container."},
 		{args: []string{"strip", "--verbose"}, want: "Remove managed artifacts and optionally the entire managed container."},
 		{args: []string{"check", "--verbose"}, want: "Reconstruct the target document state and compare it byte-for-byte."},
 	}
@@ -234,6 +235,34 @@ func TestRunnerRegenFromStdin(t *testing.T) {
 	}
 	if got := stdout.String(); !strings.Contains(got, "* [Intro](#intro)") || strings.Contains(got, "<a id=") {
 		t.Fatalf("stdout does not contain regen output honoring stored config:\n%s", got)
+	}
+}
+
+// TestRunnerRefreshAliasFromStdin verifies that refresh behaves exactly like regen on stdin input.
+func TestRunnerRefreshAliasFromStdin(t *testing.T) {
+	input, _, err := Generate("# Title\n\n## Intro\n", Options{
+		Numbering: false,
+		MinLevel:  2,
+		MaxLevel:  4,
+		Anchor:    AnchorOff,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	input = strings.Replace(input, "* [Intro](#intro)", "* [BROKEN](#intro)", 1)
+
+	var stdout, stderr strings.Builder
+	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
+	exitCode, err := runner.Run([]string{"refresh"})
+	if err != nil {
+		t.Fatalf("Run error: %v", err)
+	}
+	if exitCode != 0 {
+		t.Fatalf("exit code = %d, want 0", exitCode)
+	}
+	if got := stdout.String(); !strings.Contains(got, "* [Intro](#intro)") || strings.Contains(got, "<a id=") {
+		t.Fatalf("stdout does not contain refresh alias output honoring stored config:\n%s", got)
 	}
 }
 
