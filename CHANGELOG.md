@@ -6,6 +6,52 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* No unreleased changes recorded yet.
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.2.2..HEAD`
+
+```txt
+```
+
+## <a id='v0.2.2-changes'></a>v0.2.2 Changes (2026-05-02)
+
+### <a id='v0.2.2-overview'></a>v0.2.2 Overview
+
+* VS Code extension groundwork was added:
+  * a new `extension/` workspace now provides a desktop-only MVP scaffold with commands for `generate`, `regen`, `strip`, `check`, and `showVersion`
+  * the extension resolves `mdtoc` via `customPath -> bundled binary`, applies document changes through `stdin`/`stdout`, and documents the MVP contract in a dedicated spec
+  * the MVP spec link in `README.md` now points to a short English version in `docs/vscode-extension-mvp.md`, including the end-user `Install from VSIX...` step
+  * a new `package:release` extension script now stages binaries from the GoReleaser `dist/` archives and packages all four MVP VSIX targets in one pass
+  * the release workflows now build and upload per-platform VSIX artifacts for `darwin-x64`, `darwin-arm64`, `linux-x64`, and `win32-x64`
+  * local developer ergonomics were improved with an `F5` launch configuration and explicit README guidance for testing through either the Extension Development Host or a locally installed VSIX
+* CLI naming became a bit more forgiving:
+  * `refresh` is now accepted as an alias for the `regen` subcommand
+  * the documented CLI surface still keeps `regen` as the canonical command name
+* Documentation paths were shortened and clarified:
+  * the primary docs now live at `docs/spec.md`, `docs/alternatives.md`, and `docs/vscode-extension-mvp.md`
+  * `README.md`, `index.md`, and current changelog references now point to the shorter document paths
+  * the VS Code extension MVP document now expands `MVP` as `Minimum Viable Product`
+* Release preparation rules were tightened:
+  * `AGENTS.md` now requires explicit `CHANGELOG.md` review before relevant commits, not only before push or tag
+  * release-preparation commits now require an already prepared version section, correct git range, and a reset `Unreleased Changes` section
+  * extension build artifacts such as `extension/bin/`, `extension/out/`, and `extension/.tmp/` are now ignored
+
+### <a id='v0.2.2-git-log'></a>v0.2.2 Git Log
+
+Used git range: `v0.2.1..v0.2.2`
+
+```txt
+* 1d77840 2026-05-02 docs: shorten docs paths and retire German drafts
+* 0241f58 2026-05-02 feat(extension): add VS Code MVP and VSIX release flow
+* 0ffd65d 2026-05-02 feat(cli): add refresh alias and subcommand-flag hints
+```
+
+## <a id='v0.2.1-changes'></a>v0.2.1 Changes (2026-04-25)
+
+### <a id='v0.2.1-overview'></a>v0.2.1 Overview
+
 * CLI file handling became more flexible:
   * positional file arguments are now accepted alongside `--file/-f` for `generate`, `regen`, `strip`, and `check`
   * root mode now dispatches automatically to `regen` for valid managed input without generate overrides and to `generate` otherwise
@@ -16,26 +62,31 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * commands now reject mixed input from piped stdin together with `--file/-f` instead of silently ignoring stdin
   * config length errors now hint that the document may require a newer `mdtoc` version when a versioned container format is detected
   * tests now cover mixed-input rejection for `generate`, `regen`, `strip`, and `check`
-* README usage wording was clarified:
-  * the example command block now better distinguishes dry-run pipe usage from file-rewrite usage
-  * the managed-configuration note now states that generation settings must be changed through `generate`, not through manual config edits
 * GitLab anchor generation was implemented:
   * `--anchor gitlab` now derives heading IDs with a GitLab-specific profile instead of behaving like `github`
   * tests now cover documented GitHub/GitLab differences and a file-level generate workflow for a punctuation-sensitive heading
-  * `README.md` and `docs/mdtoc-spec.md` now document the GitLab profile and link to a stable reference section
-* The specification was brought back in sync with the current implementation:
-  * `docs/mdtoc-spec.md` now describes the current config normalization, legacy v1 container handling, bullet auto-detection, `regen`, and `strip --raw` fallback behavior
-  * outdated references to a `goldmark`-driven implementation were replaced with the current self-contained parser and inline-text extraction model
-* Alternatives documentation was condensed:
-  * new `docs/mdtoc-alternatives.md` now provides a table-centric overview of relevant alternatives relative to `mdtoc`
-  * `README.md` now links to that new overview as the primary alternatives page
-  * remaining useful scope and exclusion notes were moved into the alternatives page so the older source document no longer needs to be referenced
+  * `README.md` and the specification now document the GitLab profile and link to a stable reference section
+* The documentation set was consolidated:
+  * the specification was brought back in sync with the current implementation, including config normalization, legacy v1 containers, bullet auto-detection, `regen`, and `strip --raw` fallback behavior
+  * the alternatives page was reduced to a more compact comparison overview
+  * README usage wording and extension planning notes were clarified
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.2.1-git-log'></a>v0.2.1 Git Log
 
-Used git range: `v0.2.0..HEAD`
+Used git range: `v0.2.0..v0.2.1`
 
 ```txt
+* 627cfd1 2026-04-23 docs(changelog): add missing v0.2.0 notes
+* c22a117 2026-04-24 feat(anchor): implement GitLab slug profile
+* 29a434d 2026-04-24 docs(alternatives): replace tools comparison pages
+* a9902d2 2026-04-24 docs(spec): align behavior reference with implementation
+* d5efef8 2026-04-24 Add usage instruction for mdtoc
+* 752e00b 2026-04-24 Clarify GitLab heading ID behavior in README
+* ded9549 2026-04-24 docs: add German VS Code extension notes
+* e9449f8 2026-04-24 fix(cli): reject mixed stdin and file input
+* 2b792a7 2026-04-25 feat(cli): add root dispatch and positional file input
+* 55ab000 2026-04-25 fix(cli): allow --file with empty redirected stdin
+* c306649 2026-04-25 docs(internal): clarify type field semantics
 ```
 
 ## <a id='v0.2.0-changes'></a>v0.2.0 Changes (2026-04-23)

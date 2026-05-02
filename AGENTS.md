@@ -22,7 +22,7 @@
 
 ## Documentation
 
-* Use `README.md` and `./docs/mdtoc-spec.md` to understand intent and terminology.
+* Use `README.md` and `./docs/spec.md` to understand intent and terminology.
 * Do not change code only because the documentation suggests a nicer design.
 * If code and documentation disagree, treat the current code and tests as the source of truth unless the user explicitly asks to align them.
 * Repository-internal documentation links must stay relative.
@@ -43,10 +43,12 @@
 
 * Keep unrelated changes out of the same commit.
 * If the work naturally splits into independent topics, prefer separate commits unless the user requests a single combined commit.
+* Before every commit that affects release notes, unreleased notes, version sections, user-visible behavior, CI, docs, or shipped assets, explicitly review `CHANGELOG.md`.
 * Before every `git push`, explicitly review `CHANGELOG.md`.
 * Before every release tag, release creation, or release publication, explicitly review `CHANGELOG.md`.
 * If the pushed commits affect release notes, unreleased notes, version sections, user-visible behavior, CI, docs, or shipped assets, `CHANGELOG.md` must be updated in the same push.
 * If a task includes committing, pushing, or opening a PR for changes in those areas, treat the `CHANGELOG.md` update as a precondition and do not defer it.
+* Do not create a release-preparation commit until `CHANGELOG.md` already has the intended version section, the correct git range for that version, and `Unreleased Changes` is reset to only later work.
 * Do not push commits first and postpone the `CHANGELOG.md` update for later.
 * Before editing `CHANGELOG.md` on a working branch, first reconcile it with the current `origin/main` state if any changelog or release-preparation PRs have merged in the meantime.
 * Do not continue a structurally older `CHANGELOG.md` on `dev` after release-preparation work has already been merged into `main`; sync first, then add new unreleased notes.
