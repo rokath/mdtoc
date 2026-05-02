@@ -105,6 +105,7 @@
     "build": "tsc -p ./tsconfig.json",
     "check": "tsc -p ./tsconfig.json --noEmit",
     "package:macos-arm64": "MDTOC_VSCODE_TARGET_PLATFORM=darwin-arm64 npm run package:target",
+    "release:prepare-version": "node ./scripts/set-version.mjs",
     "package:release": "node ./scripts/package-release.mjs",
     "package:target": "node ./scripts/package-target.mjs",
     "package:vsix": "vsce package",

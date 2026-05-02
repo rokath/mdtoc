@@ -2,6 +2,16 @@
 
 This extension runs the `mdtoc` CLI against the active Markdown document in VS Code Desktop.
 
+## Release Preparation
+
+Use the repository root script for release tagging:
+
+```bash
+./setReleaseTag.sh 0.2.3
+```
+
+It normalizes `0.2.3` or `v0.2.3`, updates both extension version files, creates a version commit when needed, and then creates the repository tag.
+
 ## Local Test In VS Code
 
 ### Option A: Extension Development Host
