@@ -6,7 +6,12 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* No unreleased changes recorded yet.
+* Release publishing for VSIX assets was hardened:
+  * the release workflow now validates the extension version against the Git tag instead of rewriting `extension/package.json` and `extension/package-lock.json` during publishing
+  * this prevents GoReleaser from failing on a workflow-induced dirty git state
+  * release preparation rules now explicitly require the extension package version files to be aligned before tagging a release that ships VSIX assets
+  * a checked-in extension script now updates both version files together before tagging
+  * a new repository-root helper script now wraps version preparation plus local tag creation and fails early on a dirty repository
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

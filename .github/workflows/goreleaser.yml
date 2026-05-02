@@ -56,13 +56,22 @@ jobs:
         working-directory: extension
         run: npm ci
 
-      - name: Align extension version with release tag
+      - name: Verify extension version matches release tag
         shell: bash
         working-directory: extension
         run: |
           tag="$(git describe --tags --exact-match)"
           version="${tag#v}"
-          npm version --no-git-tag-version "$version"
+          package_version="$(node -p "require('./package.json').version")"
+          lock_version="$(node -p "require('./package-lock.json').version")"
+          if [ "$package_version" != "$version" ]; then
+            echo "extension/package.json version $package_version does not match release tag $version"
+            exit 1
+          fi
+          if [ "$lock_version" != "$version" ]; then
+            echo "extension/package-lock.json version $lock_version does not match release tag $version"
+            exit 1
+          fi
 
       - name: Build extension
         working-directory: extension
