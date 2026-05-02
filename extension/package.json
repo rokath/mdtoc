@@ -1,0 +1,119 @@
+{
+  "name": "mdtoc-vscode",
+  "displayName": "mdtoc",
+  "description": "Run mdtoc on the active Markdown document from VS Code Desktop.",
+  "version": "0.1.0",
+  "publisher": "rokath",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rokath/mdtoc.git"
+  },
+  "homepage": "https://github.com/rokath/mdtoc",
+  "bugs": {
+    "url": "https://github.com/rokath/mdtoc/issues"
+  },
+  "engines": {
+    "vscode": "^1.89.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "categories": [
+    "Formatters",
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "toc",
+    "table of contents",
+    "mdtoc"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown",
+    "onCommand:mdtoc.generate",
+    "onCommand:mdtoc.regen",
+    "onCommand:mdtoc.strip",
+    "onCommand:mdtoc.check",
+    "onCommand:mdtoc.showVersion"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mdtoc.generate",
+        "title": "mdtoc: Generate ToC",
+        "category": "mdtoc"
+      },
+      {
+        "command": "mdtoc.regen",
+        "title": "mdtoc: Regenerate ToC",
+        "category": "mdtoc"
+      },
+      {
+        "command": "mdtoc.strip",
+        "title": "mdtoc: Strip ToC",
+        "category": "mdtoc"
+      },
+      {
+        "command": "mdtoc.check",
+        "title": "mdtoc: Check ToC",
+        "category": "mdtoc"
+      },
+      {
+        "command": "mdtoc.showVersion",
+        "title": "mdtoc: Show Version",
+        "category": "mdtoc"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "mdtoc.generate",
+          "when": "editorLangId == markdown",
+          "group": "navigation"
+        },
+        {
+          "command": "mdtoc.regen",
+          "when": "editorLangId == markdown",
+          "group": "navigation"
+        },
+        {
+          "command": "mdtoc.strip",
+          "when": "editorLangId == markdown",
+          "group": "navigation"
+        },
+        {
+          "command": "mdtoc.check",
+          "when": "editorLangId == markdown",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "mdtoc",
+      "properties": {
+        "mdtoc.executable.customPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Absolute path to a custom `mdtoc` executable. Leave empty to use the bundled binary."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p ./tsconfig.json",
+    "check": "tsc -p ./tsconfig.json --noEmit",
+    "package:macos-arm64": "MDTOC_VSCODE_TARGET_PLATFORM=darwin-arm64 npm run package:target",
+    "package:release": "node ./scripts/package-release.mjs",
+    "package:target": "node ./scripts/package-target.mjs",
+    "package:vsix": "vsce package",
+    "stage:binaries": "node ./scripts/stage-binaries.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "@types/vscode": "^1.89.0",
+    "@vscode/vsce": "^3.6.2",
+    "typescript": "^5.8.3"
+  }
+}

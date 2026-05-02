@@ -1,0 +1,9 @@
+src/**
+tsconfig.json
+scripts/**
+node_modules/**
+.gitignore
+.tmp/**
+out/**
+bin/.gitkeep
+**/*.map
