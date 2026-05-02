@@ -16,7 +16,7 @@
 
 >`mdtoc`: Markdown Table of Contents ☰ with numbering and stable anchor links
 >
->`generate`, `strip`, `regen`, `check` without turning your Markdown into a moving target.
+>`generate`, `strip`, `regen`/`refresh`, `check` without turning your Markdown into a moving target.
 
 <img src="./docs/mdtoc_mascot_1024.webp" width="600">
 
@@ -106,11 +106,12 @@ mdtoc README.md -a off --toc off                 # root mode: explicit generate 
 mdtoc generate README.md -a gitlab               # explicit command with positional file input
 cat README.md | mdtoc strip > README.stripped.md # remove managed artifacts via Unix pipe and write to a different file
 mdtoc regen README.md                            # rebuild the generated state from the stored container config
+mdtoc refresh README.md                          # alias for regen
 mdtoc generate README.md                         # generate with current CLI flags or defaults and rewrite the config block
 mdtoc check README.md                            # fail in CI when README.md differs from the reconstructed target state
 ```
 
-* `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab anchor profile](docs/mdtoc-spec.md#gitlab-anchor-id-profile).
+* `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab anchor profile](docs/spec.md#gitlab-anchor-id-profile).
 * Exactly one input source is allowed per invocation: positional file, `--file/-f`, or piped `stdin`.
 * Small CLI note: the Go-style one-dash long form such as `-toc off` is currently tolerated, but `--toc off` remains the documented form.
 
@@ -139,12 +140,13 @@ state=generated
 
 The heading title stays the source of truth. Numbers, anchors, and ToC entries are derived from it.
 
-The config block records the settings that produced the current managed state. `generate` always uses current CLI flags or defaults and then rewrites that block. `regen` reuses the stored container config and rebuilds the generated state from it.
+The config block records the settings that produced the current managed state. `generate` always uses current CLI flags or defaults and then rewrites that block. `regen` reuses the stored container config and rebuilds the generated state from it. `refresh` is a command alias for `regen`.
 
 This means:
 
 * the stored config is persisted output state
 * `regen` rebuilds the generated state from that persisted config
+* `refresh` is an alias for `regen`
 * `check` uses that persisted state
 * changing generation settings must go through generate, not through manual config edits
 
@@ -162,11 +164,12 @@ This means:
 
 ### 6.1. <a id="specification"></a>Specification
 
-* [mdtoc spec](./docs/mdtoc-spec.md)
+* [mdtoc spec](./docs/spec.md)
 
 ### 6.2. <a id="comparison"></a>Comparison
 
-* [mdtoc alternatives](./docs/mdtoc-alternatives.md)
+* [mdtoc alternatives](./docs/alternatives.md)
+* [mdtoc VS Code extension MVP](./docs/vscode-extension-mvp.md)
 
 ## 7. <a id="status"></a>Status
 

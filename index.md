@@ -16,6 +16,6 @@ This keeps the homepage content in sync with README.md.
 {% include_relative README.md %}
 {% endcapture %}
 {{ readme
-  | replace: "./docs/mdtoc-spec.md", "./docs/mdtoc-spec.html"
-  | replace: "./docs/mdtoc-alternatives.md", "./docs/mdtoc-alternatives.html"
+  | replace: "./docs/spec.md", "./docs/spec.html"
+  | replace: "./docs/alternatives.md", "./docs/alternatives.html"
   | markdownify }}
