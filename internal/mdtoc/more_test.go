@@ -65,6 +65,9 @@ func TestRunnerRunAndHelpHelpers(t *testing.T) {
 	if got := regenHelp(true); !strings.Contains(got, "persisted config") {
 		t.Fatalf("regenHelp(verbose) missing verbose text:\n%s", got)
 	}
+	if got := regenHelp(true); !strings.Contains(got, "Alias: mdtoc refresh") {
+		t.Fatalf("regenHelp(verbose) missing refresh alias note:\n%s", got)
+	}
 	if got := generateHelp(false); strings.Contains(got, "Generate or update") {
 		t.Fatalf("generateHelp(non-verbose) unexpectedly contains verbose text:\n%s", got)
 	}
@@ -123,6 +126,9 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	if got := stdout.String(); !strings.Contains(got, "check    [--file <name> | <name>] [--verbose]") {
 		t.Fatalf("verbose root help missing reordered check usage:\n%s", got)
 	}
+	if got := stdout.String(); !strings.Contains(got, "refresh  [--file <name> | <name>] [--verbose]") {
+		t.Fatalf("verbose root help missing refresh alias usage:\n%s", got)
+	}
 
 	stdout.Reset()
 	exitCode, err = runner.Run([]string{"regen", "--help"})
@@ -131,6 +137,18 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	}
 	if got := stdout.String(); !strings.Contains(got, "mdtoc regen") {
 		t.Fatalf("regen help missing usage:\n%s", got)
+	}
+	if got := stdout.String(); !strings.Contains(got, "Alias: mdtoc refresh") {
+		t.Fatalf("regen help missing refresh alias note:\n%s", got)
+	}
+
+	stdout.Reset()
+	exitCode, err = runner.Run([]string{"refresh", "--help"})
+	if err != nil || exitCode != 0 {
+		t.Fatalf("refresh help failed: exit=%d err=%v", exitCode, err)
+	}
+	if got := stdout.String(); !strings.Contains(got, "mdtoc regen") {
+		t.Fatalf("refresh help did not reuse regen usage:\n%s", got)
 	}
 
 	stdout.Reset()
@@ -161,8 +179,23 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	if exitCode, err = runner.Run([]string{"regen", "--badflag"}); err == nil || exitCode != 1 {
 		t.Fatalf("regen invalid flag should fail, exit=%d err=%v", exitCode, err)
 	}
+	if exitCode, err = runner.Run([]string{"refresh", "--badflag"}); err == nil || exitCode != 1 {
+		t.Fatalf("refresh invalid flag should fail, exit=%d err=%v", exitCode, err)
+	}
 	if exitCode, err = runner.Run([]string{"check", "--badflag"}); err == nil || exitCode != 1 {
 		t.Fatalf("check invalid flag should fail, exit=%d err=%v", exitCode, err)
+	}
+
+	for _, args := range [][]string{
+		{"--regen", "README.md"},
+		{"-regen", "README.md"},
+		{"generate", "--refresh", "README.md"},
+	} {
+		if exitCode, err = runner.Run(args); err == nil || exitCode != 1 {
+			t.Fatalf("%v should fail with a subcommand hint, exit=%d err=%v", args, exitCode, err)
+		} else if got := err.Error(); !strings.Contains(got, "is a subcommand, not a flag") {
+			t.Fatalf("%v missing subcommand hint:\n%s", args, got)
+		}
 	}
 }
 

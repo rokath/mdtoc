@@ -151,7 +151,7 @@ func (r *Runner) Run(args []string) (int, error) {
 	switch args[0] {
 	case "generate":
 		return r.runGenerate(args[1:])
-	case "regen":
+	case "regen", "refresh":
 		return r.runRegen(args[1:])
 	case "strip":
 		return r.runStrip(args[1:])
@@ -346,7 +346,7 @@ func parseRootInvocation(args []string) (rootInvocation, error) {
 	verbose := fs.Bool("verbose", false, "")
 	verboseShort := fs.Bool("v", false, "")
 	if err := fs.Parse(normalized.parseArgs); err != nil {
-		return rootInvocation{}, err
+		return rootInvocation{}, enhanceFlagParseError(err)
 	}
 
 	if *verboseShort {
@@ -404,7 +404,7 @@ func parseGenerateInvocation(args []string) (generateInvocation, error) {
 	help := fs.Bool("help", false, "")
 	helpShort := fs.Bool("h", false, "")
 	if err := fs.Parse(normalized.parseArgs); err != nil {
-		return generateInvocation{}, err
+		return generateInvocation{}, enhanceFlagParseError(err)
 	}
 
 	if *verboseShort {
@@ -461,7 +461,7 @@ func parseSimpleInvocation(name string, args []string, spec argumentSpec) (simpl
 	help := fs.Bool("help", false, "")
 	helpShort := fs.Bool("h", false, "")
 	if err := fs.Parse(normalized.parseArgs); err != nil {
-		return simpleInvocation{}, err
+		return simpleInvocation{}, enhanceFlagParseError(err)
 	}
 
 	if *verboseShort {
@@ -493,7 +493,7 @@ func parseStripInvocation(args []string) (stripInvocation, error) {
 	help := fs.Bool("help", false, "")
 	helpShort := fs.Bool("h", false, "")
 	if err := fs.Parse(normalized.parseArgs); err != nil {
-		return stripInvocation{}, err
+		return stripInvocation{}, enhanceFlagParseError(err)
 	}
 
 	if *verboseShort {
@@ -720,7 +720,7 @@ func (r *Runner) writeVersion(verbose bool) {
 // subcommand. Everything else is now handled by root convenience mode.
 func isSubcommand(arg string) bool {
 	switch arg {
-	case "generate", "regen", "strip", "check":
+	case "generate", "regen", "refresh", "strip", "check":
 		return true
 	default:
 		return false
@@ -750,6 +750,7 @@ Commands:
   generate [--file <name> | <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
   check    [--file <name> | <name>] [--verbose]            validate that the document matches its persisted state
   regen    [--file <name> | <name>] [--verbose]            regenerate using persisted container config
+  refresh  [--file <name> | <name>] [--verbose]            alias for regen
   strip    [--file <name> | <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
 
 Details: mdtoc -v   short for mdtoc --help --verbose
@@ -772,6 +773,7 @@ Commands:
   generate [--file <name> | <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
   check    [--file <name> | <name>] [--verbose]            validate that the document matches its persisted state
   regen    [--file <name> | <name>] [--verbose]            regenerate using persisted container config
+  refresh  [--file <name> | <name>] [--verbose]            alias for regen
   strip    [--file <name> | <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
 
 Generate options:
@@ -825,12 +827,14 @@ Options:
 `) + "\n"
 }
 
-// regenHelp returns the regen subcommand help text.
+// regenHelp returns the regen/refresh subcommand help text.
 func regenHelp(verbose bool) string {
 	if verbose {
 		return strings.TrimSpace(`mdtoc regen [--file <name> | <name>] [--verbose]
 
 Regenerate using the persisted config from an existing managed container.
+
+Alias: mdtoc refresh
 
 Options:
   --file, -f <name>
@@ -839,6 +843,8 @@ Options:
 `) + "\n"
 	}
 	return strings.TrimSpace(`mdtoc regen [--file <name> | <name>] [--verbose]
+
+Alias: mdtoc refresh
 
 Options:
   --file, -f <name>
@@ -889,6 +895,25 @@ Options:
 Options:
   --file, -f <name>
   --verbose, -v
-  --help, -h
+	--help, -h
 `) + "\n"
+}
+
+// enhanceFlagParseError adds a focused hint when a known subcommand was passed
+// in flag position such as `--regen` instead of `regen`.
+func enhanceFlagParseError(err error) error {
+	msg := err.Error()
+	const prefix = "flag provided but not defined: "
+	if !strings.HasPrefix(msg, prefix) {
+		return err
+	}
+
+	flagToken := strings.TrimSpace(strings.TrimPrefix(msg, prefix))
+	flagToken = strings.Trim(strings.SplitN(flagToken, "=", 2)[0], "\"")
+	command := strings.TrimLeft(flagToken, "-")
+	if !isSubcommand(command) {
+		return err
+	}
+
+	return fmt.Errorf("%s\nhint: `%s` is a subcommand, not a flag; use `mdtoc %s <file>`", msg, command, command)
 }
