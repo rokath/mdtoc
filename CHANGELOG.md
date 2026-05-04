@@ -6,22 +6,38 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* Release publishing for VSIX assets was hardened:
-  * the release workflow now validates the extension version against the Git tag instead of rewriting `extension/package.json` and `extension/package-lock.json` during publishing
-  * this prevents GoReleaser from failing on a workflow-induced dirty git state
-  * release preparation rules now explicitly require the extension package version files to be aligned before tagging a release that ships VSIX assets
-  * a checked-in extension script now updates both version files together before tagging
-  * a single repository-root helper script now wraps version preparation plus local tag creation, fails early on a dirty repository, can be rerun safely to report the next remaining release step, and explains when the release still has to move from `dev` to `main`
+* No unreleased changes recorded.
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.2.3..HEAD`
+
+```txt
+```
+
+## <a id='v0.2.3-changes'></a>v0.2.3 Changes (2026-05-04)
+
+### <a id='v0.2.3-overview'></a>v0.2.3 Overview
+
+* Release automation and guidance were tightened:
+  * the GoReleaser release notes footer was extended in `.goreleaser.yaml`
+  * the old `setReleaseTag.sh` flow was replaced by a single repository-root `releaseHelper.sh` that prepares extension versions and local tags in one guarded step
+  * the helper now reports concrete next steps when a release still has to move from `dev` to `main` and checks `CHANGELOG.md` before remote fetches and tag roundtrips
+  * `AGENTS.md` and `extension/README.md` now document the release-preparation flow more explicitly
 * The VS Code extension command model was simplified:
   * the extension now exposes only `Generate ToC` and `Strip ToC`
   * `Generate ToC` now runs the CLI in root mode so existing valid managed containers reuse their stored config automatically
   * the extension leaves the document unchanged when the CLI reports an invalid container or another execution error
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.2.3-git-log'></a>v0.2.3 Git Log
 
-Used git range: `v0.2.2..HEAD`
+Used git range: `v0.2.2..v0.2.3`
 
 ```txt
+* 6e3c4ae 2026-05-02 release footer extended
+* dbcfabf 2026-05-04 release helper added
+* 51865d5 2026-05-04 feat(extension): simplify VS Code command surface
+* 553a994 2026-05-04 docs(release): improve helper guidance for missing changelog
 ```
 
 ## <a id='v0.2.2-changes'></a>v0.2.2 Changes (2026-05-02)
