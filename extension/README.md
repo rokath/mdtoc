@@ -7,10 +7,12 @@ This extension runs the `mdtoc` CLI against the active Markdown document in VS C
 Use the repository root script for release tagging:
 
 ```bash
-./setReleaseTag.sh 0.2.3
+./releaseHelper.sh 0.2.3
 ```
 
-It normalizes `0.2.3` or `v0.2.3`, updates both extension version files, creates a version commit when needed, and then creates the repository tag.
+You can start it from `dev` or `main`.
+
+It is restartable and guided: it checks branch and remote state, tells you when `dev` still needs to be merged into `main`, updates both extension version files, creates a version commit when needed, creates the local tag, and then tells you the remaining manual steps.
 
 ## Local Test In VS Code
 

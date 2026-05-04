@@ -58,7 +58,7 @@
 * After tagging or before pushing tagged release commits, verify that the latest repository tag mentioned by `git tag` is present in `CHANGELOG.md` with the correct version header and git range.
 * Before tagging a release that ships VSIX assets, ensure `extension/package.json` and `extension/package-lock.json` already match the intended repository release version; the release workflow must validate this, not rewrite tracked files during publishing.
 * Prefer the checked-in `extension` version-preparation script to update those version files so `package.json` and `package-lock.json` stay aligned through one reproducible step.
-* Prefer the repository-root release helper script to perform extension version preparation plus local tag creation in one guarded step; it must fail on a dirty worktree instead of guessing how to proceed.
+* Prefer the single repository-root release helper script to perform extension version preparation plus local tag creation in one guarded, restartable step; it may be started from `dev` or `main`, must fail on a dirty worktree instead of guessing how to proceed, and should report the remaining manual release steps clearly.
 
 ## Tests
 

@@ -11,7 +11,7 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * this prevents GoReleaser from failing on a workflow-induced dirty git state
   * release preparation rules now explicitly require the extension package version files to be aligned before tagging a release that ships VSIX assets
   * a checked-in extension script now updates both version files together before tagging
-  * a new repository-root helper script now wraps version preparation plus local tag creation and fails early on a dirty repository
+  * a single repository-root helper script now wraps version preparation plus local tag creation, fails early on a dirty repository, can be rerun safely to report the next remaining release step, and explains when the release still has to move from `dev` to `main`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
