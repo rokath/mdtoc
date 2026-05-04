@@ -169,6 +169,13 @@ nfpms:
 
 release:
   footer: |
+    ### Install as vsCode extension examples
+
+    Linux:   code --install-extension mdtoc-vscode-linux-x64.vsix
+    Darwin:  code --install-extension mdtoc-vscode-darwin-arm64.vsix
+    Darwin:  code --install-extension mdtoc-vscode-darwin-x64.vsix
+    Windows: code --install-extension mdtoc-vscode-win32-x64.vsix 
+
     ### macOS
 
     Install via Homebrew: `brew install rokath/tap/mdtoc`

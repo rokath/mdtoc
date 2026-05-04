@@ -32,12 +32,11 @@ The extension reads the active editor content, sends it to `mdtoc` over `stdin`,
 Commands:
 
 * `mdtoc.generate`
-* `mdtoc.regen`
 * `mdtoc.strip`
-* `mdtoc.check`
-* `mdtoc.showVersion`
 
-`check` does not modify the document. It only reports whether the current text still matches the persisted `mdtoc` state.
+`generate` runs the CLI in root mode so the binary decides between first-time generation and regeneration from an existing valid managed container.
+
+If the container is invalid, the extension must leave the document unchanged and surface the CLI error.
 
 ## Binary resolution
 
@@ -96,7 +95,5 @@ For normal in-editor discovery and automatic updates, the extension also needs t
 Likely follow-up work after the MVP:
 
 * more target platforms
-* compatibility checks for custom binaries
-* editor diagnostics derived from `check`
 * optional `formatOnSave`
 * a separate architecture for browser or web environments

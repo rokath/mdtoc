@@ -4,15 +4,8 @@ import { spawn } from "node:child_process";
 import * as vscode from "vscode";
 
 const output = vscode.window.createOutputChannel("mdtoc");
-const extensionCommands = [
-  "mdtoc.generate",
-  "mdtoc.regen",
-  "mdtoc.strip",
-  "mdtoc.check",
-  "mdtoc.showVersion",
-] as const;
 
-type MdtocCommand = "generate" | "regen" | "strip" | "check";
+type MdtocCommand = "generate" | "strip";
 type ResolveMode = "bundled" | "custom";
 
 interface ResolvedBinary {
@@ -30,10 +23,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(output);
   context.subscriptions.push(
     vscode.commands.registerCommand("mdtoc.generate", () => runMutatingCommand(context, "generate")),
-    vscode.commands.registerCommand("mdtoc.regen", () => runMutatingCommand(context, "regen")),
     vscode.commands.registerCommand("mdtoc.strip", () => runMutatingCommand(context, "strip")),
-    vscode.commands.registerCommand("mdtoc.check", () => runCheckCommand(context)),
-    vscode.commands.registerCommand("mdtoc.showVersion", () => showVersion(context)),
   );
 }
 
@@ -41,7 +31,7 @@ export function deactivate(): void {}
 
 async function runMutatingCommand(
   context: vscode.ExtensionContext,
-  command: Exclude<MdtocCommand, "check">,
+  command: MdtocCommand,
 ): Promise<void> {
   const editor = getActiveMarkdownEditor();
   if (!editor) {
@@ -56,7 +46,7 @@ async function runMutatingCommand(
 
   let result: CommandResult;
   try {
-    result = await runMdtoc(resolved.path, [command], documentText);
+    result = await runMdtoc(resolved.path, commandArgs(command), documentText);
   } catch (error) {
     showRuntimeError(command, resolved.path, error);
     return;
@@ -81,88 +71,6 @@ async function runMutatingCommand(
     output.appendLine(result.stderr.trim());
     output.show(true);
   }
-}
-
-async function runCheckCommand(context: vscode.ExtensionContext): Promise<void> {
-  const editor = getActiveMarkdownEditor();
-  if (!editor) {
-    return;
-  }
-
-  const resolved = await resolveBinary(context);
-  if (!resolved) {
-    return;
-  }
-
-  let result: CommandResult;
-  try {
-    result = await runMdtoc(resolved.path, ["check"], editor.document.getText());
-  } catch (error) {
-    showRuntimeError("check", resolved.path, error);
-    return;
-  }
-
-  const stderr = result.stderr.trim();
-
-  if (result.exitCode === 0) {
-    vscode.window.showInformationMessage("mdtoc: document matches its persisted state.");
-    if (stderr) {
-      output.appendLine(stderr);
-      output.show(true);
-    }
-    return;
-  }
-
-  const message = stderr || "mdtoc check reported that the document differs from its persisted state.";
-  output.appendLine(`[check] ${message}`);
-  output.show(true);
-  vscode.window.showWarningMessage(`mdtoc: ${message}`);
-}
-
-async function showVersion(context: vscode.ExtensionContext): Promise<void> {
-  const resolved = await resolveBinary(context);
-  if (!resolved) {
-    return;
-  }
-
-  let current: CommandResult;
-  try {
-    current = await runMdtoc(resolved.path, ["--version"]);
-  } catch (error) {
-    showRuntimeError("--version", resolved.path, error);
-    return;
-  }
-
-  if (current.exitCode !== 0) {
-    showExecutionError("--version", resolved, current);
-    return;
-  }
-
-  const lines = [
-    `Extension version: ${context.extension.packageJSON.version ?? "unknown"}`,
-    `mdtoc mode: ${resolved.mode}`,
-    `mdtoc path: ${resolved.path}`,
-    `mdtoc version: ${current.stdout.trim() || current.stderr.trim() || "unknown"}`,
-  ];
-
-  if (resolved.mode === "custom") {
-    const bundled = bundledBinaryPath(context);
-    if (bundled) {
-      try {
-        const bundledVersion = await runMdtoc(bundled, ["--version"]);
-        if (bundledVersion.exitCode === 0) {
-          lines.push(`bundled mdtoc version: ${bundledVersion.stdout.trim() || bundledVersion.stderr.trim()}`);
-        }
-      } catch {
-        // Ignore bundled version lookup failures while reporting a custom binary.
-      }
-    }
-  }
-
-  output.clear();
-  lines.forEach((line) => output.appendLine(line));
-  output.show(true);
-  void vscode.window.showInformationMessage("mdtoc version information written to the Output panel.");
 }
 
 function getActiveMarkdownEditor(): vscode.TextEditor | undefined {
@@ -206,6 +114,15 @@ function bundledBinaryPath(context: vscode.ExtensionContext): string | undefined
   const candidate = path.join(context.extensionPath, "bin", target, binaryName);
 
   return fs.existsSync(candidate) ? candidate : undefined;
+}
+
+function commandArgs(command: MdtocCommand): string[] {
+  if (command === "generate") {
+    // Root mode lets the CLI decide between container-aware regeneration and
+    // first-time generation with default settings.
+    return [];
+  }
+  return [command];
 }
 
 function mapArch(arch: string): string {

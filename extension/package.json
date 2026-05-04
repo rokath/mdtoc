@@ -32,10 +32,7 @@
   "activationEvents": [
     "onLanguage:markdown",
     "onCommand:mdtoc.generate",
-    "onCommand:mdtoc.regen",
-    "onCommand:mdtoc.strip",
-    "onCommand:mdtoc.check",
-    "onCommand:mdtoc.showVersion"
+    "onCommand:mdtoc.strip"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -46,23 +43,8 @@
         "category": "mdtoc"
       },
       {
-        "command": "mdtoc.regen",
-        "title": "mdtoc: Regenerate ToC",
-        "category": "mdtoc"
-      },
-      {
         "command": "mdtoc.strip",
         "title": "mdtoc: Strip ToC",
-        "category": "mdtoc"
-      },
-      {
-        "command": "mdtoc.check",
-        "title": "mdtoc: Check ToC",
-        "category": "mdtoc"
-      },
-      {
-        "command": "mdtoc.showVersion",
-        "title": "mdtoc: Show Version",
         "category": "mdtoc"
       }
     ],
@@ -74,17 +56,7 @@
           "group": "navigation"
         },
         {
-          "command": "mdtoc.regen",
-          "when": "editorLangId == markdown",
-          "group": "navigation"
-        },
-        {
           "command": "mdtoc.strip",
-          "when": "editorLangId == markdown",
-          "group": "navigation"
-        },
-        {
-          "command": "mdtoc.check",
           "when": "editorLangId == markdown",
           "group": "navigation"
         }

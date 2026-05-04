@@ -7,10 +7,12 @@ This extension runs the `mdtoc` CLI against the active Markdown document in VS C
 Use the repository root script for release tagging:
 
 ```bash
-./setReleaseTag.sh 0.2.3
+./releaseHelper.sh 0.2.3
 ```
 
-It normalizes `0.2.3` or `v0.2.3`, updates both extension version files, creates a version commit when needed, and then creates the repository tag.
+You can start it from `dev` or `main`.
+
+It is restartable and guided: it checks branch and remote state, tells you when `dev` still needs to be merged into `main`, updates both extension version files, creates a version commit when needed, creates the local tag, and then tells you the remaining manual steps.
 
 ## Local Test In VS Code
 
@@ -28,10 +30,7 @@ Use this while developing the extension itself.
 You should then see:
 
 * `mdtoc: Generate ToC`
-* `mdtoc: Regenerate ToC`
 * `mdtoc: Strip ToC`
-* `mdtoc: Check ToC`
-* `mdtoc: Show Version`
 
 ### Option B: Install A Local VSIX
 
@@ -58,10 +57,17 @@ npm run package:macos-arm64
 ## Commands
 
 * `mdtoc: Generate ToC`
-* `mdtoc: Regenerate ToC`
 * `mdtoc: Strip ToC`
-* `mdtoc: Check ToC`
-* `mdtoc: Show Version`
+
+`Generate ToC` runs the CLI in root mode with the active document on `stdin`.
+
+That means:
+
+* if the document has no managed container yet, `mdtoc` creates one with its default settings
+* if the document already has a valid managed container, `mdtoc` reuses the stored container config
+* if the managed container is invalid, the extension leaves the document unchanged and shows the CLI error
+
+`Strip ToC` runs the explicit `strip` subcommand and also leaves the document unchanged if the CLI reports an error.
 
 ## Binary Resolution
 
