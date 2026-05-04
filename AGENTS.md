@@ -59,6 +59,7 @@
 * Before tagging a release that ships VSIX assets, ensure `extension/package.json` and `extension/package-lock.json` already match the intended repository release version; the release workflow must validate this, not rewrite tracked files during publishing.
 * Prefer the checked-in `extension` version-preparation script to update those version files so `package.json` and `package-lock.json` stay aligned through one reproducible step.
 * Prefer the single repository-root release helper script to perform extension version preparation plus local tag creation in one guarded, restartable step; it may be started from `dev` or `main`, must fail on a dirty worktree instead of guessing how to proceed, and should report the remaining manual release steps clearly.
+* When the release helper script detects that `CHANGELOG.md` is not yet prepared for the requested version, it should print the concrete next steps instead of only reporting the missing section.
 
 ## Tests
 

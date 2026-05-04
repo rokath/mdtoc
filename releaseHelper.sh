@@ -85,7 +85,13 @@ fi
 
 if ! grep -Fq "$CHANGELOG_HEADER" CHANGELOG.md; then
   echo
-  echo "CHANGELOG.md does not contain the required section for $TAG." >&2
+  echo "CHANGELOG.md is not ready for $TAG." >&2
+  echo "Required next steps:" >&2
+  echo "  1. Add the section header: $CHANGELOG_HEADER" >&2
+  echo "  2. Move the current release notes from Unreleased Changes into that $TAG section" >&2
+  echo "  3. Reset Unreleased Changes so it only covers later work" >&2
+  echo "  4. Commit the changelog update on main" >&2
+  echo "  5. Re-run: ./releaseHelper.sh $TAG" >&2
   exit 1
 fi
 
