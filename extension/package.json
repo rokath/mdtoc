@@ -1,7 +1,7 @@
 {
-  "name": "mdtoc-vscode",
-  "displayName": "mdtoc",
-  "description": "Run mdtoc on the active Markdown document from VS Code Desktop.",
+  "name": "mdtoc",
+  "displayName": "mdtoc - Markdown ToC with Renumbering-Safe Links",
+  "description": "Generate and strip stable Markdown tables of contents from VS Code.",
   "version": "0.2.3",
   "publisher": "rokath",
   "license": "MIT",
