@@ -2,7 +2,7 @@
   "name": "mdtoc-vscode",
   "displayName": "mdtoc",
   "description": "Run mdtoc on the active Markdown document from VS Code Desktop.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "publisher": "rokath",
   "license": "MIT",
   "repository": {
