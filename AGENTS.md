@@ -43,7 +43,7 @@
 
 * Keep unrelated changes out of the same commit.
 * If the work naturally splits into independent topics, prefer separate commits unless the user requests a single combined commit.
-* Do not commit directly on `main`. Create commits on `dev` or another non-`main` working branch, then merge into `main` through the normal integration flow.
+* Do not modify or commit files directly on `main` unless the user explicitly asks for changes on `main`. Create changes on `dev` or another non-`main` working branch, then merge into `main` through the normal integration flow.
 * Before every commit that affects release notes, unreleased notes, version sections, user-visible behavior, CI, docs, or shipped assets, explicitly review `CHANGELOG.md`.
 * Before every `git push`, explicitly review `CHANGELOG.md`.
 * Before every release tag, release creation, or release publication, explicitly review `CHANGELOG.md`.
