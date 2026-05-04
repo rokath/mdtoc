@@ -6,16 +6,42 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* VS Code Marketplace publishing was automated:
-  * a dedicated GitHub Actions workflow now runs when a GitHub Release is published
-  * the same workflow now also supports manual `workflow_dispatch` runs with explicit `tag` and `publish` inputs for controlled testing
-  * it downloads the four VSIX assets from the release and publishes each package to the VS Code Marketplace with `VSCE_PAT`
+* No unreleased changes are recorded yet.
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.2.3..HEAD`
+Used git range: `v0.2.4..HEAD`
 
 ```txt
+```
+
+## <a id='v0.2.4-changes'></a>v0.2.4 Changes (2026-05-04)
+
+### <a id='v0.2.4-overview'></a>v0.2.4 Overview
+
+* VS Code Marketplace publishing was automated:
+  * a dedicated GitHub Actions workflow now runs when a GitHub Release is published
+  * the same workflow also supports manual `workflow_dispatch` runs with explicit `tag` and `publish` inputs for controlled testing
+  * it downloads the four VSIX assets from the release and publishes each package to the VS Code Marketplace with `VSCE_PAT`
+* The VS Code extension Marketplace metadata was finalized:
+  * the extension `name` now uses `mdtoc`
+  * the extension `displayName` now uses `mdtoc - Markdown ToC with Renumbering-Safe Links` to avoid a Marketplace name collision
+  * the extension description now states that it generates and strips stable Markdown tables of contents from VS Code
+* Repository workflow guidance was tightened:
+  * `AGENTS.md` now explicitly forbids direct edits or commits on `main` unless the user asks for work on `main`
+
+### <a id='v0.2.4-git-log'></a>v0.2.4 Git Log
+
+Used git range: `v0.2.3..v0.2.4`
+
+```txt
+* adfed21 2026-05-04 vsCode publish prepare
+* 6d95571 2026-05-04 docs(agents): require explicit approval for main edits
+* ef168be 2026-05-04 ci(vscode): add manual marketplace publish trigger
+* c34f745 2026-05-04 description adapted
+* 414ee6a 2026-05-04 Name changed to toc4md
+* 7503d49 2026-05-04 name chenged from toc4md into mdtoc123
+* 873ae1c 2026-05-04 id=mdtoc
 ```
 
 ## <a id='v0.2.3-changes'></a>v0.2.3 Changes (2026-05-04)
