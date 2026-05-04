@@ -30,10 +30,7 @@ Use this while developing the extension itself.
 You should then see:
 
 * `mdtoc: Generate ToC`
-* `mdtoc: Regenerate ToC`
 * `mdtoc: Strip ToC`
-* `mdtoc: Check ToC`
-* `mdtoc: Show Version`
 
 ### Option B: Install A Local VSIX
 
@@ -60,10 +57,17 @@ npm run package:macos-arm64
 ## Commands
 
 * `mdtoc: Generate ToC`
-* `mdtoc: Regenerate ToC`
 * `mdtoc: Strip ToC`
-* `mdtoc: Check ToC`
-* `mdtoc: Show Version`
+
+`Generate ToC` runs the CLI in root mode with the active document on `stdin`.
+
+That means:
+
+* if the document has no managed container yet, `mdtoc` creates one with its default settings
+* if the document already has a valid managed container, `mdtoc` reuses the stored container config
+* if the managed container is invalid, the extension leaves the document unchanged and shows the CLI error
+
+`Strip ToC` runs the explicit `strip` subcommand and also leaves the document unchanged if the CLI reports an error.
 
 ## Binary Resolution
 

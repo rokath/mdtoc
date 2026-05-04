@@ -12,6 +12,10 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * release preparation rules now explicitly require the extension package version files to be aligned before tagging a release that ships VSIX assets
   * a checked-in extension script now updates both version files together before tagging
   * a single repository-root helper script now wraps version preparation plus local tag creation, fails early on a dirty repository, can be rerun safely to report the next remaining release step, and explains when the release still has to move from `dev` to `main`
+* The VS Code extension command model was simplified:
+  * the extension now exposes only `Generate ToC` and `Strip ToC`
+  * `Generate ToC` now runs the CLI in root mode so existing valid managed containers reuse their stored config automatically
+  * the extension leaves the document unchanged when the CLI reports an invalid container or another execution error
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
