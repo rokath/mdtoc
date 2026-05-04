@@ -1,5 +1,5 @@
 {
-  "name": "mdtoc",
+  "name": "toc4md",
   "displayName": "mdtoc - Markdown ToC with Renumbering-Safe Links",
   "description": "Generate and strip stable Markdown tables of contents from VS Code.",
   "version": "0.2.3",

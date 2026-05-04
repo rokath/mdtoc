@@ -11,7 +11,7 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * the same workflow now also supports manual `workflow_dispatch` runs with explicit `tag` and `publish` inputs for controlled testing
   * it downloads the four VSIX assets from the release and publishes each package to the VS Code Marketplace with `VSCE_PAT`
 * The VS Code extension Marketplace metadata was adjusted:
-  * the extension `name` now uses `mdtoc`
+  * the extension `name` now uses `toc4md`
   * the extension `displayName` now uses `mdtoc - Markdown ToC with Renumbering-Safe Links` to avoid a Marketplace name collision
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
