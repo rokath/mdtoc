@@ -1,6 +1,17 @@
 name: publish-vscode-marketplace
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to download VSIX assets from
+        required: true
+        type: string
+      publish:
+        description: Publish the downloaded VSIX files to the VS Code Marketplace
+        required: true
+        default: false
+        type: boolean
   release:
     types:
       - published
@@ -21,6 +32,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Resolve release tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            tag="${{ github.event.release.tag_name }}"
+          else
+            tag="${{ inputs.tag }}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+        id: release_tag
+
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
@@ -38,7 +60,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p extension/out
-          gh release download "${{ github.event.release.tag_name }}" \
+          gh release download "${{ steps.release_tag.outputs.tag }}" \
             --pattern 'mdtoc-vscode-*.vsix' \
             --dir extension/out
 
@@ -54,6 +76,7 @@ jobs:
           fi
 
       - name: Publish VSIX assets
+        if: github.event_name == 'release' || inputs.publish
         shell: bash
         working-directory: extension
         run: |
