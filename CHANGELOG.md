@@ -6,7 +6,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* No unreleased changes recorded.
+* VS Code Marketplace publishing was automated:
+  * a dedicated GitHub Actions workflow now runs when a GitHub Release is published
+  * it downloads the four VSIX assets from the release and publishes each package to the VS Code Marketplace with `VSCE_PAT`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

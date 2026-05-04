@@ -1,0 +1,65 @@
+name: publish-vscode-marketplace
+
+on:
+  release:
+    types:
+      - published
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+permissions:
+  contents: read
+
+jobs:
+  publish-vsix:
+    name: Publish VSIX to VS Code Marketplace
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install extension dependencies
+        working-directory: extension
+        run: npm ci
+
+      - name: Download VSIX release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p extension/out
+          gh release download "${{ github.event.release.tag_name }}" \
+            --pattern 'mdtoc-vscode-*.vsix' \
+            --dir extension/out
+
+      - name: Verify VSIX asset count
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(extension/out/mdtoc-vscode-*.vsix)
+          if [ "${#files[@]}" -ne 4 ]; then
+            echo "Expected 4 VSIX files, found ${#files[@]}."
+            printf '%s\n' "${files[@]}"
+            exit 1
+          fi
+
+      - name: Publish VSIX assets
+        shell: bash
+        working-directory: extension
+        run: |
+          shopt -s nullglob
+          export PATH="$PWD/node_modules/.bin:$PATH"
+          files=(out/mdtoc-vscode-*.vsix)
+          for file in "${files[@]}"; do
+            vsce publish --packagePath "$file" -p "$VSCE_PAT"
+          done
