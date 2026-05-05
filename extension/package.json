@@ -1,8 +1,8 @@
 {
   "name": "mdtoc",
-  "displayName": "mdtoc - Markdown ToC with Renumbering-Safe Links",
-  "description": "Generate and strip stable Markdown tables of contents from VS Code.",
-  "version": "0.2.4",
+  "displayName": "mdtoc - Markdown ToC with section numbering and stable links",
+  "description": "Generate, strip and configure a Markdown table of contents. Toggle ToC, numbering and links; choose heading levels, bullet style and slug method.",
+  "version": "0.2.5",
   "publisher": "rokath",
   "license": "MIT",
   "repository": {

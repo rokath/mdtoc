@@ -1,0 +1,87 @@
+# Extension Development
+
+This document collects developer-focused notes that do not belong in the VS Code extension marketplace README.
+
+## Release Preparation
+
+Use the repository root script for release tagging:
+
+```bash
+./releaseHelper.sh 0.2.3
+```
+
+You can start it from `dev` or `main`.
+
+It is restartable and guided: it checks branch and remote state, tells you when `dev` still needs to be merged into `main`, updates both extension version files, creates a version commit when needed, creates the local tag, and then tells you the remaining manual steps.
+
+## Local Test In VS Code
+
+### Option A: Extension Development Host
+
+Use this while developing the extension itself.
+
+1. Open the `extension/` directory in VS Code.
+2. Run `npm install`.
+3. Run `npm run build`.
+4. Press `F5`.
+5. In the new Extension Development Host window, open a Markdown file.
+6. Press `Shift-Cmd-P` and type `mdtoc`.
+
+You should then see:
+
+* `mdtoc: Generate ToC`
+* `mdtoc: Strip ToC`
+
+### Option B: Install A Local VSIX
+
+Use this when you want to test the packaged extension like a normal user install.
+
+1. Stage a bundled binary into `extension/bin/<platform>/`.
+2. Build the extension with `npm run build`.
+3. Package the VSIX.
+4. In VS Code, run `Extensions: Install from VSIX...`.
+5. Select the generated file from `extension/out/`.
+
+For the current macOS Apple Silicon target, the intended packaging command is:
+
+```bash
+MDTOC_VSCODE_TARGET_PLATFORM=darwin-arm64 npm run package:target
+```
+
+If you already staged a `darwin-arm64` binary, you can also use:
+
+```bash
+npm run package:macos-arm64
+```
+
+## Command Behavior
+
+The extension contributes these commands:
+
+* `mdtoc: Generate ToC`
+* `mdtoc: Strip ToC`
+
+`Generate ToC` runs the CLI in root mode with the active document on `stdin`.
+
+That means:
+
+* if the document has no managed container yet, `mdtoc` creates one with its default settings
+* if the document already has a valid managed container, `mdtoc` reuses the stored container config
+* if the managed container is invalid, the extension leaves the document unchanged and shows the CLI error
+
+`Strip ToC` runs the explicit `strip` subcommand and also leaves the document unchanged if the CLI reports an error.
+
+## Binary Resolution
+
+The extension uses:
+
+1. `mdtoc.executable.customPath`, if set
+2. the bundled platform binary otherwise
+
+There is no automatic `PATH` lookup in the MVP.
+
+## Current Packaging Model
+
+The bundled `mdtoc` binary inside `bin/<platform>/` is not the extension itself.
+
+The installable VS Code extension is the generated `.vsix` file in `out/`.

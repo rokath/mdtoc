@@ -10,7 +10,27 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.2.4..HEAD`
+Used git range: `v0.2.5..HEAD`
+
+```txt
+```
+
+## <a id='v0.2.5-changes'></a>v0.2.5 Changes (2026-05-05)
+
+### <a id='v0.2.5-overview'></a>v0.2.5 Overview
+
+* The VS Code extension Marketplace presentation was tightened:
+  * `extension/README.md` was rewritten for the in-product and Marketplace extension view instead of local developer workflow notes
+  * the extension README now repeats the core `mdtoc` feature set, explains usage through the Command Palette and the editor context menu, and links to the canonical GitHub repository
+  * the extension README now states that the same `mdtoc` binary can also be used directly in scripts and CI outside VS Code
+  * developer-oriented extension notes were moved into a dedicated `extension/DEVELOPMENT.md`
+* The VS Code extension metadata was broadened:
+  * `extension/package.json` now uses a more descriptive Marketplace display name and description around Markdown ToC generation, stripping, configuration, numbering, and slug options
+* The repository README now advertises the VS Code extension explicitly in the main feature list
+
+### <a id='v0.2.5-git-log'></a>v0.2.5 Git Log
+
+Used git range: `v0.2.4..v0.2.5`
 
 ```txt
 ```
