@@ -1,12 +1,14 @@
 # mdtoc VS Code Extension
 
-`mdtoc` generates and removes Markdown tables of contents directly in VS Code.
+>`mdtoc`- generate and strip Markdown tables of contents
+>☰ with numbering and stable anchor links (configurabe)
 
-The extension is a thin VS Code adapter around the `mdtoc` CLI and updates the active Markdown document in place.
+<img src="./mdtoc_mascot_1024.webp" width="420">
 
-The canonical project repository is `rokath/mdtoc`:
+The extension is a thin VS Code adapter around the `mdtoc` CLI (usable in CI)
+and updates the active Markdown document in place.
 
-https://github.com/rokath/mdtoc
+The canonical project repository is https://github.com/rokath/mdtoc.
 
 ## Features
 
@@ -23,19 +25,18 @@ This extension brings the core `mdtoc` workflow into VS Code:
 * work with the same canonical `mdtoc` binary as the CLI
 * keep the VS Code workflow aligned with the same `mdtoc` binary you can also run directly in local scripts and CI
 
-## Commands
-
-The extension contributes these commands:
+## Commands available in vsCode
 
 * `mdtoc: Generate ToC`
 * `mdtoc: Strip ToC`
 
 `Generate ToC` runs `mdtoc` in root mode:
 
-* if the document has no managed container yet, `mdtoc` creates one with its default settings
-* if the document already has a valid managed container, `mdtoc` regenerates it from the stored container config
+* if the document has no managed container yet, `mdtoc` creates one with its default settings (generate)
+* if the document already has a valid managed container, `mdtoc` renews it from the stored container config
+* The user can simply edit the mdtoc config block values according to his needs
 * if the managed container is invalid, the document stays unchanged and the CLI error is shown
-* if a managed container is broken beyond repair, you can delete it and run `mdtoc: Generate ToC` again to create a fresh one
+* if a managed container is broken, beyond repair, you can delete it and run `mdtoc: Generate ToC` again to create a fresh one
 
 `Strip ToC` runs the explicit `strip` subcommand. If the CLI reports an error, the document also stays unchanged.
 
@@ -47,6 +48,8 @@ Open a Markdown file in VS Code, then use one of these entry points:
 * editor context menu: right-click inside an open Markdown editor and choose `mdtoc: Generate ToC` or `mdtoc: Strip ToC`
 
 The table of contents is initially created at the beginning of the document. You can then move the managed block to another place in the file and `mdtoc: Generate ToC` will update it there.
+
+![x]./Animation.gif
 
 ## Installation
 
