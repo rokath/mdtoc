@@ -6,13 +6,16 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* No unreleased changes are recorded yet.
+* Release-process guidance was aligned with the protected `main` branch:
+  * `AGENTS.md` now states explicitly that `origin/main` should be treated as protected and that release preparation should follow a PR-based flow
+  * `releaseHelper.sh` now prints non-`main`/PR-based next steps instead of suggesting a direct push to `origin/main`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v0.2.4..HEAD`
 
 ```txt
+* <pending>
 ```
 
 ## <a id='v0.2.4-changes'></a>v0.2.4 Changes (2026-05-04)
