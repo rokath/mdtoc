@@ -9,6 +9,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Release-process guidance was aligned with the protected `main` branch:
   * `AGENTS.md` now states explicitly that `origin/main` should be treated as protected and that release preparation should follow a PR-based flow
   * `releaseHelper.sh` now prints non-`main`/PR-based next steps instead of suggesting a direct push to `origin/main`
+* Manual release workflows were hardened against the wrong checkout ref:
+  * `goreleaser.yml` now requires an explicit `tag` input, checks out that release tag directly, and verifies that the checked-out commit matches the requested tag before building or uploading assets
+  * `publish-vscode-marketplace.yml` now also checks out the resolved release tag directly instead of implicitly using the workflow's default branch checkout
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

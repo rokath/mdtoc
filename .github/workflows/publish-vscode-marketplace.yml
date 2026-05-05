@@ -29,9 +29,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v5
-
       - name: Resolve release tag
         shell: bash
         run: |
@@ -42,6 +39,20 @@ jobs:
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
         id: release_tag
+
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ format('refs/tags/{0}', steps.release_tag.outputs.tag) }}
+
+      - name: Verify checked out release tag
+        shell: bash
+        run: |
+          tag="$(git describe --tags --exact-match)"
+          if [ "$tag" != "${{ steps.release_tag.outputs.tag }}" ]; then
+            echo "Checked out tag $tag does not match requested tag ${{ steps.release_tag.outputs.tag }}"
+            exit 1
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
