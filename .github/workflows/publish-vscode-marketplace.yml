@@ -91,9 +91,59 @@ jobs:
         shell: bash
         working-directory: extension
         run: |
+          set -Eeuo pipefail
           shopt -s nullglob
+
           export PATH="$PWD/node_modules/.bin:$PATH"
+
+          echo "Working directory: $PWD"
+          echo "vsce path: $(command -v vsce || true)"
+          vsce --version
+
           files=(out/mdtoc-vscode-*.vsix)
+
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No VSIX files found matching out/mdtoc-vscode-*.vsix"
+            echo "Available VSIX files below extension/:"
+            find . -maxdepth 4 -type f -name '*.vsix' -print | sort
+            exit 1
+          fi
+
+          echo "Found ${#files[@]} VSIX file(s) to publish:"
+          printf ' - %s\n' "${files[@]}"
+
           for file in "${files[@]}"; do
-            vsce publish --packagePath "$file" -p "$VSCE_PAT"
+            echo "::group::Inspect $file"
+            ls -lh "$file"
+            unzip -t "$file"
+            echo "package.json from $file:"
+            unzip -p "$file" extension/package.json | node -e '
+              let input = "";
+              process.stdin.on("data", chunk => input += chunk);
+              process.stdin.on("end", () => {
+                const p = JSON.parse(input);
+                console.log(JSON.stringify({
+                  publisher: p.publisher,
+                  name: p.name,
+                  displayName: p.displayName,
+                  version: p.version,
+                  engines: p.engines,
+                  main: p.main,
+                  browser: p.browser,
+                  icon: p.icon
+                }, null, 2));
+              });
+            '
+            echo "::endgroup::"
+
+            echo "::group::Publish $file"
+            vsce publish --packagePath "$file" -p "$VSCE_PAT" || {
+              status=$?
+              echo "::endgroup::"
+              echo "Failed to publish $file"
+              echo "Exit status: $status"
+              echo "The VSIX was valid as a ZIP, so check the vsce output above for Marketplace/API, duplicate version, target, or validation errors."
+              exit "$status"
+            }
+            echo "::endgroup::"
           done

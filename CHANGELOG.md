@@ -10,9 +10,31 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.2.6..HEAD`
+Used git range: `v0.2.7..HEAD`
 
 ```txt
+```
+
+## <a id='v0.2.7-changes'></a>v0.2.7 Changes (2026-05-05)
+
+### <a id='v0.2.7-overview'></a>v0.2.7 Overview
+
+* VS Code Marketplace publishing was hardened:
+  * `publish-vscode-marketplace.yml` now performs stricter VSIX discovery, ZIP validation, and package metadata inspection before attempting publication
+  * failed Marketplace publishes now emit clearer diagnostics so duplicate-version, target, or API issues are easier to distinguish from packaging problems
+* The VS Code extension now includes a Marketplace icon:
+  * `extension/package.json` now points to `extension/mdtoc_icon_128.png`
+* Repository examples were renamed:
+  * `EXAMPLE.md` was renamed without content changes
+
+### <a id='v0.2.7-git-log'></a>v0.2.7 Git Log
+
+Used git range: `v0.2.6..v0.2.7`
+
+```txt
+* 17d7504 2026-05-05 vsix icon added
+* 24e98ce 2026-05-05 renamed
+* 80e2860 2026-05-05 publish script with more checks
 ```
 
 ## <a id='v0.2.6-changes'></a>v0.2.6 Changes (2026-05-05)
