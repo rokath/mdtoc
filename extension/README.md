@@ -3,7 +3,7 @@
 > `mdtoc` - generate and strip Markdown tables of contents
 > ☰ with numbering and stable anchor links (configurable)
 
-<img src="./mdtoc_mascot_1024.webp" width="420">
+<img src="https://raw.githubusercontent.com/rokath/mdtoc/main/extension/mdtoc_mascot_1024.webp" width="420">
 
 The extension is a thin VS Code adapter around the `mdtoc` CLI (usable in CI)
 and updates the active Markdown document in place.
@@ -49,7 +49,7 @@ Open a Markdown file in VS Code, then use one of these entry points:
 
 The table of contents is initially created at the beginning of the document. You can then move the managed block to another place in the file and `mdtoc: Generate ToC` will update it there.
 
-<img src="./Animation.gif" width="420" alt="Animated demo of generating and stripping a table of contents">
+<img src="https://raw.githubusercontent.com/rokath/mdtoc/main/extension/Animation.gif" width="420" alt="Animated demo of generating and stripping a table of contents">
 
 ## Installation
 
