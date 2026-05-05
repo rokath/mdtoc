@@ -5,6 +5,7 @@
   "version": "0.2.5",
   "publisher": "rokath",
   "license": "MIT",
+  "icon": "mdtoc_icon_128.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/rokath/mdtoc.git"
