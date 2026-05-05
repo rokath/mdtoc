@@ -1,7 +1,7 @@
 # mdtoc VS Code Extension
 
->`mdtoc`- generate and strip Markdown tables of contents
->☰ with numbering and stable anchor links (configurabe)
+> `mdtoc` - generate and strip Markdown tables of contents
+> ☰ with numbering and stable anchor links (configurable)
 
 <img src="./mdtoc_mascot_1024.webp" width="420">
 
@@ -25,7 +25,7 @@ This extension brings the core `mdtoc` workflow into VS Code:
 * work with the same canonical `mdtoc` binary as the CLI
 * keep the VS Code workflow aligned with the same `mdtoc` binary you can also run directly in local scripts and CI
 
-## Commands available in vsCode
+## Commands Available in VS Code
 
 * `mdtoc: Generate ToC`
 * `mdtoc: Strip ToC`
@@ -34,22 +34,22 @@ This extension brings the core `mdtoc` workflow into VS Code:
 
 * if the document has no managed container yet, `mdtoc` creates one with its default settings (generate)
 * if the document already has a valid managed container, `mdtoc` renews it from the stored container config
-* The user can simply edit the mdtoc config block values according to his needs
+* you can edit the `mdtoc` config block values directly to match your needs
 * if the managed container is invalid, the document stays unchanged and the CLI error is shown
 * if a managed container is broken, beyond repair, you can delete it and run `mdtoc: Generate ToC` again to create a fresh one
 
 `Strip ToC` runs the explicit `strip` subcommand. If the CLI reports an error, the document also stays unchanged.
 
-## How To Use
+## How to Use
 
 Open a Markdown file in VS Code, then use one of these entry points:
 
 * Command Palette: `Shift+Cmd+P` on macOS or `Ctrl+Shift+P` on Windows/Linux, then run `mdtoc: Generate ToC` or `mdtoc: Strip ToC`
-* editor context menu: right-click inside an open Markdown editor and choose `mdtoc: Generate ToC` or `mdtoc: Strip ToC`
+* Editor context menu: right-click inside an open Markdown editor and choose `mdtoc: Generate ToC` or `mdtoc: Strip ToC`
 
 The table of contents is initially created at the beginning of the document. You can then move the managed block to another place in the file and `mdtoc: Generate ToC` will update it there.
 
-![x]./Animation.gif
+<img src="./Animation.gif" width="420" alt="Animated demo of generating and stripping a table of contents">
 
 ## Installation
 

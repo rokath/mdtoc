@@ -6,18 +6,35 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* None yet.
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.2.6..HEAD`
+
+```txt
+```
+
+## <a id='v0.2.6-changes'></a>v0.2.6 Changes (2026-05-05)
+
+### <a id='v0.2.6-overview'></a>v0.2.6 Overview
+
 * Release-process guidance was aligned with the protected `main` branch:
   * `AGENTS.md` now states explicitly that `origin/main` should be treated as protected and that release preparation should follow a PR-based flow
   * `releaseHelper.sh` now prints non-`main`/PR-based next steps instead of suggesting a direct push to `origin/main`
 * Manual release workflows were hardened against the wrong checkout ref:
   * `goreleaser.yml` now requires an explicit `tag` input, checks out that release tag directly, and verifies that the checked-out commit matches the requested tag before building or uploading assets
   * `publish-vscode-marketplace.yml` now also checks out the resolved release tag directly instead of implicitly using the workflow's default branch checkout
+* The VS Code extension README was corrected and polished:
+  * the broken animation reference was replaced with a valid embedded image tag
+  * obvious wording and capitalization errors were corrected in the user-facing extension documentation
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.2.6-git-log'></a>v0.2.6 Git Log
 
-Used git range: `v0.2.5..HEAD`
+Used git range: `v0.2.5..v0.2.6`
 
 ```txt
+* <pending>
 ```
 
 ## <a id='v0.2.5-changes'></a>v0.2.5 Changes (2026-05-05)
