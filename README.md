@@ -18,7 +18,7 @@
 >
 >`generate`, `strip`, `regen`/`refresh`, `check` without turning your Markdown into a moving target.
 
-<img src="./docs/mdtoc_mascot_1024.webp" width="600">
+<img src="./extension/mdtoc_mascot_1024.webp" width="600">
 
 <h2>Table of Contents</h2><!-- TABLE OF CONTENTS START -->
 
