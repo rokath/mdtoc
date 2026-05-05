@@ -57,6 +57,7 @@ state=generated
 * very easy to use: `mdtoc MY_IMPORTANT_DOCUMENT.md`
 * highly configurable
 * single binary, no external tools required
+* also as vsCode extension usable
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
 * targets ATX headings (`#` to `######`)

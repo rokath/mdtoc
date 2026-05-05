@@ -1,85 +1,85 @@
 # mdtoc VS Code Extension
 
-This extension runs the `mdtoc` CLI against the active Markdown document in VS Code Desktop.
+`mdtoc` generates and removes Markdown tables of contents directly in VS Code.
 
-## Release Preparation
+The extension is a thin VS Code adapter around the `mdtoc` CLI and updates the active Markdown document in place.
 
-Use the repository root script for release tagging:
+The canonical project repository is `rokath/mdtoc`:
 
-```bash
-./releaseHelper.sh 0.2.3
-```
+https://github.com/rokath/mdtoc
 
-You can start it from `dev` or `main`.
+## Features
 
-It is restartable and guided: it checks branch and remote state, tells you when `dev` still needs to be merged into `main`, updates both extension version files, creates a version commit when needed, creates the local tag, and then tells you the remaining manual steps.
+This extension brings the core `mdtoc` workflow into VS Code:
 
-## Local Test In VS Code
-
-### Option A: Extension Development Host
-
-Use this while developing the extension itself.
-
-1. Open the `extension/` directory in VS Code.
-2. Run `npm install`.
-3. Run `npm run build`.
-4. Press `F5`.
-5. In the new Extension Development Host window, open a Markdown file.
-6. Press `Shift-Cmd-P` and type `mdtoc`.
-
-You should then see:
-
-* `mdtoc: Generate ToC`
-* `mdtoc: Strip ToC`
-
-### Option B: Install A Local VSIX
-
-Use this when you want to test the packaged extension like a normal user install.
-
-1. Stage a bundled binary into `extension/bin/<platform>/`.
-2. Build the extension with `npm run build`.
-3. Package the VSIX.
-4. In VS Code, run `Extensions: Install from VSIX...`.
-5. Select the generated file from `extension/out/`.
-
-For the current macOS Apple Silicon target, the intended packaging command is:
-
-```bash
-MDTOC_VSCODE_TARGET_PLATFORM=darwin-arm64 npm run package:target
-```
-
-If you already staged a `darwin-arm64` binary, you can also use:
-
-```bash
-npm run package:macos-arm64
-```
+* generate or refresh a managed table of contents in the active Markdown file
+* strip a managed table of contents again
+* keep generated content separate from authored content
+* reuse existing managed container settings when a document already contains a valid `mdtoc` block
+* use stable slug anchors derived from heading titles
+* support repeated headings
+* ignore headings inside fenced code blocks safely
+* support exclusion regions with `<!-- mdtoc off -->` and `<!-- mdtoc on -->`
+* work with the same canonical `mdtoc` binary as the CLI
+* keep the VS Code workflow aligned with the same `mdtoc` binary you can also run directly in local scripts and CI
 
 ## Commands
 
+The extension contributes these commands:
+
 * `mdtoc: Generate ToC`
 * `mdtoc: Strip ToC`
 
-`Generate ToC` runs the CLI in root mode with the active document on `stdin`.
-
-That means:
+`Generate ToC` runs `mdtoc` in root mode:
 
 * if the document has no managed container yet, `mdtoc` creates one with its default settings
-* if the document already has a valid managed container, `mdtoc` reuses the stored container config
-* if the managed container is invalid, the extension leaves the document unchanged and shows the CLI error
+* if the document already has a valid managed container, `mdtoc` regenerates it from the stored container config
+* if the managed container is invalid, the document stays unchanged and the CLI error is shown
+* if a managed container is broken beyond repair, you can delete it and run `mdtoc: Generate ToC` again to create a fresh one
 
-`Strip ToC` runs the explicit `strip` subcommand and also leaves the document unchanged if the CLI reports an error.
+`Strip ToC` runs the explicit `strip` subcommand. If the CLI reports an error, the document also stays unchanged.
 
-## Binary Resolution
+## How To Use
 
-The extension uses:
+Open a Markdown file in VS Code, then use one of these entry points:
 
-1. `mdtoc.executable.customPath`, if set
-2. the bundled platform binary otherwise
+* Command Palette: `Shift+Cmd+P` on macOS or `Ctrl+Shift+P` on Windows/Linux, then run `mdtoc: Generate ToC` or `mdtoc: Strip ToC`
+* editor context menu: right-click inside an open Markdown editor and choose `mdtoc: Generate ToC` or `mdtoc: Strip ToC`
 
-There is no automatic `PATH` lookup in the MVP.
+The table of contents is initially created at the beginning of the document. You can then move the managed block to another place in the file and `mdtoc: Generate ToC` will update it there.
 
-## Current Packaging Model
+## Installation
 
-The bundled `mdtoc` binary inside `bin/<platform>/` is not the extension itself.
+Install the extension from a packaged `.vsix` file:
 
-The installable VS Code extension is the generated `.vsix` file in `out/`.
+1. Download the `.vsix` that matches your platform.
+2. In VS Code, run `Extensions: Install from VSIX...`.
+3. Select the downloaded `.vsix` file.
+
+The extension is intended for the VS Code Marketplace as the editor integration of the `rokath/mdtoc` repository.
+
+## Configuration
+
+The extension supports one runtime setting:
+
+```json
+{
+  "mdtoc.executable.customPath": ""
+}
+```
+
+If `mdtoc.executable.customPath` is set, the extension uses that absolute path. Otherwise it uses the bundled platform binary.
+
+There is no automatic `PATH` lookup in the current extension.
+
+## More Information
+
+The underlying `mdtoc` binary is not limited to VS Code. You can use it directly in shell workflows, scripts, and CI, for example with `mdtoc check README.md` to fail a pipeline when a managed Markdown file is out of date.
+
+For CLI usage and the full feature set, see the repository README:
+
+https://github.com/rokath/mdtoc/blob/main/README.md
+
+Developer-focused notes about local testing, packaging, binary staging, and release preparation live here:
+
+https://github.com/rokath/mdtoc/blob/main/extension/DEVELOPMENT.md
