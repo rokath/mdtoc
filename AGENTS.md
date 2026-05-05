@@ -44,6 +44,7 @@
 * Keep unrelated changes out of the same commit.
 * If the work naturally splits into independent topics, prefer separate commits unless the user requests a single combined commit.
 * Do not modify or commit files directly on `main` unless the user explicitly asks for changes on `main`. Create changes on `dev` or another non-`main` working branch, then merge into `main` through the normal integration flow.
+* Treat `origin/main` as a protected branch: do not assume direct pushes are allowed. Use a pull request unless the repository protection rules have explicitly been relaxed for the current task.
 * Before every commit that affects release notes, unreleased notes, version sections, user-visible behavior, CI, docs, or shipped assets, explicitly review `CHANGELOG.md`.
 * Before every `git push`, explicitly review `CHANGELOG.md`.
 * Before every release tag, release creation, or release publication, explicitly review `CHANGELOG.md`.
@@ -56,10 +57,11 @@
 * If `CHANGELOG.md` on the current branch differs structurally from `origin/main` around `Unreleased Changes` or recent version sections, fix that divergence before adding or moving entries.
 * A release tag must not be created or published unless the tagged version already exists as its own section in `CHANGELOG.md`.
 * When preparing a release, move the relevant notes from `Unreleased Changes` into the new versioned section and reset `Unreleased Changes` to only cover commits after the new tag.
+* Prefer a PR-based release flow for this repository: prepare the release commit on `dev` or another non-`main` branch, merge it into `main`, and only then push the release tag unless the user explicitly wants a tag-first exception.
 * After tagging or before pushing tagged release commits, verify that the latest repository tag mentioned by `git tag` is present in `CHANGELOG.md` with the correct version header and git range.
 * Before tagging a release that ships VSIX assets, ensure `extension/package.json` and `extension/package-lock.json` already match the intended repository release version; the release workflow must validate this, not rewrite tracked files during publishing.
 * Prefer the checked-in `extension` version-preparation script to update those version files so `package.json` and `package-lock.json` stay aligned through one reproducible step.
-* Prefer the single repository-root release helper script to perform extension version preparation plus local tag creation in one guarded, restartable step; it may be started from `dev` or `main`, must fail on a dirty worktree instead of guessing how to proceed, and should report the remaining manual release steps clearly.
+* Prefer the single repository-root release helper script to perform extension version preparation plus local tag creation in one guarded, restartable step; it may be started from `dev` or `main`, must fail on a dirty worktree instead of guessing how to proceed, and should report the remaining manual release steps clearly, including the protected-branch PR flow for `main`.
 * When the release helper script detects that `CHANGELOG.md` is not yet prepared for the requested version, it should print the concrete next steps instead of only reporting the missing section.
 
 ## Tests

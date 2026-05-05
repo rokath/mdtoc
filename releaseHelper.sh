@@ -34,8 +34,9 @@ if ! grep -Fq "$CHANGELOG_HEADER" CHANGELOG.md; then
   echo "  1. Add the section header: $CHANGELOG_HEADER" >&2
   echo "  2. Move the current release notes from Unreleased Changes into that $TAG section" >&2
   echo "  3. Reset Unreleased Changes so it only covers later work" >&2
-  echo "  4. Commit the changelog update on main" >&2
-  echo "  5. Re-run: ./releaseHelper.sh $TAG" >&2
+  echo "  4. Commit the changelog update on a non-main branch" >&2
+  echo "  5. Merge that branch into main through the normal PR flow" >&2
+  echo "  6. Re-run: ./releaseHelper.sh $TAG" >&2
   exit 1
 fi
 
@@ -79,12 +80,13 @@ fi
 
 if [ "$CURRENT_BRANCH" != "main" ]; then
   echo
-  echo "Release preparation may be started from dev or main, but tagging itself must run from local main." >&2
+  echo "Release preparation may be started from dev or main, but tagging itself must run from local main after the release commit has reached origin/main through a PR." >&2
   echo "Next steps:" >&2
-  echo "  1. Merge dev into main on GitHub" >&2
-  echo "  2. git switch main" >&2
-  echo "  3. git pull --ff-only origin main" >&2
-  echo "  4. ./releaseHelper.sh $TAG" >&2
+  echo "  1. Push your release-preparation branch" >&2
+  echo "  2. Merge it into main on GitHub" >&2
+  echo "  3. git switch main" >&2
+  echo "  4. git pull --ff-only origin main" >&2
+  echo "  5. ./releaseHelper.sh $TAG" >&2
   exit 1
 fi
 
@@ -109,7 +111,9 @@ if [ -n "$TARGET_REMOTE_TAG_SHA" ]; then
   fi
   echo
   echo "Tag $TAG already exists locally and on origin."
-  echo "Next step: start the GitHub goreleaser workflow for $TAG."
+  echo "Next steps:"
+  echo "  1. Confirm that the tagged commit is already reachable from origin/main"
+  echo "  2. Start the GitHub goreleaser workflow for $TAG"
   exit 0
 fi
 
@@ -143,6 +147,6 @@ fi
 
 echo
 echo "Next steps:"
-echo "  1. git push origin main"
+echo "  1. If this commit is not yet on origin/main, push it to a non-main branch and merge it into main via PR"
 echo "  2. git push origin $TAG"
-echo "  3. Start the GitHub goreleaser workflow for $TAG"
+echo "  3. After the tagged commit is reachable from origin/main, start the GitHub goreleaser workflow for $TAG"
