@@ -2,7 +2,7 @@
   "name": "mdtoc",
   "displayName": "mdtoc - Markdown ToC with section numbering and stable links",
   "description": "Generate, strip and configure a Markdown table of contents. Toggle ToC, numbering and links; choose heading levels, bullet style and slug method.",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "publisher": "rokath",
   "license": "MIT",
   "icon": "mdtoc_icon_128.png",

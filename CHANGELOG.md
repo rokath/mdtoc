@@ -10,9 +10,24 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.2.7..HEAD`
+Used git range: `v0.2.8..HEAD`
 
 ```txt
+```
+
+## <a id='v0.2.8-changes'></a>v0.2.8 Changes (2026-05-05)
+
+### <a id='v0.2.8-overview'></a>v0.2.8 Overview
+
+* The VS Code extension README image rendering was hardened:
+  * `extension/README.md` now uses explicit GitHub `https` image URLs for the mascot image and animated demo instead of relying on local relative image paths inside the Marketplace/extension README renderer
+
+### <a id='v0.2.8-git-log'></a>v0.2.8 Git Log
+
+Used git range: `v0.2.7..v0.2.8`
+
+```txt
+* 06f8309 2026-05-05 docs(extension): use absolute README image URLs
 ```
 
 ## <a id='v0.2.7-changes'></a>v0.2.7 Changes (2026-05-05)
