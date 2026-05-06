@@ -27,16 +27,16 @@ state=generated
 * highly configurable: edit the `mdtoc` config block values directly to match your needs
   * on/off for numbering, anchor, toc
     * ToC link targets stay unnumbered for inline-anchor profiles but follow rendered heading text when `anchor=off`
-  * targets ATX headings (`#` to `######`)
-  * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
+  * auto or explicit (`*`, `-`, `+`) ToC bullet style
   * explicit **anchor profiles**: `github` (default), `gitlab`, or `off`
-* ignores headings inside **fenced code blocks** safely
+  * targets ATX headings (`#` to `######`)
+* ignores headings inside **fenced code blocks** safely: ``` ## Example ```
 * ignores headings inside **HTML comments**: `<!-- ... ## Example -->`
 * **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
 * **repeated headings** support
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
-* keep the VS Code workflow aligned with the same CLI `mdtoc` binary in local scripts and CI, get it from https://github.com/rokath/mdtoc/releases
+* keep the VS Code workflow aligned with the same [mdtoc](https://github.com/rokath/mdtoc/releases) CLI binary in local scripts and CI
 * Excluded:
   * no Setext heading support (`Heading` followed by `===` or `---`)
   * no HTML heading support (`<h2>Example</h2>`)
