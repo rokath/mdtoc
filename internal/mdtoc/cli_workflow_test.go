@@ -506,6 +506,57 @@ func TestRunnerFileWorkflowRegenRestoresStoredFlags(t *testing.T) {
 	}
 }
 
+// TestRunnerFileWorkflowAnchorOffNumberingUsesRenderedHeadingSlugForTOC verifies issue #75 via the file CLI path.
+func TestRunnerFileWorkflowAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n\n### API\n",
+	})
+
+	runFileCommand(t, fs, "generate", "-f", path, "--min-level=2", "--max-level=3", "--anchor=off", "--numbering=on")
+	got := fs.fileString(path)
+	checks := []string{
+		"anchor=off",
+		"numbering=true",
+		"* [1. Intro](#1-intro)",
+		"  * [1.1. API](#11-api)",
+		"## 1. Intro",
+		"### 1.1. API",
+	}
+	for _, check := range checks {
+		if !strings.Contains(got, check) {
+			t.Fatalf("generate output missing %q:\n%s", check, got)
+		}
+	}
+	if strings.Contains(got, "* [1. Intro](#intro)") || strings.Contains(got, "  * [1.1. API](#api)") {
+		t.Fatalf("generate kept unnumbered ToC targets under anchor=off:\n%s", got)
+	}
+	if strings.Contains(got, "<a id=") {
+		t.Fatalf("generate unexpectedly rendered inline anchors under anchor=off:\n%s", got)
+	}
+	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
+		t.Fatalf("check unexpectedly failed after anchor=off numbering generate: %v", err)
+	}
+}
+
+// TestRunnerFileWorkflowAnchorOffNumberingKeepsTitleDigitsSeparated verifies
+// the file-based renderer-derived ToC target for issue #75 edge cases.
+func TestRunnerFileWorkflowAnchorOffNumberingKeepsTitleDigitsSeparated(t *testing.T) {
+	const path = "doc.md"
+	fs := newMemoryFileSystem(map[string]string{
+		path: "# Title\n\n## Intro\n\n### 2025 Roadmap\n",
+	})
+
+	runFileCommand(t, fs, "generate", "-f", path, "--min-level=2", "--max-level=3", "--anchor=off", "--numbering=on")
+	got := fs.fileString(path)
+	if !strings.Contains(got, "  * [1.1. 2025 Roadmap](#11-2025-roadmap)") {
+		t.Fatalf("generate did not render the expected ToC target:\n%s", got)
+	}
+	if strings.Contains(got, "  * [1.1. 2025 Roadmap](#112025-roadmap)") {
+		t.Fatalf("generate merged numbering and title digits in the ToC target:\n%s", got)
+	}
+}
+
 // TestRunnerFileWorkflowAutoBulletsAndForcedOverride verifies both auto detection and explicit bullet mode.
 func TestRunnerFileWorkflowAutoBulletsAndForcedOverride(t *testing.T) {
 	const path = "doc.md"
@@ -596,7 +647,7 @@ func TestRunnerFileWorkflowNormalizesAnchorFalseVariants(t *testing.T) {
 			if strings.Contains(got, "anchor=false") || strings.Contains(got, "<a id=") {
 				t.Fatalf("generate left a non-canonical false anchor state for %s:\n%s", tc.name, got)
 			}
-			if !strings.Contains(got, "* [1. Intro](#intro)") {
+			if !strings.Contains(got, "* [1. Intro](#1-intro)") {
 				t.Fatalf("generate did not preserve ToC targets for %s:\n%s", tc.name, got)
 			}
 		})

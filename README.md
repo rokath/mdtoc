@@ -65,7 +65,7 @@ state=generated
 * ignores headings inside HTML comments: `<!-- ... ## Example -->`
 * exclusion regions: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
 * explicit anchor profiles: `github` (default), `gitlab`, or `off`
-* slug link anchors from heading titles, not numbers
+* ToC link targets stay unnumbered for inline-anchor profiles and follow rendered heading text when `anchor=off`
 * works with repeated headings
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
@@ -139,7 +139,7 @@ state=generated
 <!-- /mdtoc -->
 ```
 
-The heading title stays the source of truth. Numbers, anchors, and ToC entries are derived from it.
+The heading title stays the source of truth. Numbers, inline anchors, and ToC entries are derived from it. With `anchor=off`, the ToC target follows the rendered heading text because no managed inline anchor exists.
 
 The config block records the settings that produced the current managed state. `generate` always uses current CLI flags or defaults and then rewrites that block. `regen` reuses the stored container config and rebuilds the generated state from it. `refresh` is a command alias for `regen`.
 

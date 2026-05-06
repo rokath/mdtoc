@@ -18,7 +18,7 @@ This extension brings the core `mdtoc` workflow into VS Code:
 * strip a managed table of contents again
 * keep generated content separate from authored content
 * reuse existing managed container settings when a document already contains a valid `mdtoc` block
-* use stable slug anchors derived from heading titles
+* use stable ToC link targets derived from managed heading output
 * support repeated headings
 * ignore headings inside fenced code blocks safely
 * support exclusion regions with `<!-- mdtoc off -->` and `<!-- mdtoc on -->`
