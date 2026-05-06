@@ -212,32 +212,39 @@ func removeContainerAndNormalizeHeadings(parsed *ParsedDocument) ([]string, []He
 
 // assignDerivedArtifacts computes managed numbers and anchors for eligible headings.
 func assignDerivedArtifacts(headings []Heading, cfg Config) {
-	slugger := newSluggerForAnchorMode(cfg.Anchor)
+	anchorSlugger := newSluggerForAnchorMode(cfg.Anchor)
+	tocSlugger := newTOCSlugger(cfg.Anchor)
 	counters := make([]int, 7)
 	for i := range headings {
 		h := &headings[i]
 		if !h.InManagedRange(cfg) {
-			h.ManagedNumber, h.ManagedAnchor = "", ""
+			h.ManagedNumber, h.ManagedAnchor, h.ManagedTOCTarget = "", "", ""
 			continue
 		}
-		anchorID := slugger.Next(h.TitleText)
+		anchorID := anchorSlugger.Next(h.TitleText)
 		h.ManagedAnchor = fmt.Sprintf(`<a id="%s"></a>`, anchorID)
-		if !cfg.Numbering {
-			h.ManagedNumber = ""
-			continue
-		}
-		counters[h.Level]++
-		for j := h.Level + 1; j <= 6; j++ {
-			counters[j] = 0
-		}
-		parts := []string{}
-		for j := cfg.MinLevel; j <= h.Level; j++ {
-			if counters[j] == 0 {
-				continue
+		if cfg.Numbering {
+			counters[h.Level]++
+			for j := h.Level + 1; j <= 6; j++ {
+				counters[j] = 0
 			}
-			parts = append(parts, fmt.Sprintf("%d", counters[j]))
+			parts := []string{}
+			for j := cfg.MinLevel; j <= h.Level; j++ {
+				if counters[j] == 0 {
+					continue
+				}
+				parts = append(parts, fmt.Sprintf("%d", counters[j]))
+			}
+			h.ManagedNumber = strings.Join(parts, ".") + "."
+		} else {
+			h.ManagedNumber = ""
 		}
-		h.ManagedNumber = strings.Join(parts, ".") + "."
+
+		tocSource := h.TitleText
+		if cfg.Anchor == AnchorOff && h.ManagedNumber != "" {
+			tocSource = h.ManagedNumber + " " + tocSource
+		}
+		h.ManagedTOCTarget = tocSlugger.Next(tocSource)
 	}
 }
 
@@ -272,6 +279,13 @@ func newSluggerForAnchorMode(mode AnchorMode) *Slugger {
 	}
 }
 
+func newTOCSlugger(mode AnchorMode) *Slugger {
+	if mode == AnchorOff {
+		return NewRendererSlugger()
+	}
+	return newSluggerForAnchorMode(mode)
+}
+
 // renderTOC converts managed headings into Markdown list entries.
 func renderTOC(headings []Heading, bodyLines []string, cfg Config) []string {
 	lines := []string{}
@@ -280,12 +294,11 @@ func renderTOC(headings []Heading, bodyLines []string, cfg Config) []string {
 		if !h.InManagedRange(cfg) {
 			continue
 		}
-		anchorID := strings.TrimSuffix(strings.TrimPrefix(h.ManagedAnchor, `<a id="`), `"></a>`)
 		text := h.TitleText
 		if cfg.Numbering && h.ManagedNumber != "" {
 			text = h.ManagedNumber + " " + text
 		}
-		lines = append(lines, fmt.Sprintf("%s%s [%s](#%s)", strings.Repeat("  ", h.Level-cfg.MinLevel), bullet, text, anchorID))
+		lines = append(lines, fmt.Sprintf("%s%s [%s](#%s)", strings.Repeat("  ", h.Level-cfg.MinLevel), bullet, text, h.ManagedTOCTarget))
 	}
 	return lines
 }

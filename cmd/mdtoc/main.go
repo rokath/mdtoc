@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"example.com/mdtoc/internal/mdtoc"
+	"github.com/rokath/mdtoc/internal/mdtoc"
 )
 
 var (

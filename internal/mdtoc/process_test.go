@@ -209,6 +209,68 @@ func TestRegenReusesPersistedContainerConfig(t *testing.T) {
 	}
 }
 
+// TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC verifies issue #75.
+func TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *testing.T) {
+	input := "# Title\n\n## Intro\n\n### API\n"
+
+	got, _, err := Generate(input, Options{
+		Numbering: true,
+		MinLevel:  2,
+		MaxLevel:  3,
+		Anchor:    AnchorOff,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	checks := []string{
+		"* [1. Intro](#1-intro)",
+		"  * [1.1. API](#11-api)",
+		"## 1. Intro",
+		"### 1.1. API",
+	}
+	for _, check := range checks {
+		if !strings.Contains(got, check) {
+			t.Fatalf("generated output missing %q:\n%s", check, got)
+		}
+	}
+	if strings.Contains(got, "<a id=") {
+		t.Fatalf("anchor=off unexpectedly rendered inline anchors:\n%s", got)
+	}
+}
+
+// TestGenerateAnchorOffNumberingPreservesTitleNumberBoundary verifies that title
+// numbers do not get merged into the numbering prefix for renderer-derived IDs.
+func TestGenerateAnchorOffNumberingPreservesTitleNumberBoundary(t *testing.T) {
+	input := "# Title\n\n## Intro\n\n### 2025 Roadmap\n"
+
+	got, _, err := Generate(input, Options{
+		Numbering: true,
+		MinLevel:  2,
+		MaxLevel:  3,
+		Anchor:    AnchorOff,
+		TOC:       true,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	checks := []string{
+		"* [1. Intro](#1-intro)",
+		"  * [1.1. 2025 Roadmap](#11-2025-roadmap)",
+		"### 1.1. 2025 Roadmap",
+	}
+	for _, check := range checks {
+		if !strings.Contains(got, check) {
+			t.Fatalf("generated output missing %q:\n%s", check, got)
+		}
+	}
+	if strings.Contains(got, "  * [1.1. 2025 Roadmap](#112025-roadmap)") {
+		t.Fatalf("renderer-derived ToC target merged numbering with title digits:\n%s", got)
+	}
+}
+
 // TestRegenRequiresManagedConfig verifies that regen fails without a valid managed container.
 func TestRegenRequiresManagedConfig(t *testing.T) {
 	if _, _, err := Regen("# Title\n\n## Intro\n"); err == nil {
