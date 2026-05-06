@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"example.com/mdtoc/internal/mdtoc"
+	"github.com/rokath/mdtoc/internal/mdtoc"
 )
 
 // TestRunReturnsVersionOutput verifies version output through the testable run helper.

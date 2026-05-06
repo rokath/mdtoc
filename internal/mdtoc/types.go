@@ -159,6 +159,8 @@ type Heading struct {
 	ManagedNumber string
 	// ManagedAnchor is the computed anchor ID for this heading under the active anchor mode.
 	ManagedAnchor string
+	// ManagedTOCTarget is the computed ToC link target for this heading.
+	ManagedTOCTarget string
 }
 
 // InManagedRange reports whether the heading participates in numbering, anchors,

@@ -6,7 +6,16 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* None yet.
+* `anchor=off` now generates renderer-style ToC link targets from the rendered heading text instead of reusing the inline-anchor slug logic:
+  * numbered headings such as `1.1. API` now link as `#11-api` in the managed ToC, which matches VS Code-style preview renderers more closely
+  * title-leading digits remain separated from the numbering prefix in generated link targets, for example `1.1. 2025 Roadmap` -> `#11-2025-roadmap`
+  * dedicated unit and CLI workflow tests now cover renderer-style `anchor=off` targets, Unicode retention, and collision handling for numbered headings
+* Repository metadata and docs were aligned with the published project identity:
+  * the Go module path now uses `github.com/rokath/mdtoc` instead of the placeholder `example.com/mdtoc`
+  * the repository and extension READMEs now describe the `anchor=off` behavior and config workflow more accurately
+* Repository workflow guidance was hardened further:
+  * `AGENTS.md` now requires an explicit branch check before `git add`, `git commit`, merge, reset, or push operations
+  * a plain user request such as `commit` or `push` is now documented as insufficient permission for landing work on `main`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

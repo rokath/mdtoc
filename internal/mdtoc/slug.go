@@ -28,6 +28,12 @@ func NewGitLabSlugger() *Slugger {
 	return newSlugger(slugifyGitLabBase)
 }
 
+// NewRendererSlugger creates a fresh collision tracker for renderer-derived
+// heading IDs that remove punctuation instead of turning it into separators.
+func NewRendererSlugger() *Slugger {
+	return newSlugger(slugifyRendererBase)
+}
+
 // Next returns the deterministic anchor ID for one heading.
 func (s *Slugger) Next(title string) string {
 	base := s.slugify(title)
@@ -96,6 +102,41 @@ func slugifyGitLabBase(title string) string {
 		return "section"
 	}
 	return slug
+}
+
+// slugifyRendererBase models renderer-derived heading IDs such as those used by
+// VS Code-style Markdown previews when no explicit inline anchor is present.
+func slugifyRendererBase(title string) string {
+	title = strings.ToLower(title)
+	var b strings.Builder
+	pendingDash := false
+	hasContent := false
+	for _, r := range title {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			if pendingDash && hasContent {
+				b.WriteByte('-')
+			}
+			b.WriteRune(r)
+			hasContent = true
+			pendingDash = false
+		case r == '_' || r == '-':
+			if hasContent {
+				pendingDash = true
+			}
+		case unicode.IsSpace(r):
+			if hasContent {
+				pendingDash = true
+			}
+		default:
+			// Punctuation and other non-word separators do not create a dash in
+			// renderer-derived heading IDs; they are simply removed.
+		}
+	}
+	if b.Len() == 0 {
+		return "section"
+	}
+	return b.String()
 }
 
 func collapseHyphenRuns(s string) string {

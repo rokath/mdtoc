@@ -645,14 +645,24 @@ Displayed in the link text:
 
 Link target:
 
-* always `#` + `anchor_id`
-* `anchor_id` is computed exactly according to section 11
+* with `anchor=github` or `anchor=gitlab`: `#` + `anchor_id`
+* with `anchor=off` and `numbering=false`: `#` + renderer-slug(`title_text`)
+* with `anchor=off` and `numbering=true`: `#` + renderer-slug(`number + " " + title_text`)
+* collision handling follows the same per-document slugger behavior described in section 11
 
 Behavior of `anchor`:
 
 * with `anchor=github`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitHub-compatible profile
 * with `anchor=gitlab`, `mdtoc` renders a managed inline anchor and computes `anchor_id` with the GitLab profile
-* with `anchor=off`, `mdtoc` does not render a managed inline anchor; the ToC links still remain `#anchor_id`
+* with `anchor=off`, `mdtoc` does not render a managed inline anchor; the ToC links instead target the renderer-derived heading ID based on the rendered heading text
+
+For `renderer-slug`, `mdtoc` uses these rules:
+
+* text is lowercased
+* Unicode letters and Unicode decimal digits are preserved
+* whitespace and explicit hyphen/underscore separators become a single `-`
+* punctuation such as `.` or `+` is removed instead of becoming a separator
+* if the resulting ID already exists in the same document, `-1`, `-2`, `-3`, ... is appended
 
 _Explanation:_
 

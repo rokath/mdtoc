@@ -62,6 +62,27 @@ func TestSluggerProfilesDiffer(t *testing.T) {
 	}
 }
 
+// TestRendererSluggerExamples verifies the renderer-derived heading-ID behavior
+// used for anchor=off ToC targets.
+func TestRendererSluggerExamples(t *testing.T) {
+	slugger := NewRendererSlugger()
+	cases := []struct{ input, want string }{
+		{"1. Intro", "1-intro"},
+		{"1.1. API", "11-api"},
+		{"1.2. 2025 Roadmap", "12-2025-roadmap"},
+		{"中文 русский عربى", "中文-русский-عربى"},
+		{"A+B", "ab"},
+		{"🚀 !!!", "section"},
+		{"1.23 Setup", "123-setup"},
+		{"1.2.3 Setup", "123-setup-1"},
+	}
+	for _, tc := range cases {
+		if got := slugger.Next(tc.input); got != tc.want {
+			t.Fatalf("renderer slugger.Next(%q) = %q, want %q", tc.input, got, tc.want)
+		}
+	}
+}
+
 // TestExtractPlainText verifies inline Markdown text extraction for headings.
 func TestExtractPlainText(t *testing.T) {
 	got, err := ExtractPlainText("This'll be a _Helpful_ [Section](#x) about `Go`")
