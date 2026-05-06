@@ -61,12 +61,12 @@ state=generated
 * auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
 * works with files and Unix pipes
 * targets ATX headings (`#` to `######`)
-* ignores headings inside fenced code blocks safely
-* ignores headings inside HTML comments: `<!-- ... ## Example -->`
-* exclusion regions: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
+* ignores headings inside **fenced code blocks** safely
+* ignores headings inside **HTML comments**: `<!-- ... ## Example -->`
+* **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
 * explicit anchor profiles: `github` (default), `gitlab`, or `off`
 * ToC link targets stay unnumbered for inline-anchor profiles and follow rendered heading text when `anchor=off`
-* works with repeated headings
+* **repeated headings** support
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
 
