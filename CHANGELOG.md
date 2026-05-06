@@ -13,6 +13,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Repository metadata and docs were aligned with the published project identity:
   * the Go module path now uses `github.com/rokath/mdtoc` instead of the placeholder `example.com/mdtoc`
   * the repository and extension READMEs now describe the `anchor=off` behavior and config workflow more accurately
+* Repository workflow guidance was hardened further:
+  * `AGENTS.md` now requires an explicit branch check before `git add`, `git commit`, merge, reset, or push operations
+  * a plain user request such as `commit` or `push` is now documented as insufficient permission for landing work on `main`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

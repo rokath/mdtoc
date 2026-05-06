@@ -44,6 +44,9 @@
 * Keep unrelated changes out of the same commit.
 * If the work naturally splits into independent topics, prefer separate commits unless the user requests a single combined commit.
 * Do not modify or commit files directly on `main` unless the user explicitly asks for changes on `main`. Create changes on `dev` or another non-`main` working branch, then merge into `main` through the normal integration flow.
+* Before any `git add`, `git commit`, merge, reset, or push, explicitly run `git branch --show-current` and verify that the branch is intended for that action.
+* A generic user request such as `commit`, `push`, or `open a PR` is **not** permission to commit on `main`; only an explicit instruction to land the change on `main` counts.
+* If the current branch is `main` and the user did not explicitly request a `main` commit, stop and move the work to `dev` or another non-`main` branch before staging, committing, merging, or resetting.
 * Treat `origin/main` as a protected branch: do not assume direct pushes are allowed. Use a pull request unless the repository protection rules have explicitly been relaxed for the current task.
 * Before every commit that affects release notes, unreleased notes, version sections, user-visible behavior, CI, docs, or shipped assets, explicitly review `CHANGELOG.md`.
 * Before every `git push`, explicitly review `CHANGELOG.md`.
