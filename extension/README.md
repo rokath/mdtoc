@@ -22,26 +22,64 @@ state=generated
 
 ## 1. Features
 
-* very easy to use with editor context menu:
+* very **easy to use** with editor context menu:
   * right-click inside an open Markdown editor and choose `mdtoc: Generate ToC`
-* highly configurable: edit the `mdtoc` config block values directly to match your needs
-  * on/off for numbering, anchor, toc
+* highly **configurable**: edit the `mdtoc` config block values directly to match your needs
+  * on/off for **numbering**, **anchor**, **toc**
     * ToC link targets stay unnumbered for inline-anchor profiles but follow rendered heading text when `anchor=off`
-  * auto or explicit (`*`, `-`, `+`) ToC bullet style
+  * auto or explicit (`*`, `-`, `+`) ToC **bullet style**
   * explicit **anchor profiles**: `github` (default), `gitlab`, or `off`
-  * targets ATX headings (`#` to `######`)
-* ignores headings inside **fenced code blocks** safely: ``` ## Example ```
-* ignores headings inside **HTML comments**: `<!-- ... ## Example -->`
-* **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
+  * targets ATX headings `#` to `######` (**min-level**, **max-level**)
 * **repeated headings** support
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
-* keep the VS Code workflow aligned with the same [mdtoc](https://github.com/rokath/mdtoc/releases) CLI binary in local scripts and CI
-* Excluded:
-  * no Setext heading support (`Heading` followed by `===` or `---`)
-  * no HTML heading support (`<h2>Example</h2>`)
-  * not a site generator
-  * not a Markdown formatter
+* keep the VS Code **workflow aligned** with the same [mdtoc](https://github.com/rokath/mdtoc/releases) CLI binary in local scripts and CI
+* **Intentionally ignored headings**:
+  * as **Setext headings**:
+  
+    ```md
+    Example 1
+    =========
+    
+    Example 2
+    ---------
+    ```
+
+  * in **fenced code blocks**:
+
+    ````md
+    ``` 
+    ## Example
+    ```
+    ````
+
+  * in **HTML comments**:
+  
+    ```md
+    <!-- 
+    ## Example
+    -->
+    ```
+
+  * as **HTML syntax**:
+  
+    ```md
+    <h2>Example</h2>
+    ```
+
+  * between **exclusion regions**:
+  
+    ```md
+    <!-- mdtoc off -->
+    ## Example
+    <!-- mdtoc on -->
+    ```
+
+  * with **starting space(s)**:
+
+    ```md
+     ## Example
+    ```
 
 ## 2. How to Use
 
@@ -61,9 +99,11 @@ The table of contents is initially created at the beginning of the document. You
 `Generate ToC` runs `mdtoc` in root mode:
 
 * if the document has no managed container yet, `mdtoc` creates one with its default settings (generate)
-* if the document already has a valid managed container, `mdtoc` renews it from the stored container config
-* if the managed container is invalid, the document stays unchanged and the CLI error is shown
-* if a managed container is broken, beyond repair, you can delete it and run `mdtoc: Generate ToC` again to create a fresh one
+* if the document already has a valid managed container, `mdtoc` regenerates it from the stored container config
+* the document stays unchanged and the CLI error is shown if
+  * more than one managed container exists
+  * the managed container is invalid
+* if a managed container is broken beyond repair, you can delete it and run `mdtoc: Generate ToC` again to create a fresh one
 
 `Strip ToC` runs the explicit `strip` subcommand. If the CLI reports an error, the document also stays unchanged.
 
@@ -91,6 +131,4 @@ Install the extension from a packaged `.vsix` file:
 
 ### 3.4. Continuous Integration
 
-The underlying `mdtoc` binary is not limited to VS Code. You can use it directly in shell workflows, scripts, and CI, for example with `mdtoc check README.md` to fail a pipeline when a managed Markdown file is out of date.
-
-For CLI usage and the full feature set, see the repository [README](https://github.com/rokath/mdtoc/blob/main/README.md).
+The underlying `mdtoc` binary is not limited to VS Code. You can use it directly in shell workflows, scripts, and CI, for example with `mdtoc check README.md` to fail a pipeline when a managed Markdown file is out of date. For CLI usage and the full feature set, see the repository [README](https://github.com/rokath/mdtoc/blob/main/README.md).
