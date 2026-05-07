@@ -1,14 +1,62 @@
 
-# Example
+# Example Marfkdown File
 
 <img src="./extension/mdtoc_mascot_1024.webp" width="200">
 
+## Ignored Examples
+
+### Examples as Setext headings
+
+Example 1
+=========
+
+Example 2
+---------
+
+### Examples in fenced code blocks
+
+```md
+## Example in fenced code block
+```
+
+````md
+``` 
+## Example in fenced code block in fenced code block
+```
+````
+
+### Example in HTML comments
+
+<!-- 
+## HTML comment Example
+-->
+
+### Example as HTML syntax
+
+<h2>HTML Example</h2>
+
+### Example inside exclusion region
+
+<!-- mdtoc off -->
+## Example mdtoc off
+<!-- mdtoc on -->
+
+### Examples with starting space(s)
+
+#### 0 starting space Example
+ 
+ #### 1 starting space Example
+
+  #### 2 starting spaces Example
+
+   #### 3 starting spaces Example
+
+    #### 4 starting spaces Example
+
+## Footnotes ##
+
 <h2>Table of Contents</h2>
 <!-- mdtoc -->
-- [1. Overview](#overview)
-- [2. Setup](#setup)
-  - [2.1. Important](#important)
-  - [2.2. Requirements](#requirements)
 <!-- mdtoc-config
 container-version=v2
 numbering=true
@@ -17,18 +65,6 @@ max-level=4
 anchor=github
 toc=true
 bullets=auto
-state=generated
+state=stripped
 -->
 <!-- /mdtoc -->
-
-## 1. <a id="overview"></a>Overview
-
-- Automating...
-
-## 2. <a id="setup"></a>Setup
-
-### 2.1. <a id="important"></a>Important
-
-### 2.2. <a id="requirements"></a>Requirements
-
-You need ...

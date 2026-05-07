@@ -20,6 +20,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * `extension/scripts/package-release.mjs` now stages and packages a dedicated `mdtoc-vscode-linux-arm64.vsix`
   * the Marketplace publish workflow now expects five VSIX assets instead of four
   * the VS Code extension MVP docs and release footer examples now list the new `linux-arm64` package
+* Fenced-code ignored-region parsing was hardened for nested fence content:
+  * a shorter inner fence marker inside a longer fenced code block no longer closes the outer ignored region early
+  * regression tests now cover heading parsing, ToC generation, and bullet auto-detection for nested-fence content
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

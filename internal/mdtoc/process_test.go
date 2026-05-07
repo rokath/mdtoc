@@ -338,6 +338,34 @@ func TestGenerateIgnoresHeadingsInsideFencesAndComments(t *testing.T) {
 	}
 }
 
+// TestGenerateIgnoresHeadingsInsideNestedFenceContent verifies issue #77:
+// a shorter inner fence marker inside a longer fenced code block must not end
+// the outer ignored region early.
+func TestGenerateIgnoresHeadingsInsideNestedFenceContent(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"````md",
+		"```",
+		"## Still code",
+		"```",
+		"````",
+		"",
+		"## Real heading",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if strings.Contains(got, "Still code](#still-code)") {
+		t.Fatalf("nested fence content leaked into ToC:\n%s", got)
+	}
+	if !strings.Contains(got, "* [1. Real heading](#real-heading)") {
+		t.Fatalf("real heading missing from ToC:\n%s", got)
+	}
+}
+
 // TestGenerateIgnoresHeadingsInsideMdtocOffRegions verifies explicit mdtoc off/on exclusion blocks.
 func TestGenerateIgnoresHeadingsInsideMdtocOffRegions(t *testing.T) {
 	input := strings.Join([]string{
@@ -470,6 +498,33 @@ func TestGenerateAutoDetectsBulletsOutsideIgnoredRegions(t *testing.T) {
 	}
 	if !strings.Contains(got, "+ [1. Intro](#intro)") {
 		t.Fatalf("ToC did not ignore non-live bullet regions:\n%s", got)
+	}
+}
+
+// TestGenerateAutoDetectsBulletsOutsideNestedFenceContent verifies that a
+// shorter inner fence inside a longer outer fence does not re-enable bullet
+// detection too early.
+func TestGenerateAutoDetectsBulletsOutsideNestedFenceContent(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"````md",
+		"```",
+		"- not live",
+		"```",
+		"````",
+		"",
+		"+ live bullet",
+		"",
+		"## Real heading",
+	}, "\n") + "\n"
+
+	got, _, err := Generate(input, DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if !strings.Contains(got, "+ [1. Real heading](#real-heading)") {
+		t.Fatalf("ToC bullet auto-detection counted nested-fence bullets:\n%s", got)
 	}
 }
 
