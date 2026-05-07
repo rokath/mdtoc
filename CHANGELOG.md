@@ -6,7 +6,10 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* No unreleased changes recorded yet.
+* VS Code extension packaging was extended further:
+  * `extension/scripts/package-release.mjs` now also stages and packages a dedicated `mdtoc-vscode-win32-arm64.vsix`
+  * the Marketplace publish workflow now expects six VSIX assets instead of five
+  * the release footer examples now list the new `win32-arm64` package
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
