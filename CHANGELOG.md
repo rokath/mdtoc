@@ -23,6 +23,9 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Fenced-code ignored-region parsing was hardened for nested fence content:
   * a shorter inner fence marker inside a longer fenced code block no longer closes the outer ignored region early
   * regression tests now cover heading parsing, ToC generation, and bullet auto-detection for nested-fence content
+* `anchor=on` is now accepted as a compatibility alias for `anchor=github`:
+  * CLI parsing and stored config parsing now normalize `on` and `true` to canonical `anchor=github`
+  * virtual file-based workflow tests now cover both `generate --anchor on|true` and `regen` from a document that stores `anchor=on|true`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

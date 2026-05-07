@@ -305,6 +305,12 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	if mode, err := parseAnchorMode("off"); err != nil || mode != AnchorOff {
 		t.Fatalf("parseAnchorMode(off) = %q, %v", mode, err)
 	}
+	if mode, err := parseAnchorMode("on"); err != nil || mode != AnchorGitHub {
+		t.Fatalf("parseAnchorMode(on) = %q, %v", mode, err)
+	}
+	if mode, err := parseAnchorMode("true"); err != nil || mode != AnchorGitHub {
+		t.Fatalf("parseAnchorMode(true) = %q, %v", mode, err)
+	}
 	if mode, err := parseAnchorMode("false"); err != nil || mode != AnchorOff {
 		t.Fatalf("parseAnchorMode(false) = %q, %v", mode, err)
 	}

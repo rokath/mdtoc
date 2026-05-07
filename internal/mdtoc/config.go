@@ -183,6 +183,8 @@ func parseAnchorMode(s string) (AnchorMode, error) {
 	switch AnchorMode(s) {
 	case AnchorGitHub, AnchorGitLab, AnchorOff:
 		return AnchorMode(s), nil
+	case "on", "true":
+		return AnchorGitHub, nil
 	case "false":
 		return AnchorOff, nil
 	default:

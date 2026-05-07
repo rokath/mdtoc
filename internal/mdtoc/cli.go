@@ -780,7 +780,7 @@ Generate options:
   --numbering=on  heading numbers on or off
   --min-level=2   minimum heading level (valid 1 to --max-level)
   --max-level=4   maximum heading level (valid --min-level to 6)
-  --anchor=github anchor profile: github, gitlab, or off
+  --anchor=github anchor profile: github, gitlab, or off (aliases: on/true=github, false=off)
   --toc=on        table of contents on or off
   --bullets=auto  ToC bullets auto, *, -, or +
 
@@ -804,7 +804,7 @@ Options:
   --numbering, -n <on|off>
   --min-level <N>
   --max-level <N>
-  --anchor, -a <github|gitlab|off>
+  --anchor, -a <github|gitlab|off|on|true|false>
   --toc <on|off>
   --bullets, -b <auto|*|-|+>
   --file, -f <name>
@@ -818,7 +818,7 @@ Options:
   --numbering, -n <on|off>
   --min-level <N>
   --max-level <N>
-  --anchor, -a <github|gitlab|off>
+  --anchor, -a <github|gitlab|off|on|true|false>
   --toc <on|off>
   --bullets, -b <auto|*|-|+>
   --file, -f <name>
