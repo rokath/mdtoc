@@ -16,6 +16,10 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Repository workflow guidance was hardened further:
   * `AGENTS.md` now requires an explicit branch check before `git add`, `git commit`, merge, reset, or push operations
   * a plain user request such as `commit` or `push` is now documented as insufficient permission for landing work on `main`
+* VS Code extension packaging now supports `linux-arm64`:
+  * `extension/scripts/package-release.mjs` now stages and packages a dedicated `mdtoc-vscode-linux-arm64.vsix`
+  * the Marketplace publish workflow now expects five VSIX assets instead of four
+  * the VS Code extension MVP docs and release footer examples now list the new `linux-arm64` package
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

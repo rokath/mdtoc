@@ -28,6 +28,12 @@ const targets = [
     extract: ["tar", ["-xzf", archivePath("dist/mdtoc_linux_amd64.tar.gz"), "-C", tmpRoot]],
   },
   {
+    target: "linux-arm64",
+    archive: "dist/mdtoc_linux_arm64.tar.gz",
+    source: "mdtoc_linux_arm64/mdtoc",
+    extract: ["tar", ["-xzf", archivePath("dist/mdtoc_linux_arm64.tar.gz"), "-C", tmpRoot]],
+  },
+  {
     target: "win32-x64",
     archive: "dist/mdtoc_windows_amd64.zip",
     source: "mdtoc_windows_amd64/mdtoc.exe",
