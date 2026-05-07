@@ -43,6 +43,7 @@
 
 * Keep unrelated changes out of the same commit.
 * If the work naturally splits into independent topics, prefer separate commits unless the user requests a single combined commit.
+* If the task is tied to a known issue number, include that issue reference explicitly in the commit message.
 * Do not modify or commit files directly on `main` unless the user explicitly asks for changes on `main`. Create changes on `dev` or another non-`main` working branch, then merge into `main` through the normal integration flow.
 * Before any `git add`, `git commit`, merge, reset, or push, explicitly run `git branch --show-current` and verify that the branch is intended for that action.
 * A generic user request such as `commit`, `push`, or `open a PR` is **not** permission to commit on `main`; only an explicit instruction to land the change on `main` counts.

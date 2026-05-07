@@ -111,20 +111,40 @@ func startsGenericHTMLComment(trimmed string) bool {
 	return trimmed != startMarker && trimmed != endMarker && trimmed != offMarker && trimmed != onMarker && trimmed != configStart
 }
 
-// fenceOpen reports the supported fence marker that starts on the given line.
+// fenceOpen reports the full supported fence run that starts on the given line.
 func fenceOpen(trimmed string) string {
-	if strings.HasPrefix(trimmed, "```") {
-		return "```"
-	}
-	if strings.HasPrefix(trimmed, "~~~") {
-		return "~~~"
-	}
-	return ""
+	return leadingFenceRun(trimmed)
 }
 
 // isFenceClose reports whether the line closes the active fence type.
 func isFenceClose(trimmed, marker string) bool {
-	return marker != "" && strings.HasPrefix(trimmed, marker)
+	if marker == "" {
+		return false
+	}
+	run := leadingFenceRun(trimmed)
+	if len(run) < len(marker) || run[0] != marker[0] {
+		return false
+	}
+	return strings.TrimSpace(trimmed[len(run):]) == ""
+}
+
+func leadingFenceRun(trimmed string) string {
+	if trimmed == "" {
+		return ""
+	}
+	switch trimmed[0] {
+	case '`', '~':
+	default:
+		return ""
+	}
+	i := 0
+	for i < len(trimmed) && trimmed[i] == trimmed[0] {
+		i++
+	}
+	if i < 3 {
+		return ""
+	}
+	return trimmed[:i]
 }
 
 // findConfigEnd searches for the terminating line of the config block.

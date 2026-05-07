@@ -383,44 +383,44 @@ _Note:_ `state` is intentionally also normalized to `key=value`. This makes the 
 
 ### 8.1 Commands
 
-| Option                                  | Description                                     |
-|-----------------------------------------|-------------------------------------------------|
-| `mdtoc --version`                       | Prints short version information.               |
-| `mdtoc --version --verbose`             | Prints detailed version information.            |
-|                                         |                                                 |
-| `mdtoc --help`                          | Prints short help text.                         |
-| `mdtoc --help --verbose`                | Prints long help text.                          |
-|                                         |                                                 |
+| Option                                             | Description                                                                                       |
+|----------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| `mdtoc --version`                                  | Prints short version information.                                                                 |
+| `mdtoc --version --verbose`                        | Prints detailed version information.                                                              |
+|                                                    |                                                                                                   |
+| `mdtoc --help`                                     | Prints short help text.                                                                           |
+| `mdtoc --help --verbose`                           | Prints long help text.                                                                            |
+|                                                    |                                                                                                   |
 | `mdtoc [--file <name>\|<name>] [GENERATE OPTIONS]` | root mode: uses `regen` for valid managed input without generate overrides, otherwise `generate`. |
-| `mdtoc [GENERATE OPTIONS] < INPUT.md`   | root mode on `stdin`; same dispatch rule as above. |
-|                                         |                                                 |
-| `mdtoc generate [--verbose] [OPTIONS]`  | generates/updates ToC, numbers, anchors.        |
-| `mdtoc generate  --help`                | Prints long help text specifically for generate.|
-|                                         |                                                 |
-| `mdtoc regen    [--verbose]`            | regenerates from the persisted container config.|
-| `mdtoc refresh  [--verbose]`            | alias for `regen`.                              |
-| `mdtoc regen     --help`                | Prints long help text specifically for regen.   |
-| `mdtoc refresh   --help`                | Prints the same help text as `regen`.           |
-|                                         |                                                 |
-| `mdtoc strip    [--verbose] [--raw]`    | removes ToC, numbers, anchors and optionally config. |
-| `mdtoc strip     --help`                | Prints long help text specifically for strip.   |
-|                                         |                                                 |
-| `mdtoc check    [--verbose]`            | checks config and optionally ToC, numbers, anchors. |
-| `mdtoc check     --help`                | Prints long help text specifically for check.   |
+| `mdtoc [GENERATE OPTIONS] < INPUT.md`              | root mode on `stdin`; same dispatch rule as above.                                                |
+|                                                    |                                                                                                   |
+| `mdtoc generate [--verbose] [OPTIONS]`             | generates/updates ToC, numbers, anchors.                                                          |
+| `mdtoc generate  --help`                           | Prints long help text specifically for generate.                                                  |
+|                                                    |                                                                                                   |
+| `mdtoc regen    [--verbose]`                       | regenerates from the persisted container config.                                                  |
+| `mdtoc refresh  [--verbose]`                       | alias for `regen`.                                                                                |
+| `mdtoc regen     --help`                           | Prints long help text specifically for regen.                                                     |
+| `mdtoc refresh   --help`                           | Prints the same help text as `regen`.                                                             |
+|                                                    |                                                                                                   |
+| `mdtoc strip    [--verbose] [--raw]`               | removes ToC, numbers, anchors and optionally config.                                              |
+| `mdtoc strip     --help`                           | Prints long help text specifically for strip.                                                     |
+|                                                    |                                                                                                   |
+| `mdtoc check    [--verbose]`                       | checks config and optionally ToC, numbers, anchors.                                               |
+| `mdtoc check     --help`                           | Prints long help text specifically for check.                                                     |
 
 ### 8.2 Options for `generate`
 
-| Option                  | Default | Meaning                                                               |
-|-------------------------|---------|-----------------------------------------------------------------------|
-| `--numbering <on\|off\|true\|false>` | `on`    | enable or disable heading numbering                        |
-| `--min-level <N>`       | `2`     | minimum managed heading level (>=1)                                   |
-| `--max-level <N>`       | `4`     | maximum managed heading level (<=6)                                   |
-| `--anchor <github\|gitlab\|off\|false>` | `github` | select the anchor profile or disable inline anchors         |
-| `--toc <on\|off\|true\|false>`       | `on`    | renders the managed ToC area when `on`, leaves it empty when `off` |
-| `--bullets <auto\|*\|-\|+>` | `auto` | choose the generated unordered-list bullet style                     |
-| `--file <name>`         | –       | read and overwrite file                                               |
-| `--verbose`             | `off`   | diagnostic and progress messages on `stderr`                          |
-| `--help`                | –       | show help                                                             |
+| Option                                            | Default  | Meaning                                                            |
+|---------------------------------------------------|----------|--------------------------------------------------------------------|
+| `--numbering <on\|off\|true\|false>`              | `on`     | enable or disable heading numbering                                |
+| `--min-level <N>`                                 | `2`      | minimum managed heading level (>=1)                                |
+| `--max-level <N>`                                 | `4`      | maximum managed heading level (<=6)                                |
+| `--anchor <github\|gitlab\|off\|on\|true\|false>` | `github` | select the anchor profile or disable inline anchors                |
+| `--toc <on\|off\|true\|false>`                    | `on`     | renders the managed ToC area when `on`, leaves it empty when `off` |
+| `--bullets <auto\|*\|-\|+>`                       | `auto`   | choose the generated unordered-list bullet style                   |
+| `--file <name>`                                   | –        | read and overwrite file                                            |
+| `--verbose`                                       | `off`    | diagnostic and progress messages on `stderr`                       |
+| `--help`                                          | –        | show help                                                          |
 
 Input form rules:
 
@@ -498,6 +498,7 @@ Additional rules:
 * Anchor IDs are computed only from the unnumbered title.
 * Duplicate IDs are resolved deterministically.
 * Foreign content in the ToC area is not deleted, but preserved as an HTML comment.
+* `--anchor on` and `--anchor true` are accepted as aliases for `--anchor github`, but normalized persistence uses `anchor=github`.
 * `--anchor false` is accepted as an alias for `--anchor off`, but normalized persistence uses `anchor=off`.
 * On success, the result is idempotent.
 

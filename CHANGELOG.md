@@ -16,6 +16,16 @@ This file summarizes notable repository changes in a compact, release-oriented f
 * Repository workflow guidance was hardened further:
   * `AGENTS.md` now requires an explicit branch check before `git add`, `git commit`, merge, reset, or push operations
   * a plain user request such as `commit` or `push` is now documented as insufficient permission for landing work on `main`
+* VS Code extension packaging now supports `linux-arm64`:
+  * `extension/scripts/package-release.mjs` now stages and packages a dedicated `mdtoc-vscode-linux-arm64.vsix`
+  * the Marketplace publish workflow now expects five VSIX assets instead of four
+  * the VS Code extension MVP docs and release footer examples now list the new `linux-arm64` package
+* Fenced-code ignored-region parsing was hardened for nested fence content:
+  * a shorter inner fence marker inside a longer fenced code block no longer closes the outer ignored region early
+  * regression tests now cover heading parsing, ToC generation, and bullet auto-detection for nested-fence content
+* `anchor=on` is now accepted as a compatibility alias for `anchor=github`:
+  * CLI parsing and stored config parsing now normalize `on` and `true` to canonical `anchor=github`
+  * virtual file-based workflow tests now cover both `generate --anchor on|true` and `regen` from a document that stores `anchor=on|true`
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 

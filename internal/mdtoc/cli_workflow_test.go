@@ -629,6 +629,8 @@ func TestRunnerFileWorkflowNormalizesAnchorFalseVariants(t *testing.T) {
 		name string
 		args []string
 	}{
+		{name: "anchor-on", args: []string{"generate", "-f", "doc.md", "--anchor", "on"}},
+		{name: "anchor-true", args: []string{"generate", "-f", "doc.md", "--anchor", "true"}},
 		{name: "anchor-false", args: []string{"generate", "-f", "doc.md", "--anchor", "false"}},
 		{name: "anchor-off", args: []string{"generate", "-f", "doc.md", "--anchor", "off"}},
 	}
@@ -641,14 +643,71 @@ func TestRunnerFileWorkflowNormalizesAnchorFalseVariants(t *testing.T) {
 
 			runFileCommand(t, fs, tc.args...)
 			got := fs.fileString("doc.md")
-			if !strings.Contains(got, "anchor=off") {
-				t.Fatalf("generate did not normalize %s to anchor=off:\n%s", tc.name, got)
+			switch tc.name {
+			case "anchor-on", "anchor-true":
+				if !strings.Contains(got, "anchor=github") {
+					t.Fatalf("generate did not normalize %s to anchor=github:\n%s", tc.name, got)
+				}
+				if strings.Contains(got, "anchor=on") || strings.Contains(got, "anchor=true") || !strings.Contains(got, "<a id=\"intro\"></a>") {
+					t.Fatalf("generate left a non-canonical on anchor state for %s:\n%s", tc.name, got)
+				}
+				if !strings.Contains(got, "* [1. Intro](#intro)") {
+					t.Fatalf("generate did not preserve ToC targets for %s:\n%s", tc.name, got)
+				}
+			default:
+				if !strings.Contains(got, "anchor=off") {
+					t.Fatalf("generate did not normalize %s to anchor=off:\n%s", tc.name, got)
+				}
+				if strings.Contains(got, "anchor=false") || strings.Contains(got, "<a id=") {
+					t.Fatalf("generate left a non-canonical false anchor state for %s:\n%s", tc.name, got)
+				}
+				if !strings.Contains(got, "* [1. Intro](#1-intro)") {
+					t.Fatalf("generate did not preserve ToC targets for %s:\n%s", tc.name, got)
+				}
 			}
-			if strings.Contains(got, "anchor=false") || strings.Contains(got, "<a id=") {
-				t.Fatalf("generate left a non-canonical false anchor state for %s:\n%s", tc.name, got)
+		})
+	}
+}
+
+// TestRunnerFileWorkflowNormalizesStoredAnchorOnLikeValues verifies that
+// stored anchor=on/true config values are accepted and rewritten canonically as github.
+func TestRunnerFileWorkflowNormalizesStoredAnchorOnLikeValues(t *testing.T) {
+	for _, stored := range []string{"on", "true"} {
+		t.Run(stored, func(t *testing.T) {
+			const path = "doc.md"
+			fs := newMemoryFileSystem(map[string]string{
+				path: strings.Join([]string{
+					startMarker,
+					"* [Wrong](#wrong)",
+					configStart,
+					"container-version=v2",
+					"numbering=true",
+					"min-level=2",
+					"max-level=4",
+					"anchor=" + stored,
+					"toc=true",
+					"bullets=auto",
+					"state=generated",
+					configEnd,
+					endMarker,
+					"",
+					"## Intro",
+				}, "\n") + "\n",
+			})
+
+			runFileCommand(t, fs, "regen", "-f", path)
+			got := fs.fileString(path)
+			if !strings.Contains(got, "anchor=github") {
+				t.Fatalf("regen did not normalize stored anchor=%s to github:\n%s", stored, got)
 			}
-			if !strings.Contains(got, "* [1. Intro](#1-intro)") {
-				t.Fatalf("generate did not preserve ToC targets for %s:\n%s", tc.name, got)
+			if strings.Contains(got, "anchor=on") || strings.Contains(got, "anchor=true") {
+				t.Fatalf("regen left non-canonical anchor=%s in the config block:\n%s", stored, got)
+			}
+			if !strings.Contains(got, `<a id="intro"></a>`) || !strings.Contains(got, "* [1. Intro](#intro)") {
+				t.Fatalf("regen did not rebuild github-style anchor artifacts from anchor=%s:\n%s", stored, got)
+			}
+			if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
+				t.Fatalf("check unexpectedly failed after anchor=%s normalization: %v", stored, err)
 			}
 		})
 	}

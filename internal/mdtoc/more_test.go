@@ -305,6 +305,12 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	if mode, err := parseAnchorMode("off"); err != nil || mode != AnchorOff {
 		t.Fatalf("parseAnchorMode(off) = %q, %v", mode, err)
 	}
+	if mode, err := parseAnchorMode("on"); err != nil || mode != AnchorGitHub {
+		t.Fatalf("parseAnchorMode(on) = %q, %v", mode, err)
+	}
+	if mode, err := parseAnchorMode("true"); err != nil || mode != AnchorGitHub {
+		t.Fatalf("parseAnchorMode(true) = %q, %v", mode, err)
+	}
 	if mode, err := parseAnchorMode("false"); err != nil || mode != AnchorOff {
 		t.Fatalf("parseAnchorMode(false) = %q, %v", mode, err)
 	}
@@ -416,6 +422,31 @@ func TestParseDocumentIgnoresMdtocOffMarkersInsideFences(t *testing.T) {
 	}
 }
 
+func TestParseDocumentIgnoresHeadingsInsideNestedFenceContent(t *testing.T) {
+	input := strings.Join([]string{
+		"# Title",
+		"",
+		"````md",
+		"```",
+		"## Still code",
+		"```",
+		"````",
+		"",
+		"## Real heading",
+	}, "\n") + "\n"
+
+	parsed, err := ParseDocument(input)
+	if err != nil {
+		t.Fatalf("ParseDocument error: %v", err)
+	}
+	if len(parsed.Headings) != 2 {
+		t.Fatalf("unexpected headings parsed: %+v", parsed.Headings)
+	}
+	if parsed.Headings[1].TitleText != "Real heading" {
+		t.Fatalf("second heading = %q, want Real heading", parsed.Headings[1].TitleText)
+	}
+}
+
 // TestParserAndContainerHelpers covers structural parser helpers and container validation errors.
 func TestParserAndContainerHelpers(t *testing.T) {
 	if got := splitLines(""); len(got) != 0 {
@@ -424,8 +455,17 @@ func TestParserAndContainerHelpers(t *testing.T) {
 	if got := splitLines("a\nb\n"); len(got) != 2 || got[1] != "b" {
 		t.Fatalf("splitLines returned %v", got)
 	}
-	if fenceOpen("~~~go") != "~~~" || fenceOpen("plain") != "" {
+	if fenceOpen("~~~go") != "~~~" || fenceOpen("````md") != "````" || fenceOpen("plain") != "" {
 		t.Fatalf("fenceOpen returned unexpected values")
+	}
+	if isFenceClose("```", "````") {
+		t.Fatalf("shorter inner fence should not close longer active fence")
+	}
+	if !isFenceClose("````", "```") {
+		t.Fatalf("longer fence should close shorter active fence")
+	}
+	if isFenceClose("``` trailing", "```") {
+		t.Fatalf("fence close should reject trailing content")
 	}
 	if end := findConfigEnd([]string{"x", configEnd}, 0); end != 1 {
 		t.Fatalf("findConfigEnd = %d, want 1", end)
