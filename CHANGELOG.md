@@ -6,6 +6,19 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* No unreleased changes recorded yet.
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.2.8..HEAD`
+
+```txt
+```
+
+## <a id='v0.2.9-changes'></a>v0.2.9 Changes (2026-05-07)
+
+### <a id='v0.2.9-overview'></a>v0.2.9 Overview
+
 * `anchor=off` now generates renderer-style ToC link targets from the rendered heading text instead of reusing the inline-anchor slug logic:
   * numbered headings such as `1.1. API` now link as `#11-api` in the managed ToC, which matches VS Code-style preview renderers more closely
   * title-leading digits remain separated from the numbering prefix in generated link targets, for example `1.1. 2025 Roadmap` -> `#11-2025-roadmap`
@@ -27,11 +40,12 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * CLI parsing and stored config parsing now normalize `on` and `true` to canonical `anchor=github`
   * virtual file-based workflow tests now cover both `generate --anchor on|true` and `regen` from a document that stores `anchor=on|true`
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.2.9-git-log'></a>v0.2.9 Git Log
 
-Used git range: `v0.2.8..HEAD`
+Used git range: `v0.2.8..v0.2.9`
 
 ```txt
+* <pending>
 ```
 
 ## <a id='v0.2.8-changes'></a>v0.2.8 Changes (2026-05-05)
