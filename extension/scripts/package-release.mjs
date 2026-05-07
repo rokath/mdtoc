@@ -39,6 +39,12 @@ const targets = [
     source: "mdtoc_windows_amd64/mdtoc.exe",
     extract: ["unzip", ["-q", archivePath("dist/mdtoc_windows_amd64.zip"), "-d", tmpRoot]],
   },
+  {
+    target: "win32-arm64",
+    archive: "dist/mdtoc_windows_arm64.zip",
+    source: "mdtoc_windows_arm64/mdtoc.exe",
+    extract: ["unzip", ["-q", archivePath("dist/mdtoc_windows_arm64.zip"), "-d", tmpRoot]],
+  },
 ];
 
 rmSync(tmpRoot, { force: true, recursive: true });

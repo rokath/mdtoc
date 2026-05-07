@@ -80,8 +80,8 @@ jobs:
         run: |
           shopt -s nullglob
           files=(extension/out/mdtoc-vscode-*.vsix)
-          if [ "${#files[@]}" -ne 5 ]; then
-            echo "Expected 5 VSIX files, found ${#files[@]}."
+          if [ "${#files[@]}" -ne 6 ]; then
+            echo "Expected 6 VSIX files, found ${#files[@]}."
             printf '%s\n' "${files[@]}"
             exit 1
           fi

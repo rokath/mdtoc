@@ -175,7 +175,8 @@ release:
     Linux:   code --install-extension mdtoc-vscode-linux-arm64.vsix
     Darwin:  code --install-extension mdtoc-vscode-darwin-arm64.vsix
     Darwin:  code --install-extension mdtoc-vscode-darwin-x64.vsix
-    Windows: code --install-extension mdtoc-vscode-win32-x64.vsix 
+    Windows: code --install-extension mdtoc-vscode-win32-x64.vsix
+    Windows: code --install-extension mdtoc-vscode-win32-arm64.vsix
 
     ### macOS
 
