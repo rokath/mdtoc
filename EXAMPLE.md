@@ -51,6 +51,7 @@ IGNORED Example 2
 ## 3. <a id="footnotes"></a>Footnotes ##
 
 <h2>Table of Contents</h2>
+
 <!-- mdtoc -->
 * [1. About](#about)
 * [2. Examples for ignored Headings](#examples-for-ignored-headings)
@@ -73,3 +74,4 @@ bullets=auto
 state=generated
 -->
 <!-- /mdtoc -->
+
