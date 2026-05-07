@@ -5,7 +5,7 @@
 
 <img src="https://raw.githubusercontent.com/rokath/mdtoc/main/extension/mdtoc_mascot_1024.webp" width="420">
 
-This is a thin VS Code extension around [mdtoc CLI](https://github.com/rokath/mdtoc) and updates the active Markdown document in place.
+This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc) and updates the active Markdown document in place.
 
 <!-- mdtoc -->
 <!-- mdtoc-config
@@ -26,14 +26,14 @@ state=generated
   * right-click inside an open Markdown editor and choose `mdtoc: Generate ToC`
 * highly **configurable**: edit the `mdtoc` config block values directly to match your needs
   * on/off for **numbering**, **anchor**, **toc**
-    * ToC link targets stay unnumbered for inline-anchor profiles but follow rendered heading text when `anchor=off`
+    * ToC link targets stay stable (unnumbered) for inline-anchor profiles but follow rendered heading text when `anchor=off`
   * auto or explicit (`*`, `-`, `+`) ToC **bullet style**
   * explicit **anchor profiles**: `github` (default), `gitlab`, or `off`
   * targets ATX headings `#` to `######` (**min-level**, **max-level**)
 * **repeated headings** support
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
-* keep the VS Code **workflow aligned** with the same [mdtoc](https://github.com/rokath/mdtoc/releases) CLI binary in local scripts and CI
+* keep the VS Code **workflow aligned** with the same [mdtoc CLI binary](https://github.com/rokath/mdtoc/releases) in local scripts and CI
 * **Intentionally ignored headings**:
   * as **Setext headings**:
   
