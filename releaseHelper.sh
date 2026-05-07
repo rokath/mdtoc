@@ -49,28 +49,6 @@ LATEST_LOCAL_TAG=$(git tag --sort=version:refname | tail -n 1 || true)
 TARGET_LOCAL_TAG_SHA=$(git rev-list -n 1 "$TAG" 2>/dev/null || true)
 TARGET_REMOTE_TAG_SHA=$(git ls-remote --tags --refs origin "refs/tags/$TAG" 2>/dev/null | awk '{print $1}')
 
-PACKAGE_VERSION=$(node -p "require('./extension/package.json').version")
-LOCK_VERSION=$(node -p "require('./extension/package-lock.json').version")
-
-echo "Release helper status"
-echo "  target tag: $TAG"
-echo "  branch: $CURRENT_BRANCH"
-echo "  local HEAD: $HEAD_SHA"
-echo "  origin/main: $ORIGIN_MAIN_SHA"
-echo "  latest local tag: ${LATEST_LOCAL_TAG:-none}"
-echo "  extension package version: $PACKAGE_VERSION"
-echo "  extension lock version: $LOCK_VERSION"
-if [ -n "$TARGET_LOCAL_TAG_SHA" ]; then
-  printf '  local tag %s: %s\n' "$TAG" "$(printf '%.7s' "$TARGET_LOCAL_TAG_SHA")"
-else
-  echo "  local tag $TAG: missing"
-fi
-if [ -n "$TARGET_REMOTE_TAG_SHA" ]; then
-  printf '  remote tag %s: %s\n' "$TAG" "$(printf '%.7s' "$TARGET_REMOTE_TAG_SHA")"
-else
-  echo "  remote tag $TAG: missing"
-fi
-
 if [ -n "$(git status --porcelain)" ]; then
   echo
   echo "Repository is dirty. Commit, stash, or discard local changes before running ./releaseHelper.sh." >&2
@@ -78,24 +56,8 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-if [ "$CURRENT_BRANCH" != "main" ]; then
-  echo
-  echo "Release preparation may be started from dev or main, but tagging itself must run from local main after the release commit has reached origin/main through a PR." >&2
-  echo "Next steps:" >&2
-  echo "  1. Push your release-preparation branch" >&2
-  echo "  2. Merge it into main on GitHub" >&2
-  echo "  3. git switch main" >&2
-  echo "  4. git pull --ff-only origin main" >&2
-  echo "  5. ./releaseHelper.sh $TAG" >&2
-  exit 1
-fi
-
-if ! git merge-base --is-ancestor origin/main HEAD; then
-  echo
-  echo "Local main is behind or diverged from origin/main. Sync main first." >&2
-  echo "Suggested command: git pull --ff-only origin main" >&2
-  exit 1
-fi
+PACKAGE_VERSION=$(node -p "require('./extension/package.json').version")
+LOCK_VERSION=$(node -p "require('./extension/package-lock.json').version")
 
 if [ -n "$TARGET_REMOTE_TAG_SHA" ]; then
   if [ -z "$TARGET_LOCAL_TAG_SHA" ]; then
@@ -136,6 +98,47 @@ if [ -n "$(git status --porcelain -- extension/package.json extension/package-lo
   HEAD_SHA=$(git rev-parse --short HEAD)
   echo
   echo "Created extension version commit at $HEAD_SHA."
+fi
+
+PACKAGE_VERSION=$(node -p "require('./extension/package.json').version")
+LOCK_VERSION=$(node -p "require('./extension/package-lock.json').version")
+
+echo "Release helper status"
+echo "  target tag: $TAG"
+echo "  branch: $CURRENT_BRANCH"
+echo "  local HEAD: $HEAD_SHA"
+echo "  origin/main: $ORIGIN_MAIN_SHA"
+echo "  latest local tag: ${LATEST_LOCAL_TAG:-none}"
+echo "  extension package version: $PACKAGE_VERSION"
+echo "  extension lock version: $LOCK_VERSION"
+if [ -n "$TARGET_LOCAL_TAG_SHA" ]; then
+  printf '  local tag %s: %s\n' "$TAG" "$(printf '%.7s' "$TARGET_LOCAL_TAG_SHA")"
+else
+  echo "  local tag $TAG: missing"
+fi
+if [ -n "$TARGET_REMOTE_TAG_SHA" ]; then
+  printf '  remote tag %s: %s\n' "$TAG" "$(printf '%.7s' "$TARGET_REMOTE_TAG_SHA")"
+else
+  echo "  remote tag $TAG: missing"
+fi
+
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo
+  echo "Release preparation may be started from dev or main, but tagging itself must run from local main after the release commit has reached origin/main through a PR." >&2
+  echo "Next steps:" >&2
+  echo "  1. Push your release-preparation branch" >&2
+  echo "  2. Merge it into main on GitHub" >&2
+  echo "  3. git switch main" >&2
+  echo "  4. git pull --ff-only origin main" >&2
+  echo "  5. ./releaseHelper.sh $TAG" >&2
+  exit 1
+fi
+
+if ! git merge-base --is-ancestor origin/main HEAD; then
+  echo
+  echo "Local main is behind or diverged from origin/main. Sync main first." >&2
+  echo "Suggested command: git pull --ff-only origin main" >&2
+  exit 1
 fi
 
 if [ -z "$TARGET_LOCAL_TAG_SHA" ]; then

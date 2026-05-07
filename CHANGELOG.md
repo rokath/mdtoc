@@ -29,6 +29,7 @@ Used git range: `v0.2.8..HEAD`
 * Repository workflow guidance was hardened further:
   * `AGENTS.md` now requires an explicit branch check before `git add`, `git commit`, merge, reset, or push operations
   * a plain user request such as `commit` or `push` is now documented as insufficient permission for landing work on `main`
+  * `releaseHelper.sh` now prepares `extension/package.json` and `extension/package-lock.json` for the target release version before it stops on a non-`main` branch, so the version-alignment commit can be merged through the normal PR flow
 * VS Code extension packaging now supports `linux-arm64`:
   * `extension/scripts/package-release.mjs` now stages and packages a dedicated `mdtoc-vscode-linux-arm64.vsix`
   * the Marketplace publish workflow now expects five VSIX assets instead of four
