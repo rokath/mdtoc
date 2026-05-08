@@ -36,7 +36,7 @@
 * [5. Limits](#5-limits)
 * [6. Documentation](#6-documentation)
   * [6.1. Specification](#6-1-specification)
-  * [6.2. Comparison](#6-2-comparison)
+  * [6.2. Comparison](#62-comparison)
 * [7. Status](#7-status)
 
 <!-- numbering=true min=2 max=4 slug=github anchor=false link=true toc=true bullets=auto -->
