@@ -26,24 +26,24 @@
 <summary>(click to expand)</summary>
 
 <!-- mdtoc -->
-* [1. Features](#features)
-* [2. Install](#install)
-  * [2.1. Releases](#releases)
-  * [2.2. Build from source](#build-from-source)
-* [3. Usage](#usage)
-  * [3.1. Inspect the CLI](#inspect-the-cli)
-  * [3.2. Use EXAMPLE.md as play ground](#use-example-md-as-play-ground)
-* [4. Managed Structure](#managed-structure)
-* [5. Limits](#limits)
-* [6. Documentation](#documentation)
-  * [6.1. Specification](#specification)
-  * [6.2. Comparison](#comparison)
-* [7. Status](#status)
-<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->
+* [1. Features](#1-features)
+* [2. Install](#2-install)
+  * [2.1. Releases](#2-1-releases)
+  * [2.2. Build from source](#2-2-build-from-source)
+* [3. Usage](#3-usage)
+  * [3.1. Inspect the CLI](#3-1-inspect-the-cli)
+  * [3.2. Use EXAMPLE.md as play ground](#3-2-use-example-md-as-play-ground)
+* [4. Managed Structure](#4-managed-structure)
+* [5. Limits](#5-limits)
+* [6. Documentation](#6-documentation)
+  * [6.1. Specification](#6-1-specification)
+  * [6.2. Comparison](#6-2-comparison)
+* [7. Status](#7-status)
+<!-- numbering=true min=2 max=4 slug=github anchor=false link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
 </details>
 
-## 1. <a id="features"></a>Features
+## 1. Features
 
 * **easy** to use: `mdtoc MY.md`
 * single binary, also as **vsCode** extension
@@ -52,6 +52,7 @@
   * targets ATX headings (**min** `#` to **max** `######`)
   * **slug** profiles: `github`, `gitlab`, `crossnote`
   * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
+* **move** the generated ToC with its container to any place - it will be re-generated there
 * **protects** non-generated content inside ToC area
 * works with **files** and Unix **pipes**
 * **repeated headings** support
@@ -63,9 +64,9 @@
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
 
-## 2. <a id="install"></a>Install
+## 2. Install
 
-### 2.1. <a id="releases"></a>Releases
+### 2.1. Releases
 
 Download a prebuilt binary from [GitHub Releases](https://github.com/rokath/mdtoc/releases).
 
@@ -75,15 +76,15 @@ Homebrew tap install:
 brew install rokath/tap/mdtoc
 ```
 
-### 2.2. <a id="build-from-source"></a>Build from source
+### 2.2. Build from source
 
 ```bash
 go build ./cmd/mdtoc
 ```
 
-## 3. <a id="usage"></a>Usage
+## 3. Usage
 
-### 3.1. <a id="inspect-the-cli"></a>Inspect the CLI
+### 3.1. Inspect the CLI
 
 ```bash
 mdtoc --help        # show compact CLI usage and commands
@@ -91,7 +92,7 @@ mdtoc --verbose     # show extended root help with command details
 mdtoc <command> -v  # show the long help for one command
 ```
 
-### 3.2. <a id="use-example-md-as-play-ground"></a>Use EXAMPLE.md as play ground
+### 3.2. Use [EXAMPLE.md](./docs/EXAMPLE.md) as play ground
 
 ```bash
 mdtoc EXAMPLE.md                                   # root mode: regen if managed, otherwise generate
@@ -109,7 +110,7 @@ mdtoc check EXAMPLE.md                             # fail in CI when EXAMPLE.md 
 * Exactly one input source is allowed per invocation: positional file, `--file/-f`, or piped `stdin`.
 * Small CLI note: the Go-style one-dash long form such as `-toc off` is currently tolerated, but `--toc off` remains the documented form.
 
-## 4. <a id="managed-structure"></a>Managed Structure
+## 4. Managed Structure
 
 `mdtoc` uses an explicit container so generated content is easy to spot and safe to regenerate.
 
@@ -137,24 +138,26 @@ This means:
 
 </details>
 
-## 5. <a id="limits"></a>Limits
+## 5. Limits
 
 * repeated-heading links depend on occurrence order ([issue #8](https://github.com/rokath/mdtoc/issues/8))
+  * Workaround: [example](./docs/EXAMPLE.md#chapter-a-about)
+* The per default with `anchor=true` generated ToC links guaranty to work in any environment, but reduce the readability of the raw Markdown document. With `anchor=off numbering=off slug=crossnote` a good working setting is possible. But switching `numbering=on` breaks the link stability promise then. There is no generally best setting - you have to choose.
 * not a site generator
 * not a Markdown formatter
 
-## 6. <a id="documentation"></a>Documentation
+## 6. Documentation
 
-### 6.1. <a id="specification"></a>Specification
+### 6.1. Specification
 
 * [mdtoc spec](./docs/spec.md)
 
-### 6.2. <a id="comparison"></a>Comparison
+### 6.2. Comparison
 
 * [mdtoc alternatives](./docs/alternatives.md)
 * [mdtoc VS Code extension MVP](./docs/vscode-extension-mvp.md)
 
-## 7. <a id="status"></a>Status
+## 7. Status
 
 ```diff
 + READY TO USE +
