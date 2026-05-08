@@ -10,10 +10,25 @@ This file summarizes notable repository changes in a compact, release-oriented f
   * `extension/scripts/package-release.mjs` now also stages and packages a dedicated `mdtoc-vscode-win32-arm64.vsix`
   * the Marketplace publish workflow now expects six VSIX assets instead of five
   * the release footer examples now list the new `win32-arm64` package
+* Local builds now report a concrete build date:
+  * when `date` is not injected by GoReleaser, `mdtoc --version` falls back to the installed executable's modification time instead of printing `date: unknown`
+  * the fallback is normalized to UTC RFC3339 and covered by a command-level regression test
+* The managed config interface was redesigned around compact `key=value` HTML comments:
+  * the stored config is now optional; deleting it makes `regen` and `check` use defaults
+  * `anchor` is now a Boolean (`true|false|on|off`) and `slug=github|gitlab|crossnote` selects the slug algorithm independently
+  * `link=true|false` now controls whether ToC entries are rendered as Markdown links or plain text
+  * obsolete `state`, `container-version`, and legacy `mdtoc-config` compatibility were removed
+* `anchor=false` ToC targets now use the active slug profile and the rendered heading text:
+  * default `slug=github` keeps number separators, for example `1.1. API` -> `#1-1-api`
+  * `slug=crossnote` covers Markdown Preview Enhanced / Crossnote behavior, including ATX closing hash markers such as `## An ATX title with closing hash markers  ####` -> `#an-atx-title-with-closing-hash-markers--`
+  * dedicated unit and CLI workflow tests cover renderer-style targets, Unicode retention, and collision handling for numbered headings
+* Boolean option parsing was normalized across CLI and stored config:
+  * `on|true` normalize to `true`, and `off|false` normalize to `false`
+  * virtual file-based workflow tests cover both CLI values and stored config values
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.2.8..HEAD`
+Used git range: `v0.2.9..HEAD`
 
 ```txt
 ```
