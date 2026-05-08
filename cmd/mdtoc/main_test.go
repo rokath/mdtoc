@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rokath/mdtoc/internal/mdtoc"
 )
@@ -26,6 +28,27 @@ func TestRunReturnsVersionOutput(t *testing.T) {
 	}
 	if got := stdout.String(); !strings.Contains(got, "mdtoc v1.2.3") {
 		t.Fatalf("stdout missing version output:\n%s", got)
+	}
+}
+
+// TestExecutableBuildDateForPath verifies the non-goreleaser date fallback used by `go install`.
+func TestExecutableBuildDateForPath(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "mdtoc")
+	if err := os.WriteFile(path, []byte("binary"), 0o755); err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+	modTime := time.Date(2026, 5, 8, 12, 34, 56, 0, time.FixedZone("CEST", 2*60*60))
+	if err := os.Chtimes(path, modTime, modTime); err != nil {
+		t.Fatalf("Chtimes error: %v", err)
+	}
+
+	got := executableBuildDateForPath(path)
+	want := "2026-05-08T10:34:56Z"
+	if got != want {
+		t.Fatalf("executableBuildDateForPath() = %q, want %q", got, want)
+	}
+	if got := executableBuildDateForPath(filepath.Join(t.TempDir(), "missing")); got != "" {
+		t.Fatalf("missing executable build date = %q, want empty", got)
 	}
 }
 
