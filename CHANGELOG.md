@@ -14,6 +14,25 @@ Used git range: `v0.3.0..HEAD`
 ```txt
 ```
 
+## <a id='v0.3.1-changes'></a>v0.3.1 Changes (2026-05-08)
+
+### <a id='v0.3.1-overview'></a>v0.3.1 Overview
+
+* Generated ToC blocks are now surrounded by one blank line on both sides:
+  * the managed ToC stays visually separated from surrounding prose
+  * the container layout remains stable when `generate`, `regen`, or `strip` rewrites the document
+* Strip now uses the same protection contract as generate and regen:
+  * authored or otherwise non-generated lines in the managed ToC area are kept inside `<!-- preserved by mdtoc -->`
+  * generated ToC entries, heading numbers, and managed inline anchors are still removed
+
+### <a id='v0.3.1-git-log'></a>v0.3.1 Git Log
+
+Used git range: `v0.3.0..HEAD`
+
+```txt
+* 31fd3d6 fix(strip): preserve foreign toc content
+```
+
 ## <a id='v0.3.0-changes'></a>v0.3.0 Changes (2026-05-08)
 
 ### <a id='v0.3.0-overview'></a>v0.3.0 Overview
@@ -37,16 +56,12 @@ Used git range: `v0.3.0..HEAD`
 * Boolean option parsing was normalized across CLI and stored config:
   * `on|true` normalize to `true`, and `off|false` normalize to `false`
   * virtual file-based workflow tests cover both CLI values and stored config values
-* Strip now uses the same protection contract as generate and regen:
-  * authored or otherwise non-generated lines in the managed ToC area are kept inside `<!-- preserved by mdtoc -->`
-  * generated ToC entries, heading numbers, and managed inline anchors are still removed
 
 ### <a id='v0.3.0-git-log'></a>v0.3.0 Git Log
 
-Used git range: `v0.2.9..HEAD`
+Used git range: `v0.2.9..v0.3.0`
 
 ```txt
-* 31fd3d6 fix(strip): preserve foreign toc content
 * 7f7294e repeated headings hint added
 * f22e16e EXAMPLE.md edited and moved into ./docs
 * a56d255 release: prepare v0.3.0 extension version
