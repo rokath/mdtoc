@@ -7,26 +7,9 @@ const (
 	endMarker   = "<!-- /mdtoc -->"
 	offMarker   = "<!-- mdtoc off -->"
 	onMarker    = "<!-- mdtoc on -->"
-	configStart = "<!-- mdtoc-config"
 	configEnd   = "-->"
 
 	preservedCommentHeader = "<!-- preserved by mdtoc"
-)
-
-// State is the persisted document state in the config block.
-type State string
-
-const (
-	StateGenerated State = "generated"
-	StateStripped  State = "stripped"
-)
-
-// ContainerVersion identifies the managed config-block format.
-type ContainerVersion string
-
-const (
-	ContainerVersionV1 ContainerVersion = "v1"
-	ContainerVersionV2 ContainerVersion = "v2"
 )
 
 // BulletMode controls how unordered ToC bullets are selected.
@@ -39,47 +22,38 @@ const (
 	BulletPlus BulletMode = "+"
 )
 
-// AnchorMode controls how anchor IDs are interpreted and whether inline anchors are rendered.
-type AnchorMode string
+// SlugMode controls how heading IDs and ToC link targets are derived.
+type SlugMode string
 
 const (
-	AnchorGitHub AnchorMode = "github"
-	AnchorGitLab AnchorMode = "gitlab"
-	AnchorOff    AnchorMode = "off"
+	SlugGitHub    SlugMode = "github"
+	SlugGitLab    SlugMode = "gitlab"
+	SlugCrossnote SlugMode = "crossnote"
 )
-
-// RendersInline reports whether the mode should emit inline anchor HTML.
-func (m AnchorMode) RendersInline() bool {
-	return m != AnchorOff
-}
 
 // Config mirrors the normalized config block managed by the tool.
 type Config struct {
-	// ContainerVersion selects the persisted config-block layout.
-	ContainerVersion ContainerVersion
 	// Numbering controls managed heading numbering inside the active range.
 	Numbering bool
 	// MinLevel is the smallest heading depth managed by mdtoc.
 	MinLevel int
 	// MaxLevel is the largest heading depth managed by mdtoc.
 	MaxLevel int
-	// Anchor selects the anchor-ID profile and inline-anchor rendering mode.
-	Anchor AnchorMode
+	// Slug selects the heading-ID derivation profile.
+	Slug SlugMode
+	// Anchor controls whether managed inline anchors are rendered.
+	Anchor bool
 	// TOC controls whether the managed container includes a rendered ToC block.
 	TOC bool
+	// Link controls whether rendered ToC entries are Markdown links.
+	Link bool
 	// Bullets selects the unordered-list marker used for rendered ToC entries.
 	Bullets BulletMode
-	// State records whether the managed container currently holds generated or stripped content.
-	State State
-
-	// BulletsExplicit reports whether the parsed config block already contained
-	// an explicit bullets line. Legacy configs omit it.
-	BulletsExplicit bool
 }
 
 // DefaultConfig returns the v1 defaults from the specification.
 func DefaultConfig() Config {
-	return Config{ContainerVersion: ContainerVersionV2, Numbering: true, MinLevel: 2, MaxLevel: 4, Anchor: AnchorGitHub, TOC: true, Bullets: BulletAuto, State: StateGenerated}
+	return Config{Numbering: true, MinLevel: 2, MaxLevel: 4, Slug: SlugGitHub, Anchor: true, TOC: true, Link: true, Bullets: BulletAuto}
 }
 
 // Validate checks the persisted configuration contract.
@@ -93,17 +67,11 @@ func (c Config) Validate() error {
 	if c.MinLevel > c.MaxLevel {
 		return fmt.Errorf("min-level must not be greater than max-level")
 	}
-	if c.ContainerVersion != ContainerVersionV1 && c.ContainerVersion != ContainerVersionV2 {
-		return fmt.Errorf("container-version must be v1 or v2")
-	}
-	if c.Anchor != AnchorGitHub && c.Anchor != AnchorGitLab && c.Anchor != AnchorOff {
-		return fmt.Errorf("anchor must be github, gitlab, or off")
+	if c.Slug != SlugGitHub && c.Slug != SlugGitLab && c.Slug != SlugCrossnote {
+		return fmt.Errorf("slug must be github, gitlab, or crossnote")
 	}
 	if c.Bullets != BulletAuto && c.Bullets != BulletStar && c.Bullets != BulletDash && c.Bullets != BulletPlus {
 		return fmt.Errorf("bullets must be auto, *, -, or +")
-	}
-	if c.State != StateGenerated && c.State != StateStripped {
-		return fmt.Errorf("state must be generated or stripped")
 	}
 	return nil
 }
@@ -116,10 +84,18 @@ type Options struct {
 	MinLevel int
 	// MaxLevel is the largest heading depth managed by mdtoc.
 	MaxLevel int
-	// Anchor selects the anchor-ID profile and inline-anchor rendering mode.
-	Anchor AnchorMode
+	// Slug selects the heading-ID derivation profile.
+	Slug SlugMode
+	// Anchor controls whether managed inline anchors are rendered.
+	Anchor bool
+	// AnchorSet reports whether Anchor was explicitly provided.
+	AnchorSet bool
 	// TOC controls whether generation renders a ToC block.
 	TOC bool
+	// Link controls whether rendered ToC entries are Markdown links.
+	Link bool
+	// LinkSet reports whether Link was explicitly provided.
+	LinkSet bool
 	// Bullets selects the unordered-list marker used for rendered ToC entries.
 	Bullets BulletMode
 }
@@ -127,7 +103,7 @@ type Options struct {
 // DefaultOptions mirrors the generator defaults from the spec.
 func DefaultOptions() Options {
 	d := DefaultConfig()
-	return Options{Numbering: d.Numbering, MinLevel: d.MinLevel, MaxLevel: d.MaxLevel, Anchor: d.Anchor, TOC: d.TOC, Bullets: d.Bullets}
+	return Options{Numbering: d.Numbering, MinLevel: d.MinLevel, MaxLevel: d.MaxLevel, Slug: d.Slug, Anchor: d.Anchor, AnchorSet: true, TOC: d.TOC, Link: d.Link, LinkSet: true, Bullets: d.Bullets}
 }
 
 // ToConfig converts ephemeral generate options to a persisted config.
@@ -136,11 +112,19 @@ func (o Options) ToConfig() Config {
 	if bullets == "" {
 		bullets = BulletAuto
 	}
-	anchor := o.Anchor
-	if anchor == "" {
-		anchor = AnchorGitHub
+	slug := o.Slug
+	if slug == "" {
+		slug = SlugGitHub
 	}
-	return Config{ContainerVersion: ContainerVersionV2, Numbering: o.Numbering, MinLevel: o.MinLevel, MaxLevel: o.MaxLevel, Anchor: anchor, TOC: o.TOC, Bullets: bullets, State: StateGenerated}
+	anchor := o.Anchor
+	if !o.AnchorSet && !anchor {
+		anchor = true
+	}
+	link := o.Link
+	if !o.LinkSet && !link {
+		link = true
+	}
+	return Config{Numbering: o.Numbering, MinLevel: o.MinLevel, MaxLevel: o.MaxLevel, Slug: slug, Anchor: anchor, TOC: o.TOC, Link: link, Bullets: bullets}
 }
 
 // Heading stores one heading candidate that mdtoc can manage.
@@ -157,7 +141,7 @@ type Heading struct {
 	TitleText string
 	// ManagedNumber is the computed numbering prefix, or empty when numbering is off/out of range.
 	ManagedNumber string
-	// ManagedAnchor is the computed anchor ID for this heading under the active anchor mode.
+	// ManagedAnchor is the computed inline anchor for this heading under the active slug mode.
 	ManagedAnchor string
 	// ManagedTOCTarget is the computed ToC link target for this heading.
 	ManagedTOCTarget string
@@ -196,6 +180,10 @@ type Container struct {
 	EndLine int
 	// Config is the parsed normalized config stored inside the container.
 	Config Config
+	// ConfigPresent reports whether the container had an explicit config block.
+	ConfigPresent bool
+	// ConfigMultiline reports whether the explicit config block used multiline layout.
+	ConfigMultiline bool
 	// TOCArea stores the managed lines between the config block and closing marker.
 	TOCArea []string
 }

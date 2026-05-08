@@ -8,38 +8,38 @@
 
 ### 2.1. <a id="examples-as-setext-headings"></a>Examples as Setext headings
 
-IGNORED Example 1
+IGNORED Heading 1
 =================
 
-IGNORED Example 2
+IGNORED Heading 2
 -----------------
 
 ### 2.2. <a id="examples-in-fenced-code-blocks"></a>Examples in fenced code blocks
 
 ```md
-## IGNORED Example in fenced code block
+## IGNORED Heading 3
 ```
 
 ````md
 ``` 
-## IGNORED Example in fenced code block inside fenced code block
+## IGNORED Heading 4
 ```
 ````
 
 ### 2.3. <a id="example-in-html-comments"></a>Example in HTML comments
 
 <!-- 
-## IGNORED HTML comment Example
+## IGNORED Heading 5
 -->
 
 ### 2.4. <a id="example-as-html-syntax"></a>Example as HTML syntax
 
-<h2>IGNORED HTML Example</h2>
+<h2>IGNORED Heading 6</h2>
 
 ### 2.5. <a id="example-inside-exclusion-region"></a>Example inside exclusion region
 
 <!-- mdtoc off -->
-## IGNORED Example mdtoc off
+## IGNORED Heading 7
 <!-- mdtoc on -->
 
 ### 2.6. <a id="examples-with-starting-space-s"></a>Examples with starting space(s)
@@ -62,16 +62,6 @@ IGNORED Example 2
   * [2.5. Example inside exclusion region](#example-inside-exclusion-region)
   * [2.6. Examples with starting space(s)](#examples-with-starting-space-s)
     * [2.6.1. 0 starting space Example NOT ignored](#0-starting-space-example-not-ignored)
-* [3. Footnotes ##](#footnotes)
-<!-- mdtoc-config
-container-version=v2
-numbering=true
-min-level=2
-max-level=4
-anchor=github
-toc=true
-bullets=auto
-state=generated
--->
+* [3. Footnotes](#footnotes)
+<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
-

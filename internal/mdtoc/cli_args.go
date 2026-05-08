@@ -53,6 +53,8 @@ func generateCommandArgSpec() argumentSpec {
 			"--max-level": true,
 			"--anchor":    true,
 			"-a":          true,
+			"--slug":      true,
+			"--link":      true,
 			"--toc":       true,
 			"--bullets":   true,
 			"-b":          true,
@@ -129,6 +131,8 @@ func rootCommandArgSpec() argumentSpec {
 			"--max-level": true,
 			"--anchor":    true,
 			"-a":          true,
+			"--slug":      true,
+			"--link":      true,
 			"--toc":       true,
 			"--bullets":   true,
 			"-b":          true,
@@ -280,7 +284,7 @@ func hasExplicitGenerateControlFlag(args []string) bool {
 		}
 		flagName = canonicalGenerateControlFlag(flagName)
 		switch flagName {
-		case "--numbering", "-n", "--min-level", "--max-level", "--anchor", "-a", "--toc", "--bullets", "-b":
+		case "--numbering", "-n", "--min-level", "--max-level", "--anchor", "-a", "--slug", "--link", "--toc", "--bullets", "-b":
 			return true
 		}
 	}
@@ -300,6 +304,10 @@ func canonicalGenerateControlFlag(flagName string) string {
 		return "--max-level"
 	case "-anchor":
 		return "--anchor"
+	case "-slug":
+		return "--slug"
+	case "-link":
+		return "--link"
 	case "-toc":
 		return "--toc"
 	case "-bullets":

@@ -32,41 +32,34 @@
   * [2.2. Build from source](#build-from-source)
 * [3. Usage](#usage)
   * [3.1. Inspect the CLI](#inspect-the-cli)
-  * [3.2. Use this README as example](#use-this-readme-as-example)
+  * [3.2. Use EXAMPLE.md as play ground](#use-example-md-as-play-ground)
 * [4. Managed Structure](#managed-structure)
 * [5. Limits](#limits)
 * [6. Documentation](#documentation)
   * [6.1. Specification](#specification)
   * [6.2. Comparison](#comparison)
 * [7. Status](#status)
-<!-- mdtoc-config
-container-version=v2
-numbering=true
-min-level=2
-max-level=4
-anchor=github
-toc=true
-bullets=auto
-state=generated
--->
+<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
 </details>
 
 ## 1. <a id="features"></a>Features
 
-* very easy to use: `mdtoc MY_IMPORTANT_DOCUMENT.md`
-* highly configurable
-* single binary, no external tools required
-* also as vsCode extension usable
-* auto-detects the dominant bullet style (`*`, `-`, `+`) for ToC
-* works with files and Unix pipes
-* targets ATX headings (`#` to `######`)
-* ignores headings inside **fenced code blocks** safely
-* ignores headings inside **HTML comments**: `<!-- ... ## Example -->`
-* **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
-* explicit anchor profiles: `github` (default), `gitlab`, or `off`
-* ToC link targets stay unnumbered for inline-anchor profiles and follow rendered heading text when `anchor=off`
+* **easy** to use: `mdtoc MY.md`
+* single binary, also as **vsCode** extension
+* **configurable**: CLI or edit generated `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->`
+  * `on|off` for **numbering**, **anchor**, **link**, **toc**
+  * targets ATX headings (**min** `#` to **max** `######`)
+  * **slug** profiles: `github`, `gitlab`, `crossnote`
+  * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
+* **protects** non-generated content inside ToC area
+* works with **files** and Unix **pipes**
 * **repeated headings** support
+* **ignores** headings:
+  * in **Setext** stype
+  * inside **fenced code blocks**
+  * inside **HTML comments**: `<!-- ... ## Example -->`
+  * between **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
 
@@ -98,21 +91,21 @@ mdtoc --verbose     # show extended root help with command details
 mdtoc <command> -v  # show the long help for one command
 ```
 
-### 3.2. <a id="use-this-readme-as-example"></a>Use this README as example
+### 3.2. <a id="use-example-md-as-play-ground"></a>Use EXAMPLE.md as play ground
 
 ```bash
-mdtoc README.md                                  # root mode: regen if managed, otherwise generate
-cat README.md | mdtoc -n off -a off              # root mode on stdin: generate a dry-run ToC-only view
-mdtoc README.md -a off --toc off                 # root mode: explicit generate because flags override regen
-mdtoc generate README.md -a gitlab               # explicit command with positional file input
-cat README.md | mdtoc strip > README.stripped.md # remove managed artifacts via Unix pipe and write to a different file
-mdtoc regen README.md                            # rebuild the generated state from the stored container config
-mdtoc refresh README.md                          # alias for regen
-mdtoc generate README.md                         # generate with current CLI flags or defaults and rewrite the config block
-mdtoc check README.md                            # fail in CI when README.md differs from the reconstructed target state
+mdtoc EXAMPLE.md                                   # root mode: regen if managed, otherwise generate
+cat EXAMPLE.md | mdtoc -n off -a off               # root mode on stdin: generate a dry-run ToC-only view
+mdtoc EXAMPLE.md -a off --toc off                  # root mode: explicit generate because flags override regen
+mdtoc generate EXAMPLE.md --slug gitlab            # explicit command with positional file input
+cat EXAMPLE.md | mdtoc strip > EXAMPLE.stripped.md # remove managed artifacts via Unix pipe and write to a different file
+mdtoc regen EXAMPLE.md                             # rebuild generated output from the stored container config
+mdtoc refresh EXAMPLE.md                           # alias for regen
+mdtoc generate EXAMPLE.md                          # generate with current CLI flags or defaults and rewrite the config block
+mdtoc check EXAMPLE.md                             # fail in CI when EXAMPLE.md differs from the reconstructed target state
 ```
 
-* `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab anchor profile](docs/spec.md#gitlab-anchor-id-profile).
+* `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab slug profile](docs/spec.md#gitlab-slug-profile).
 * Exactly one input source is allowed per invocation: positional file, `--file/-f`, or piped `stdin`.
 * Small CLI note: the Go-style one-dash long form such as `-toc off` is currently tolerated, but `--toc off` remains the documented form.
 
@@ -126,37 +119,26 @@ mdtoc check README.md                            # fail in CI when README.md dif
 ```md
 <!-- mdtoc -->
 * [About](#about)
-<!-- mdtoc-config
-container-version=v2
-numbering=true
-min-level=2
-max-level=4
-anchor=github
-toc=true
-bullets=auto
-state=generated
--->
+<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
 ```
 
-The heading title stays the source of truth. Numbers, inline anchors, and ToC entries are derived from it. With `anchor=off`, the ToC target follows the rendered heading text because no managed inline anchor exists.
+The heading title stays the source of truth. Numbers, inline anchors, and ToC entries are derived from it. With `anchor=false`, the ToC target follows the rendered heading text because no managed inline anchor exists. Use `slug=github|gitlab|crossnote` to control the link type generation.
 
-The config block records the settings that produced the current managed state. `generate` always uses current CLI flags or defaults and then rewrites that block. `regen` reuses the stored container config and rebuilds the generated state from it. `refresh` is a command alias for `regen`.
+The optional config block records the settings used for regeneration. `generate` uses current CLI flags or defaults and then rewrites that block when settings need to be persisted. `regen` reuses the stored container config, or defaults if the config block was deleted. `refresh` is a command alias for `regen`.
 
 This means:
 
-* the stored config is persisted output state
-* `regen` rebuilds the generated state from that persisted config
+* the stored config is persisted generator input
+* `regen` rebuilds generated output from that config
 * `refresh` is an alias for `regen`
-* `check` uses that persisted state
+* `check` validates against regenerated output
 * changing generation settings must go through generate, not through manual config edits
 
 </details>
 
 ## 5. <a id="limits"></a>Limits
 
-* no Setext heading support (`Heading` followed by `===` or `---`)
-* no HTML heading support (`<h2>Example</h2>`)
 * repeated-heading links depend on occurrence order ([issue #8](https://github.com/rokath/mdtoc/issues/8))
 * not a site generator
 * not a Markdown formatter

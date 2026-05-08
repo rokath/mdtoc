@@ -95,19 +95,19 @@ func TestRunnerFileWorkflowGenerateStripRegenCheck(t *testing.T) {
 
 	runFileCommand(t, fs, "generate", "-f", path, "--min-level=1")
 	generated := fs.fileString(path)
-	if !strings.Contains(generated, "state=generated") || !strings.Contains(generated, "<a id=\"title\"></a>") {
+	if !strings.Contains(generated, "anchor=true") || !strings.Contains(generated, "<a id=\"title\"></a>") {
 		t.Fatalf("generate did not create managed state:\n%s", generated)
 	}
 
 	runFileCommand(t, fs, "strip", "-f", path)
 	stripped := fs.fileString(path)
-	if !strings.Contains(stripped, "state=stripped") || strings.Contains(stripped, "<a id=") {
+	if !strings.Contains(stripped, "anchor=true") || strings.Contains(stripped, "<a id=") {
 		t.Fatalf("strip did not produce stripped state:\n%s", stripped)
 	}
 
 	runFileCommand(t, fs, "regen", "-f", path)
 	regenerated := fs.fileString(path)
-	if !strings.Contains(regenerated, "state=generated") || !strings.Contains(regenerated, "<a id=\"title\"></a>") {
+	if !strings.Contains(regenerated, "anchor=true") || !strings.Contains(regenerated, "<a id=\"title\"></a>") {
 		t.Fatalf("regen did not restore generated state:\n%s", regenerated)
 	}
 
@@ -130,7 +130,7 @@ func TestRunnerFileWorkflowRefreshAlias(t *testing.T) {
 
 	runFileCommand(t, fs, "refresh", "-f", path)
 	regenerated := fs.fileString(path)
-	if !strings.Contains(regenerated, "state=generated") || !strings.Contains(regenerated, "<a id=\"title\"></a>") || strings.Contains(regenerated, "* [BROKEN](#intro)") {
+	if !strings.Contains(regenerated, "anchor=true") || !strings.Contains(regenerated, "<a id=\"title\"></a>") || strings.Contains(regenerated, "* [BROKEN](#intro)") {
 		t.Fatalf("refresh alias did not restore generated state:\n%s", regenerated)
 	}
 }
@@ -158,7 +158,7 @@ func TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin(t *testing.T) {
 	}
 
 	got := fs.fileString(path)
-	if !strings.Contains(got, startMarker) || !strings.Contains(got, "state=generated") {
+	if !strings.Contains(got, startMarker) || !strings.Contains(got, "anchor=true") {
 		t.Fatalf("generate did not create managed state:\n%s", got)
 	}
 }
@@ -173,7 +173,7 @@ func TestRunnerRootFileWorkflowGenerateFromPositional(t *testing.T) {
 
 	runFileCommand(t, fs, path)
 	got := fs.fileString(path)
-	if !strings.Contains(got, startMarker) || !strings.Contains(got, "state=generated") {
+	if !strings.Contains(got, startMarker) || !strings.Contains(got, "anchor=true") {
 		t.Fatalf("root generate did not create managed state:\n%s", got)
 	}
 }
@@ -212,7 +212,7 @@ func TestRunnerRootFileWorkflowGenerateOverridesForceGenerate(t *testing.T) {
 
 	runFileCommand(t, fs, path, "-a", "off", "-n", "off")
 	got := fs.fileString(path)
-	if !strings.Contains(got, "anchor=off") || !strings.Contains(got, "numbering=false") {
+	if !strings.Contains(got, "anchor=false") || !strings.Contains(got, "numbering=false") {
 		t.Fatalf("root generate did not honor explicit override flags:\n%s", got)
 	}
 	if strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
@@ -253,8 +253,8 @@ func TestRunnerRootFileWorkflowSingleDashGenerateOverrides(t *testing.T) {
 			args: []string{path, "-anchor", "off"},
 			check: func(t *testing.T, got string) {
 				t.Helper()
-				if !strings.Contains(got, "anchor=off") {
-					t.Fatalf("root generate did not persist anchor=off:\n%s", got)
+				if !strings.Contains(got, "anchor=false") {
+					t.Fatalf("root generate did not persist anchor=false:\n%s", got)
 				}
 				if strings.Contains(got, "<a id=") {
 					t.Fatalf("root generate left anchors enabled:\n%s", got)
@@ -266,8 +266,8 @@ func TestRunnerRootFileWorkflowSingleDashGenerateOverrides(t *testing.T) {
 			args: []string{path, "-min-level", "3"},
 			check: func(t *testing.T, got string) {
 				t.Helper()
-				if !strings.Contains(got, "min-level=3") {
-					t.Fatalf("root generate did not persist min-level=3:\n%s", got)
+				if !strings.Contains(got, "min=3") {
+					t.Fatalf("root generate did not persist min=3:\n%s", got)
 				}
 				if strings.Contains(got, "* [1. Intro](#intro)") {
 					t.Fatalf("root generate still included the level-2 heading in the ToC:\n%s", got)
@@ -279,8 +279,8 @@ func TestRunnerRootFileWorkflowSingleDashGenerateOverrides(t *testing.T) {
 			args: []string{path, "-max-level", "2"},
 			check: func(t *testing.T, got string) {
 				t.Helper()
-				if !strings.Contains(got, "max-level=2") {
-					t.Fatalf("root generate did not persist max-level=2:\n%s", got)
+				if !strings.Contains(got, "max=2") {
+					t.Fatalf("root generate did not persist max=2:\n%s", got)
 				}
 				if strings.Contains(got, "### 1.1. ") {
 					t.Fatalf("root generate did not stop numbering at level 2:\n%s", got)
@@ -297,6 +297,29 @@ func TestRunnerRootFileWorkflowSingleDashGenerateOverrides(t *testing.T) {
 				}
 				if !strings.Contains(got, "+ [1. Intro](#intro)") {
 					t.Fatalf("root generate did not render plus bullets:\n%s", got)
+				}
+			},
+		},
+		{
+			name: "slug",
+			args: []string{path, "-slug", "gitlab"},
+			check: func(t *testing.T, got string) {
+				t.Helper()
+				if !strings.Contains(got, "slug=gitlab") {
+					t.Fatalf("root generate did not persist slug=gitlab:\n%s", got)
+				}
+			},
+		},
+		{
+			name: "link",
+			args: []string{path, "-link", "off"},
+			check: func(t *testing.T, got string) {
+				t.Helper()
+				if !strings.Contains(got, "link=false") {
+					t.Fatalf("root generate did not persist link=false:\n%s", got)
+				}
+				if !strings.Contains(got, "* 1. Intro") || strings.Contains(got, "](#intro)") {
+					t.Fatalf("root generate did not render plain ToC entries:\n%s", got)
 				}
 			},
 		},
@@ -368,7 +391,7 @@ func TestRunnerGenerateSubcommandAcceptsPositionalFile(t *testing.T) {
 
 	runFileCommand(t, fs, "generate", path, "--min-level=1")
 	got := fs.fileString(path)
-	if !strings.Contains(got, "<a id=\"title\"></a>") || !strings.Contains(got, "state=generated") {
+	if !strings.Contains(got, "<a id=\"title\"></a>") || !strings.Contains(got, "anchor=true") {
 		t.Fatalf("generate positional file did not rewrite the document:\n%s", got)
 	}
 }
@@ -407,7 +430,7 @@ func TestRunnerStripSubcommandAcceptsPositionalFile(t *testing.T) {
 
 	runFileCommand(t, fs, "strip", path)
 	got := fs.fileString(path)
-	if !strings.Contains(got, "state=stripped") || strings.Contains(got, "<a id=") {
+	if !strings.Contains(got, "anchor=true") || strings.Contains(got, "<a id=") {
 		t.Fatalf("strip positional file did not produce stripped state:\n%s", got)
 	}
 }
@@ -492,7 +515,7 @@ func TestRunnerFileWorkflowRegenRestoresStoredFlags(t *testing.T) {
 	runFileCommand(t, fs, "regen", "-f", path)
 
 	got := fs.fileString(path)
-	if !strings.Contains(got, "state=generated") {
+	if !strings.Contains(got, "anchor=false") {
 		t.Fatalf("regen did not restore generated state:\n%s", got)
 	}
 	if strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") || strings.Contains(got, "### 1.1. ") {
@@ -516,10 +539,10 @@ func TestRunnerFileWorkflowAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *te
 	runFileCommand(t, fs, "generate", "-f", path, "--min-level=2", "--max-level=3", "--anchor=off", "--numbering=on")
 	got := fs.fileString(path)
 	checks := []string{
-		"anchor=off",
+		"anchor=false",
 		"numbering=true",
 		"* [1. Intro](#1-intro)",
-		"  * [1.1. API](#11-api)",
+		"  * [1.1. API](#1-1-api)",
 		"## 1. Intro",
 		"### 1.1. API",
 	}
@@ -549,7 +572,7 @@ func TestRunnerFileWorkflowAnchorOffNumberingKeepsTitleDigitsSeparated(t *testin
 
 	runFileCommand(t, fs, "generate", "-f", path, "--min-level=2", "--max-level=3", "--anchor=off", "--numbering=on")
 	got := fs.fileString(path)
-	if !strings.Contains(got, "  * [1.1. 2025 Roadmap](#11-2025-roadmap)") {
+	if !strings.Contains(got, "  * [1.1. 2025 Roadmap](#1-1-2025-roadmap)") {
 		t.Fatalf("generate did not render the expected ToC target:\n%s", got)
 	}
 	if strings.Contains(got, "  * [1.1. 2025 Roadmap](#112025-roadmap)") {
@@ -578,16 +601,16 @@ func TestRunnerFileWorkflowAutoBulletsAndForcedOverride(t *testing.T) {
 }
 
 // TestRunnerFileWorkflowPersistsExplicitAnchorProfile verifies the profile-based anchor setting.
-func TestRunnerFileWorkflowPersistsExplicitAnchorProfile(t *testing.T) {
+func TestRunnerFileWorkflowPersistsExplicitSlugProfile(t *testing.T) {
 	const path = "doc.md"
 	fs := newMemoryFileSystem(map[string]string{
 		path: "# Title\n\n## Intro\n",
 	})
 
-	runFileCommand(t, fs, "generate", "-f", path, "--anchor", "gitlab")
+	runFileCommand(t, fs, "generate", "-f", path, "--slug", "gitlab")
 	got := fs.fileString(path)
-	if !strings.Contains(got, "anchor=gitlab") {
-		t.Fatalf("generate did not persist the explicit anchor profile:\n%s", got)
+	if !strings.Contains(got, "slug=gitlab") || !strings.Contains(got, "anchor=true") {
+		t.Fatalf("generate did not persist the explicit slug profile:\n%s", got)
 	}
 	if !strings.Contains(got, `<a id="intro"></a>`) {
 		t.Fatalf("generate did not render inline anchors for the gitlab profile:\n%s", got)
@@ -604,16 +627,16 @@ func TestRunnerFileWorkflowGitLabAnchorProfileDiffersFromGitHub(t *testing.T) {
 		path: "# Title\n\n## Version 3.5\n",
 	})
 
-	runFileCommand(t, gitlabFS, "generate", "-f", path, "--anchor", "gitlab")
+	runFileCommand(t, gitlabFS, "generate", "-f", path, "--slug", "gitlab")
 	gotGitLab := gitlabFS.fileString(path)
-	if !strings.Contains(gotGitLab, "anchor=gitlab") || !strings.Contains(gotGitLab, `<a id="version-35"></a>`) {
+	if !strings.Contains(gotGitLab, "slug=gitlab") || !strings.Contains(gotGitLab, `<a id="version-35"></a>`) {
 		t.Fatalf("generate did not render the GitLab-specific anchor ID:\n%s", gotGitLab)
 	}
 	if !strings.Contains(gotGitLab, "* [1. Version 3.5](#version-35)") {
 		t.Fatalf("generate did not render the GitLab-specific ToC target:\n%s", gotGitLab)
 	}
 
-	runFileCommand(t, githubFS, "generate", "-f", path, "--anchor", "github")
+	runFileCommand(t, githubFS, "generate", "-f", path, "--slug", "github")
 	gotGitHub := githubFS.fileString(path)
 	if !strings.Contains(gotGitHub, `<a id="version-3-5"></a>`) {
 		t.Fatalf("generate did not render the GitHub-specific anchor ID:\n%s", gotGitHub)
@@ -645,20 +668,20 @@ func TestRunnerFileWorkflowNormalizesAnchorFalseVariants(t *testing.T) {
 			got := fs.fileString("doc.md")
 			switch tc.name {
 			case "anchor-on", "anchor-true":
-				if !strings.Contains(got, "anchor=github") {
-					t.Fatalf("generate did not normalize %s to anchor=github:\n%s", tc.name, got)
+				if !strings.Contains(got, "anchor=true") {
+					t.Fatalf("generate did not normalize %s to anchor=true:\n%s", tc.name, got)
 				}
-				if strings.Contains(got, "anchor=on") || strings.Contains(got, "anchor=true") || !strings.Contains(got, "<a id=\"intro\"></a>") {
+				if strings.Contains(got, "anchor=on") || !strings.Contains(got, "<a id=\"intro\"></a>") {
 					t.Fatalf("generate left a non-canonical on anchor state for %s:\n%s", tc.name, got)
 				}
 				if !strings.Contains(got, "* [1. Intro](#intro)") {
 					t.Fatalf("generate did not preserve ToC targets for %s:\n%s", tc.name, got)
 				}
 			default:
-				if !strings.Contains(got, "anchor=off") {
-					t.Fatalf("generate did not normalize %s to anchor=off:\n%s", tc.name, got)
+				if !strings.Contains(got, "anchor=false") {
+					t.Fatalf("generate did not normalize %s to anchor=false:\n%s", tc.name, got)
 				}
-				if strings.Contains(got, "anchor=false") || strings.Contains(got, "<a id=") {
+				if strings.Contains(got, "anchor=off") || strings.Contains(got, "<a id=") {
 					t.Fatalf("generate left a non-canonical false anchor state for %s:\n%s", tc.name, got)
 				}
 				if !strings.Contains(got, "* [1. Intro](#1-intro)") {
@@ -670,7 +693,7 @@ func TestRunnerFileWorkflowNormalizesAnchorFalseVariants(t *testing.T) {
 }
 
 // TestRunnerFileWorkflowNormalizesStoredAnchorOnLikeValues verifies that
-// stored anchor=on/true config values are accepted and rewritten canonically as github.
+// stored anchor=on/true config values are accepted and rewritten canonically.
 func TestRunnerFileWorkflowNormalizesStoredAnchorOnLikeValues(t *testing.T) {
 	for _, stored := range []string{"on", "true"} {
 		t.Run(stored, func(t *testing.T) {
@@ -679,16 +702,7 @@ func TestRunnerFileWorkflowNormalizesStoredAnchorOnLikeValues(t *testing.T) {
 				path: strings.Join([]string{
 					startMarker,
 					"* [Wrong](#wrong)",
-					configStart,
-					"container-version=v2",
-					"numbering=true",
-					"min-level=2",
-					"max-level=4",
-					"anchor=" + stored,
-					"toc=true",
-					"bullets=auto",
-					"state=generated",
-					configEnd,
+					"<!-- numbering=true min=2 max=4 slug=github anchor=" + stored + " link=true toc=true bullets=auto -->",
 					endMarker,
 					"",
 					"## Intro",
@@ -697,10 +711,10 @@ func TestRunnerFileWorkflowNormalizesStoredAnchorOnLikeValues(t *testing.T) {
 
 			runFileCommand(t, fs, "regen", "-f", path)
 			got := fs.fileString(path)
-			if !strings.Contains(got, "anchor=github") {
-				t.Fatalf("regen did not normalize stored anchor=%s to github:\n%s", stored, got)
+			if !strings.Contains(got, "anchor=true") {
+				t.Fatalf("regen did not normalize stored anchor=%s to true:\n%s", stored, got)
 			}
-			if strings.Contains(got, "anchor=on") || strings.Contains(got, "anchor=true") {
+			if strings.Contains(got, "anchor=on") {
 				t.Fatalf("regen left non-canonical anchor=%s in the config block:\n%s", stored, got)
 			}
 			if !strings.Contains(got, `<a id="intro"></a>`) || !strings.Contains(got, "* [1. Intro](#intro)") {
@@ -751,15 +765,7 @@ func TestRunnerFileWorkflowAutoBulletsIgnoreManagedTOC(t *testing.T) {
 		path: strings.Join([]string{
 			startMarker,
 			"* [1. Wrong](#wrong)",
-			configStart,
-			"numbering=true",
-			"min-level=2",
-			"max-level=4",
-			"anchors=on",
-			"toc=true",
-			"bullets=auto",
-			"state=generated",
-			configEnd,
+			"<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->",
 			endMarker,
 			"",
 			"- local bullet",
@@ -782,21 +788,14 @@ func TestRunnerFileWorkflowAutoBulletsIgnoreManagedTOC(t *testing.T) {
 	}
 }
 
-// TestRunnerFileWorkflowLegacyContainerKeepsStarBullets verifies backward-compatible handling of pre-bullets containers.
-func TestRunnerFileWorkflowLegacyContainerKeepsStarBullets(t *testing.T) {
+// TestRunnerFileWorkflowConfiguredStarBulletsPreserved verifies configured bullet handling.
+func TestRunnerFileWorkflowConfiguredStarBulletsPreserved(t *testing.T) {
 	const path = "doc.md"
 	fs := newMemoryFileSystem(map[string]string{
 		path: strings.Join([]string{
 			startMarker,
 			"* [1. Wrong](#wrong)",
-			configStart,
-			"numbering=true",
-			"min-level=2",
-			"max-level=4",
-			"anchors=on",
-			"toc=true",
-			"state=generated",
-			configEnd,
+			"<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=* -->",
 			endMarker,
 			"",
 			"- local bullet",
@@ -806,26 +805,26 @@ func TestRunnerFileWorkflowLegacyContainerKeepsStarBullets(t *testing.T) {
 		}, "\n") + "\n",
 	})
 
-	runFileCommand(t, fs, "generate", "-f", path)
+	runFileCommand(t, fs, "regen", "-f", path)
 	got := fs.fileString(path)
 	if !strings.Contains(got, "bullets=*") {
-		t.Fatalf("legacy container was not normalized to star bullets:\n%s", got)
+		t.Fatalf("configured star bullets were not preserved:\n%s", got)
 	}
 	if !strings.Contains(got, "* [1. Intro](#intro)") {
-		t.Fatalf("legacy star bullets were not preserved:\n%s", got)
+		t.Fatalf("configured star bullets were not rendered:\n%s", got)
 	}
 	if strings.Contains(got, "- [1. Intro](#intro)") {
-		t.Fatalf("legacy container unexpectedly switched to auto-detected dash bullets:\n%s", got)
+		t.Fatalf("configured star bullets unexpectedly switched to auto-detected dash bullets:\n%s", got)
 	}
 
 	runFileCommand(t, fs, "strip", "-f", path)
 	runFileCommand(t, fs, "regen", "-f", path)
 	got = fs.fileString(path)
 	if !strings.Contains(got, "bullets=*") || !strings.Contains(got, "* [1. Intro](#intro)") {
-		t.Fatalf("regen did not preserve normalized legacy star bullets:\n%s", got)
+		t.Fatalf("regen did not preserve configured star bullets:\n%s", got)
 	}
 	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
-		t.Fatalf("check unexpectedly failed after legacy star regen: %v", err)
+		t.Fatalf("check unexpectedly failed after configured star regen: %v", err)
 	}
 }
 
@@ -838,8 +837,8 @@ func TestRunnerFileWorkflowStripCheckThenRegenCheck(t *testing.T) {
 
 	runFileCommand(t, fs, "generate", "-f", path)
 	runFileCommand(t, fs, "strip", "-f", path)
-	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
-		t.Fatalf("check unexpectedly failed for stripped state: %v", err)
+	if err := runFileCommandExpect(t, fs, 2, "check", "-f", path); err == nil {
+		t.Fatalf("check unexpectedly succeeded for stripped output")
 	}
 
 	runFileCommand(t, fs, "regen", "-f", path)
@@ -859,7 +858,7 @@ func TestRunnerFileWorkflowRawStripRejectsRegen(t *testing.T) {
 	runFileCommand(t, fs, "strip", "--raw", "-f", path)
 
 	err := runFileCommandExpect(t, fs, 1, "regen", "-f", path)
-	if err == nil || !strings.Contains(err.Error(), "valid mdtoc config block") {
+	if err == nil || !strings.Contains(err.Error(), "valid mdtoc container") {
 		t.Fatalf("regen after raw strip returned unexpected error: %v", err)
 	}
 }
@@ -871,15 +870,7 @@ func TestRunnerFileWorkflowRawStripRecoversMalformedContainer(t *testing.T) {
 		path: strings.Join([]string{
 			startMarker,
 			"* [1. Intro](#intro)",
-			configStart,
-			"container-version=v2",
-			"numbering=true",
-			"min-level=2",
-			"max-level=4",
-			"anchor=github",
-			"toc=true",
-			"bullets=auto",
-			"state=generated",
+			"<!-- anchor=github -->",
 			endMarker,
 			"",
 			"## 1. <a id=\"intro\"></a>Intro",

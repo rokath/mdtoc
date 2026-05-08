@@ -8,28 +8,46 @@
 This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc) and updates the active Markdown document in place.
 
 <!-- mdtoc -->
-<!-- mdtoc-config
-container-version=v2
+<!-- preserved by mdtoc
+  * [3.1. Behaviour](#31-behaviour) cc
+-->
+<!-- preserved by mdtoc
+  * [3.1. Behaviour](#31-behaviour) aa
+-->
+<!-- preserved by mdtoc
+  * [3.3. Installation Alternative](#33-installation-alternative) ff
+-->
+
+* [1. Features](#1-features)
+* [2. How to Use](#2-how-to-use)
+* [3. Additional Information](#3-additional-information)
+  * [3.1. Behaviour](#31-behaviour)
+  * [3.2. Configuration](#32-configuration)
+  * [3.3. Installation Alternative](#33-installation-alternative)
+  * [3.4. Continuous Integration](#34-continuous-integration)
+<!--
 numbering=true
-min-level=2
-max-level=4
-anchor=off
-toc=false
+min=2
+max=4
+slug=gitlab
+anchor=false
+link=true
+toc=true
 bullets=auto
-state=generated
 -->
 <!-- /mdtoc -->
 
 ## 1. Features
 
-* very **easy to use** with editor context menu:
+* **easy** to use with editor context menu:
   * right-click inside an open Markdown editor and choose `mdtoc: Generate ToC`
-* highly **configurable**: edit the `mdtoc` config block values directly to match your needs
-  * on/off for **numbering**, **anchor**, **toc**
-    * ToC link targets stay stable (unnumbered) for inline-anchor profiles but follow rendered heading text when `anchor=off`
-  * auto or explicit (`*`, `-`, `+`) ToC **bullet style**
-  * explicit **anchor profiles**: `github` (default), `gitlab`, or `off`
-  * targets ATX headings `#` to `######` (**min-level**, **max-level**)
+* **configurable**: edit the generated `mdtoc` config block values directly to match your needs
+  * `on|off` for **numbering**, **anchor**, **link**, **toc**
+  * targets ATX headings (**min** `#` to **max** `######`)
+  * **slug** profiles: `github`, `gitlab`, `crossnote`
+  * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
+  * **delete** line `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->` for **defaults** only
+* **protects** non-generated content inside ToC area
 * **repeated headings** support
 * generated content stays clearly separated from authored content
 * deterministic and idempotent output
@@ -38,10 +56,10 @@ state=generated
   * as **Setext headings**:
   
     ```md
-    Example 1
+    IGNORED Heading 1
     =========
     
-    Example 2
+    IGNORED Heading 2
     ---------
     ```
 
@@ -49,7 +67,7 @@ state=generated
 
     ````md
     ``` 
-    ## Example
+    ## IGNORED Heading 3
     ```
     ````
 
@@ -57,28 +75,28 @@ state=generated
   
     ```md
     <!-- 
-    ## Example
+    ## IGNORED Heading 4
     -->
     ```
 
   * as **HTML syntax**:
   
     ```md
-    <h2>Example</h2>
+    <h4>IGNORED Heading 5</h4>
     ```
 
   * between **exclusion regions**:
   
     ```md
     <!-- mdtoc off -->
-    ## Example
+    ## IGNORED Heading 6
     <!-- mdtoc on -->
     ```
 
   * with **starting space(s)**:
 
     ```md
-     ## Example
+     ## IGNORED Heading 7
     ```
 
 ## 2. How to Use
@@ -98,14 +116,37 @@ The table of contents is initially created at the beginning of the document. You
 
 `Generate ToC` runs `mdtoc` in root mode:
 
-* if the document has no managed container yet, `mdtoc` creates one with its default settings (generate)
+* if the document has no managed container yet, `mdtoc` creates one with its default settings (generate):
+  * `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->`
 * if the document already has a valid managed container, `mdtoc` regenerates it from the stored container config
+  * If the defaults ok for you can delete the config block line
+  * break this config block line and you get re-generated:
+
+  ```md
+  <!--
+  numbering=true
+  min=2
+  max=4
+  slug=gitlab
+  anchor=false
+  link=true
+  toc=true
+  bullets=auto
+  -->
+  ```
+
 * the document stays unchanged and the CLI error is shown if
   * more than one managed container exists
   * the managed container is invalid
 * if a managed container is broken beyond repair, you can delete it and run `mdtoc: Generate ToC` again to create a fresh one
 
-`Strip ToC` runs the explicit `strip` subcommand. If the CLI reports an error, the document also stays unchanged.
+`Strip ToC` runs the explicit `strip` subcommand and is implicit executed on each re-generate. If the CLI reports an error, the document stays unchanged. If inside the ToC area non-generated lines found according to the current config block rules, these are saved inside aditional regions (**protection**).
+
+```md
+<!-- preserved by mdtoc
+  * [3.1. Behaviour](#31-behaviour) accidently entered text here
+-->
+```
 
 ### 3.2. Configuration
 

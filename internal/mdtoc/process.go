@@ -10,7 +10,7 @@ func Generate(input string, opts Options) (string, []string, error) {
 	return generateWithConfig(input, opts.ToConfig())
 }
 
-// Regen rebuilds the generated state from the persisted config of an existing
+// Regen rebuilds generated output from the persisted config of an existing
 // managed container.
 func Regen(input string) (string, []string, error) {
 	parsed, err := ParseDocument(input)
@@ -18,16 +18,9 @@ func Regen(input string) (string, []string, error) {
 		return "", nil, err
 	}
 	if parsed.Container == nil {
-		return "", nil, fmt.Errorf("regen requires a valid mdtoc config block")
+		return "", nil, fmt.Errorf("regen requires a valid mdtoc container")
 	}
-	cfg := parsed.Container.Config
-	switch cfg.State {
-	case StateGenerated, StateStripped:
-		cfg.State = StateGenerated
-		return generateWithConfig(input, cfg)
-	default:
-		return "", parsed.Warnings, fmt.Errorf("unsupported state %q", parsed.Container.Config.State)
-	}
+	return generateWithConfig(input, parsed.Container.Config)
 }
 
 // generateWithConfig renders the managed document state for a fully validated config.
@@ -35,9 +28,6 @@ func generateWithConfig(input string, cfg Config) (string, []string, error) {
 	parsed, err := ParseDocument(input)
 	if err != nil {
 		return "", nil, err
-	}
-	if parsed.Container != nil && !parsed.Container.Config.BulletsExplicit && cfg.Bullets == BulletAuto {
-		cfg.Bullets = BulletStar
 	}
 	if err := cfg.Validate(); err != nil {
 		return "", nil, err
@@ -48,7 +38,7 @@ func generateWithConfig(input string, cfg Config) (string, []string, error) {
 	if cfg.TOC {
 		tocLines = renderTOC(headings, bodyLines, cfg)
 	}
-	containerLines := renderContainer(cfg, preserveForeignTOC(parsed.Container), tocLines)
+	containerLines := renderContainer(cfg, parsed.Container, preserveForeignTOC(parsed.Container), tocLines)
 	bodyLines = rewriteHeadings(bodyLines, headings, cfg)
 	return joinLines(placeContainer(bodyLines, containerLines, parsed.Container)), parsed.Warnings, nil
 }
@@ -60,13 +50,12 @@ func Strip(input string) (string, []string, error) {
 		return "", nil, err
 	}
 	if parsed.Container == nil {
-		return "", nil, fmt.Errorf("strip requires a valid mdtoc config block")
+		return "", nil, fmt.Errorf("strip requires a valid mdtoc container")
 	}
 	cfg := parsed.Container.Config
-	cfg.State = StateStripped
 	bodyLines, headings := removeContainerAndNormalizeHeadings(parsed)
 	bodyLines = rewriteHeadings(bodyLines, headings, Config{MinLevel: 1, MaxLevel: 0})
-	containerLines := renderContainer(cfg, nil, nil)
+	containerLines := renderContainer(cfg, parsed.Container, nil, nil)
 	return joinLines(placeContainer(bodyLines, containerLines, parsed.Container)), parsed.Warnings, nil
 }
 
@@ -118,12 +107,6 @@ func findManagedContainerBounds(lines []string) (int, int, []string, error) {
 			}
 			continue
 		}
-		if inGenericComment {
-			if strings.Contains(line, "-->") {
-				inGenericComment = false
-			}
-			continue
-		}
 		if marker := fenceOpen(trimmed); marker != "" {
 			inFence, fenceMarker = true, marker
 			continue
@@ -142,6 +125,12 @@ func findManagedContainerBounds(lines []string) (int, int, []string, error) {
 			endLine = i
 			continue
 		}
+		if inGenericComment {
+			if strings.Contains(line, "-->") {
+				inGenericComment = false
+			}
+			continue
+		}
 		if startsGenericHTMLComment(trimmed) && !strings.Contains(trimmed, "-->") {
 			inGenericComment = true
 		}
@@ -152,25 +141,17 @@ func findManagedContainerBounds(lines []string) (int, int, []string, error) {
 	return startLine, endLine, []string{"warning: strip --raw removed a managed container via fallback parsing"}, nil
 }
 
-// Check reconstructs the target state indicated by the stored config and
-// compares it byte-for-byte against the current document.
+// Check reconstructs the generated target state and compares it byte-for-byte
+// against the current document.
 func Check(input string) (bool, []string, error) {
 	parsed, err := ParseDocument(input)
 	if err != nil {
 		return false, nil, err
 	}
 	if parsed.Container == nil {
-		return false, nil, fmt.Errorf("check requires a valid mdtoc config block")
+		return false, nil, fmt.Errorf("check requires a valid mdtoc container")
 	}
-	var expected string
-	switch parsed.Container.Config.State {
-	case StateGenerated:
-		expected, _, err = Generate(input, Options{Numbering: parsed.Container.Config.Numbering, MinLevel: parsed.Container.Config.MinLevel, MaxLevel: parsed.Container.Config.MaxLevel, Anchor: parsed.Container.Config.Anchor, TOC: parsed.Container.Config.TOC, Bullets: parsed.Container.Config.Bullets})
-	case StateStripped:
-		expected, _, err = Strip(input)
-	default:
-		err = fmt.Errorf("unsupported state %q", parsed.Container.Config.State)
-	}
+	expected, _, err := generateWithConfig(input, parsed.Container.Config)
 	if err != nil {
 		return false, parsed.Warnings, err
 	}
@@ -212,8 +193,8 @@ func removeContainerAndNormalizeHeadings(parsed *ParsedDocument) ([]string, []He
 
 // assignDerivedArtifacts computes managed numbers and anchors for eligible headings.
 func assignDerivedArtifacts(headings []Heading, cfg Config) {
-	anchorSlugger := newSluggerForAnchorMode(cfg.Anchor)
-	tocSlugger := newTOCSlugger(cfg.Anchor)
+	anchorSlugger := newSluggerForSlugMode(cfg.Slug)
+	tocSlugger := newSluggerForSlugMode(cfg.Slug)
 	counters := make([]int, 7)
 	for i := range headings {
 		h := &headings[i]
@@ -221,7 +202,7 @@ func assignDerivedArtifacts(headings []Heading, cfg Config) {
 			h.ManagedNumber, h.ManagedAnchor, h.ManagedTOCTarget = "", "", ""
 			continue
 		}
-		anchorID := anchorSlugger.Next(h.TitleText)
+		anchorID := anchorSlugger.Next(anchorSlugSource(*h, cfg))
 		h.ManagedAnchor = fmt.Sprintf(`<a id="%s"></a>`, anchorID)
 		if cfg.Numbering {
 			counters[h.Level]++
@@ -240,12 +221,29 @@ func assignDerivedArtifacts(headings []Heading, cfg Config) {
 			h.ManagedNumber = ""
 		}
 
-		tocSource := h.TitleText
-		if cfg.Anchor == AnchorOff && h.ManagedNumber != "" {
-			tocSource = h.ManagedNumber + " " + tocSource
-		}
-		h.ManagedTOCTarget = tocSlugger.Next(tocSource)
+		h.ManagedTOCTarget = tocSlugger.Next(tocSlugSource(*h, cfg))
 	}
+}
+
+func anchorSlugSource(h Heading, cfg Config) string {
+	if cfg.Slug == SlugCrossnote {
+		return h.TitleMarkup
+	}
+	return h.TitleText
+}
+
+func tocSlugSource(h Heading, cfg Config) string {
+	if cfg.Anchor {
+		return anchorSlugSource(h, cfg)
+	}
+	source := h.TitleText
+	if cfg.Slug == SlugCrossnote {
+		source = h.TitleMarkup
+	}
+	if h.ManagedNumber != "" {
+		source = h.ManagedNumber + " " + source
+	}
+	return source
 }
 
 // rewriteHeadings renders the managed heading state back into the document lines.
@@ -259,7 +257,7 @@ func rewriteHeadings(lines []string, headings []Heading, cfg Config) []string {
 		if h.InManagedRange(cfg) && h.ManagedNumber != "" {
 			line += h.ManagedNumber + " "
 		}
-		if h.InManagedRange(cfg) && cfg.Anchor.RendersInline() && h.ManagedAnchor != "" {
+		if h.InManagedRange(cfg) && cfg.Anchor && h.ManagedAnchor != "" {
 			line += h.ManagedAnchor
 		}
 		line += h.TitleMarkup
@@ -268,22 +266,17 @@ func rewriteHeadings(lines []string, headings []Heading, cfg Config) []string {
 	return out
 }
 
-func newSluggerForAnchorMode(mode AnchorMode) *Slugger {
+func newSluggerForSlugMode(mode SlugMode) *Slugger {
 	switch mode {
-	case AnchorGitLab:
+	case SlugGitLab:
 		return NewGitLabSlugger()
-	case AnchorGitHub, AnchorOff, "":
+	case SlugCrossnote:
+		return NewCrossnoteSlugger()
+	case SlugGitHub, "":
 		return NewSlugger()
 	default:
 		return NewSlugger()
 	}
-}
-
-func newTOCSlugger(mode AnchorMode) *Slugger {
-	if mode == AnchorOff {
-		return NewRendererSlugger()
-	}
-	return newSluggerForAnchorMode(mode)
 }
 
 // renderTOC converts managed headings into Markdown list entries.
@@ -298,7 +291,12 @@ func renderTOC(headings []Heading, bodyLines []string, cfg Config) []string {
 		if cfg.Numbering && h.ManagedNumber != "" {
 			text = h.ManagedNumber + " " + text
 		}
-		lines = append(lines, fmt.Sprintf("%s%s [%s](#%s)", strings.Repeat("  ", h.Level-cfg.MinLevel), bullet, text, h.ManagedTOCTarget))
+		prefix := fmt.Sprintf("%s%s ", strings.Repeat("  ", h.Level-cfg.MinLevel), bullet)
+		if cfg.Link {
+			lines = append(lines, fmt.Sprintf("%s[%s](#%s)", prefix, text, h.ManagedTOCTarget))
+			continue
+		}
+		lines = append(lines, prefix+text)
 	}
 	return lines
 }
@@ -385,7 +383,7 @@ func detectListBullet(line string) (BulletMode, bool) {
 }
 
 // renderContainer renders the normalized managed container for the current config.
-func renderContainer(cfg Config, preserved, toc []string) []string {
+func renderContainer(cfg Config, existing *Container, preserved, toc []string) []string {
 	lines := []string{startMarker}
 	if len(preserved) > 0 {
 		lines = append(lines, preserved...)
@@ -396,9 +394,22 @@ func renderContainer(cfg Config, preserved, toc []string) []string {
 		}
 		lines = append(lines, toc...)
 	}
-	lines = append(lines, RenderConfig(cfg)...)
+	if shouldRenderConfig(cfg, existing) {
+		multiline := existing != nil && existing.ConfigPresent && existing.ConfigMultiline
+		lines = append(lines, RenderConfig(cfg, multiline)...)
+	}
 	lines = append(lines, endMarker)
 	return lines
+}
+
+func shouldRenderConfig(cfg Config, existing *Container) bool {
+	if existing == nil {
+		return true
+	}
+	if existing.ConfigPresent {
+		return true
+	}
+	return !configEquals(cfg, DefaultConfig())
 }
 
 // preserveForeignTOC keeps handwritten content from the managed ToC area as comments.
@@ -406,6 +417,7 @@ func preserveForeignTOC(container *Container) []string {
 	if container == nil || len(container.TOCArea) == 0 {
 		return nil
 	}
+	cfg := container.Config
 	var preserved []string
 	for i := 0; i < len(container.TOCArea); {
 		line := container.TOCArea[i]
@@ -427,13 +439,13 @@ func preserveForeignTOC(container *Container) []string {
 				preserved = append(preserved, wrapPreservedComment(container.TOCArea[i:])...)
 				return preserved
 			}
-		case isGeneratedTOCLine(line):
+		case isGeneratedTOCLine(line, cfg):
 			i++
 		default:
 			j := i
 			var chunk []string
 			for ; j < len(container.TOCArea); j++ {
-				if isGeneratedTOCLine(container.TOCArea[j]) {
+				if isGeneratedTOCLine(container.TOCArea[j], cfg) {
 					break
 				}
 				chunk = append(chunk, container.TOCArea[j])
@@ -446,15 +458,18 @@ func preserveForeignTOC(container *Container) []string {
 }
 
 // isGeneratedTOCLine reports whether the line matches the generated ToC shape.
-func isGeneratedTOCLine(line string) bool {
+func isGeneratedTOCLine(line string, cfg Config) bool {
 	trimmed := strings.TrimSpace(line)
 	if trimmed == "" {
 		return true
 	}
-	if !(strings.HasPrefix(trimmed, "* [") || strings.HasPrefix(trimmed, "- [") || strings.HasPrefix(trimmed, "+ [")) {
+	if strings.HasPrefix(trimmed, "* [") || strings.HasPrefix(trimmed, "- [") || strings.HasPrefix(trimmed, "+ [") {
+		return strings.Contains(trimmed, "](#") && strings.HasSuffix(trimmed, ")")
+	}
+	if cfg.Link {
 		return false
 	}
-	return strings.Contains(trimmed, "](#") && strings.HasSuffix(trimmed, ")")
+	return strings.HasPrefix(trimmed, "* ") || strings.HasPrefix(trimmed, "- ") || strings.HasPrefix(trimmed, "+ ")
 }
 
 // wrapPreservedComment wraps preserved foreign lines in a generated HTML comment.

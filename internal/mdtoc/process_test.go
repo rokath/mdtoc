@@ -16,7 +16,7 @@ func TestGenerateCreatesContainerAndDerivedArtifacts(t *testing.T) {
 	if len(warnings) != 0 {
 		t.Fatalf("unexpected warnings: %v", warnings)
 	}
-	checks := []string{startMarker, "* [1. Intro](#intro)", "  * [1.1. API](#api)", `## 1. <a id="intro"></a>Intro`, `### 1.1. <a id="api"></a>API`, "bullets=auto", "state=generated"}
+	checks := []string{startMarker, "* [1. Intro](#intro)", "  * [1.1. API](#api)", `## 1. <a id="intro"></a>Intro`, `### 1.1. <a id="api"></a>API`, "bullets=auto", "anchor=true", "slug=github"}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
 			t.Fatalf("generated output missing %q:\n%s", check, got)
@@ -133,7 +133,9 @@ func TestGenerateIsIdempotentWithStarBullets(t *testing.T) {
 		Numbering: true,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorGitHub,
+		Slug:      SlugGitHub,
+		Anchor:    true,
+		AnchorSet: true,
 		TOC:       true,
 		Bullets:   BulletStar,
 	})
@@ -148,7 +150,9 @@ func TestGenerateIsIdempotentWithStarBullets(t *testing.T) {
 		Numbering: true,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorGitHub,
+		Slug:      SlugGitHub,
+		Anchor:    true,
+		AnchorSet: true,
 		TOC:       true,
 		Bullets:   BulletStar,
 	})
@@ -170,7 +174,7 @@ func TestGenerateIsIdempotentWithStarBullets(t *testing.T) {
 
 // TestGeneratePreservesForeignTOCContentAsComment verifies preservation of handwritten managed-area content.
 func TestGeneratePreservesForeignTOCContentAsComment(t *testing.T) {
-	input := strings.Join([]string{startMarker, "Some handwritten note", configStart, "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n"
+	input := strings.Join([]string{startMarker, "Some handwritten note", "<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->", endMarker, "", "## Intro"}, "\n") + "\n"
 	got, _, err := Generate(input, DefaultOptions())
 	if err != nil {
 		t.Fatalf("Generate error: %v", err)
@@ -187,7 +191,8 @@ func TestRegenReusesPersistedContainerConfig(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  3,
-		Anchor:    AnchorOff,
+		Anchor:    false,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -209,6 +214,82 @@ func TestRegenReusesPersistedContainerConfig(t *testing.T) {
 	}
 }
 
+// TestRegenUsesDefaultsWhenContainerHasNoConfig verifies the optional config block contract.
+func TestRegenUsesDefaultsWhenContainerHasNoConfig(t *testing.T) {
+	input := strings.Join([]string{
+		startMarker,
+		"* [Wrong](#wrong)",
+		endMarker,
+		"",
+		"## Intro",
+	}, "\n") + "\n"
+
+	got, _, err := Regen(input)
+	if err != nil {
+		t.Fatalf("Regen error: %v", err)
+	}
+	if !strings.Contains(got, "* [1. Intro](#intro)") || !strings.Contains(got, `## 1. <a id="intro"></a>Intro`) {
+		t.Fatalf("regen did not apply default config to config-less container:\n%s", got)
+	}
+	if strings.Contains(got, "numbering=") || strings.Contains(got, "anchor=") {
+		t.Fatalf("regen should preserve absent default config block:\n%s", got)
+	}
+	ok, _, err := Check(got)
+	if err != nil || !ok {
+		t.Fatalf("Check(config-less generated) = %v, %v", ok, err)
+	}
+}
+
+// TestGenerateLinkFalseRendersPlainTOC verifies link=false keeps ToC text but omits link targets.
+func TestGenerateLinkFalseRendersPlainTOC(t *testing.T) {
+	got, _, err := Generate("# Title\n\n## Intro\n\n### API\n", Options{
+		Numbering: true,
+		MinLevel:  2,
+		MaxLevel:  3,
+		Slug:      SlugGitHub,
+		Anchor:    true,
+		AnchorSet: true,
+		Link:      false,
+		LinkSet:   true,
+		TOC:       true,
+		Bullets:   BulletAuto,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if !strings.Contains(got, "* 1. Intro") || !strings.Contains(got, "  * 1.1. API") {
+		t.Fatalf("link=false did not render plain ToC entries:\n%s", got)
+	}
+	if strings.Contains(got, "](#intro)") || strings.Contains(got, "](#api)") {
+		t.Fatalf("link=false rendered linked ToC entries:\n%s", got)
+	}
+	if !strings.Contains(got, "link=false") {
+		t.Fatalf("link=false was not persisted:\n%s", got)
+	}
+	ok, _, err := Check(got)
+	if err != nil || !ok {
+		t.Fatalf("Check(link=false output) = %v, %v", ok, err)
+	}
+	second, _, err := Generate(got, Options{
+		Numbering: true,
+		MinLevel:  2,
+		MaxLevel:  3,
+		Slug:      SlugGitHub,
+		Anchor:    true,
+		AnchorSet: true,
+		Link:      false,
+		LinkSet:   true,
+		TOC:       true,
+		Bullets:   BulletAuto,
+	})
+	if err != nil {
+		t.Fatalf("second Generate error: %v", err)
+	}
+	if got != second {
+		t.Fatalf("link=false generate is not idempotent\nfirst:\n%s\nsecond:\n%s", got, second)
+	}
+}
+
 // TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC verifies issue #75.
 func TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *testing.T) {
 	input := "# Title\n\n## Intro\n\n### API\n"
@@ -217,7 +298,8 @@ func TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *testing.T) {
 		Numbering: true,
 		MinLevel:  2,
 		MaxLevel:  3,
-		Anchor:    AnchorOff,
+		Anchor:    false,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -226,7 +308,7 @@ func TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *testing.T) {
 
 	checks := []string{
 		"* [1. Intro](#1-intro)",
-		"  * [1.1. API](#11-api)",
+		"  * [1.1. API](#1-1-api)",
 		"## 1. Intro",
 		"### 1.1. API",
 	}
@@ -240,6 +322,33 @@ func TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *testing.T) {
 	}
 }
 
+// TestGenerateAnchorOffCrossnoteClosingATXSpaces verifies the MPE/Crossnote
+// slug behavior for ATX closing markers preceded by multiple spaces.
+func TestGenerateAnchorOffCrossnoteClosingATXSpaces(t *testing.T) {
+	got, _, err := Generate("# Title\n\n## An ATX title with closing hash markers  ####\n", Options{
+		Numbering: false,
+		MinLevel:  2,
+		MaxLevel:  2,
+		Slug:      SlugCrossnote,
+		Anchor:    false,
+		AnchorSet: true,
+		Link:      true,
+		LinkSet:   true,
+		TOC:       true,
+		Bullets:   BulletAuto,
+	})
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	want := "* [An ATX title with closing hash markers](#an-atx-title-with-closing-hash-markers--)"
+	if !strings.Contains(got, want) {
+		t.Fatalf("generated ToC missing %q:\n%s", want, got)
+	}
+	if strings.Contains(got, "<a id=") {
+		t.Fatalf("anchor=false rendered inline anchors:\n%s", got)
+	}
+}
+
 // TestGenerateAnchorOffNumberingPreservesTitleNumberBoundary verifies that title
 // numbers do not get merged into the numbering prefix for renderer-derived IDs.
 func TestGenerateAnchorOffNumberingPreservesTitleNumberBoundary(t *testing.T) {
@@ -249,7 +358,8 @@ func TestGenerateAnchorOffNumberingPreservesTitleNumberBoundary(t *testing.T) {
 		Numbering: true,
 		MinLevel:  2,
 		MaxLevel:  3,
-		Anchor:    AnchorOff,
+		Anchor:    false,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -258,7 +368,7 @@ func TestGenerateAnchorOffNumberingPreservesTitleNumberBoundary(t *testing.T) {
 
 	checks := []string{
 		"* [1. Intro](#1-intro)",
-		"  * [1.1. 2025 Roadmap](#11-2025-roadmap)",
+		"  * [1.1. 2025 Roadmap](#1-1-2025-roadmap)",
 		"### 1.1. 2025 Roadmap",
 	}
 	for _, check := range checks {
@@ -279,12 +389,14 @@ func TestRegenRequiresManagedConfig(t *testing.T) {
 }
 
 // TestRegenRestoresGeneratedStateFromStrippedInput verifies regen after a stripped-state workflow.
-func TestRegenRestoresGeneratedStateFromStrippedInput(t *testing.T) {
+func TestRegenRestoresGeneratedOutputFromStrippedInput(t *testing.T) {
 	generated, _, err := Generate("# Title\n\n## Intro\n", Options{
 		Numbering: true,
 		MinLevel:  1,
 		MaxLevel:  4,
-		Anchor:    AnchorGitHub,
+		Slug:      SlugGitHub,
+		Anchor:    true,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -295,8 +407,8 @@ func TestRegenRestoresGeneratedStateFromStrippedInput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Strip error: %v", err)
 	}
-	if !strings.Contains(stripped, "state=stripped") {
-		t.Fatalf("stripped document missing stripped state:\n%s", stripped)
+	if strings.Contains(stripped, "<a id=") || strings.Contains(stripped, "## 1.1. ") {
+		t.Fatalf("strip kept managed artifacts:\n%s", stripped)
 	}
 
 	manual := strings.Replace(stripped, "## Intro", "## 7. Intro", 1)
@@ -306,9 +418,6 @@ func TestRegenRestoresGeneratedStateFromStrippedInput(t *testing.T) {
 	}
 	if strings.Contains(regenerated, "## 7. Intro") {
 		t.Fatalf("regen kept manual stripped-state edits:\n%s", regenerated)
-	}
-	if !strings.Contains(regenerated, "state=generated") {
-		t.Fatalf("regen did not restore generated state:\n%s", regenerated)
 	}
 	if !strings.Contains(regenerated, "<a id=") || !strings.Contains(regenerated, "## 1.1. ") {
 		t.Fatalf("regen did not rebuild managed artifacts:\n%s", regenerated)
@@ -543,7 +652,9 @@ func TestGenerateForcedBulletModeOverridesAutoDetection(t *testing.T) {
 		Numbering: true,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorGitHub,
+		Slug:      SlugGitHub,
+		Anchor:    true,
+		AnchorSet: true,
 		TOC:       true,
 		Bullets:   BulletPlus,
 	})
@@ -555,19 +666,12 @@ func TestGenerateForcedBulletModeOverridesAutoDetection(t *testing.T) {
 	}
 }
 
-// TestGenerateTreatsLegacyConfigWithoutBulletsAsStar verifies backward-compatible normalization of old containers.
-func TestGenerateTreatsLegacyConfigWithoutBulletsAsStar(t *testing.T) {
+// TestRegenUsesStoredBulletMode verifies stored compact config controls regen.
+func TestRegenUsesStoredBulletMode(t *testing.T) {
 	input := strings.Join([]string{
 		startMarker,
 		"- [1. Wrong](#wrong)",
-		configStart,
-		"numbering=true",
-		"min-level=2",
-		"max-level=4",
-		"anchors=on",
-		"toc=true",
-		"state=generated",
-		configEnd,
+		"<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=* -->",
 		endMarker,
 		"",
 		"- local bullet",
@@ -576,23 +680,23 @@ func TestGenerateTreatsLegacyConfigWithoutBulletsAsStar(t *testing.T) {
 		"## Intro",
 	}, "\n") + "\n"
 
-	got, _, err := Generate(input, DefaultOptions())
+	got, _, err := Regen(input)
 	if err != nil {
-		t.Fatalf("Generate error: %v", err)
+		t.Fatalf("Regen error: %v", err)
 	}
 	if !strings.Contains(got, "bullets=*") {
-		t.Fatalf("legacy config was not normalized to bullets=*:\n%s", got)
+		t.Fatalf("stored bullet mode was not preserved:\n%s", got)
 	}
 	if !strings.Contains(got, "* [1. Intro](#intro)") {
-		t.Fatalf("legacy config did not preserve star bullets:\n%s", got)
+		t.Fatalf("stored bullet mode did not render star bullets:\n%s", got)
 	}
 	if strings.Contains(got, "- [1. Intro](#intro)") || strings.Contains(got, "+ [1. Intro](#intro)") {
-		t.Fatalf("legacy config unexpectedly switched to non-star bullets:\n%s", got)
+		t.Fatalf("stored bullet mode unexpectedly switched to non-star bullets:\n%s", got)
 	}
 }
 
-// TestStripKeepsContainerAndMarksStateStripped verifies stripped-state rendering with the container retained.
-func TestStripKeepsContainerAndMarksStateStripped(t *testing.T) {
+// TestStripKeepsContainerAndConfig verifies strip removes artifacts while retaining the container.
+func TestStripKeepsContainerAndConfig(t *testing.T) {
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
 	if err != nil {
 		t.Fatalf("Generate error: %v", err)
@@ -601,7 +705,7 @@ func TestStripKeepsContainerAndMarksStateStripped(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Strip error: %v", err)
 	}
-	checks := []string{startMarker, endMarker, "state=stripped", "## Intro"}
+	checks := []string{startMarker, endMarker, "anchor=true", "## Intro"}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
 			t.Fatalf("stripped output missing %q:\n%s", check, got)
@@ -635,7 +739,7 @@ func TestStripRawRecoversFromFutureContainerVersion(t *testing.T) {
 	input := strings.Join([]string{
 		startMarker,
 		"+ [1. Intro](#intro)",
-		configStart,
+		"<!-- mdtoc-config",
 		"container-version=v3",
 		"numbering=true",
 		"min-level=2",
@@ -665,12 +769,12 @@ func TestStripRawRecoversFromFutureContainerVersion(t *testing.T) {
 	}
 }
 
-// TestGenerateNormalizesLegacyContainerToExplicitV2 verifies that rewrites upgrade legacy containers.
-func TestGenerateNormalizesLegacyContainerToExplicitV2(t *testing.T) {
+// TestGenerateRejectsLegacyConfig verifies old mdtoc-config blocks are no longer supported.
+func TestGenerateRejectsLegacyConfig(t *testing.T) {
 	input := strings.Join([]string{
 		startMarker,
 		"* [1. Intro](#intro)",
-		configStart,
+		"<!-- mdtoc-config",
 		"numbering=true",
 		"min-level=2",
 		"max-level=4",
@@ -683,18 +787,8 @@ func TestGenerateNormalizesLegacyContainerToExplicitV2(t *testing.T) {
 		"## 1. <a id=\"intro\"></a>Intro",
 	}, "\n") + "\n"
 
-	got, _, err := Generate(input, DefaultOptions())
-	if err != nil {
-		t.Fatalf("Generate error: %v", err)
-	}
-	if !strings.Contains(got, "container-version=v2") {
-		t.Fatalf("legacy container was not upgraded to explicit v2:\n%s", got)
-	}
-	if !strings.Contains(got, "anchor=github") {
-		t.Fatalf("legacy anchor config was not normalized:\n%s", got)
-	}
-	if !strings.Contains(got, "bullets=*") {
-		t.Fatalf("legacy bullets were not normalized into explicit v2 output:\n%s", got)
+	if _, _, err := Generate(input, DefaultOptions()); err == nil {
+		t.Fatalf("Generate unexpectedly accepted legacy mdtoc-config")
 	}
 }
 
@@ -703,7 +797,7 @@ func TestStripRawRecoversFromUnknownConfigKey(t *testing.T) {
 	input := strings.Join([]string{
 		startMarker,
 		"* [1. Intro](#intro)",
-		configStart,
+		"<!-- mdtoc-config",
 		"numbering=true",
 		"min-level=2",
 		"max-level=4",
@@ -737,14 +831,7 @@ func TestStripRawRecoversFromUnterminatedConfigBlock(t *testing.T) {
 	input := strings.Join([]string{
 		startMarker,
 		"* [1. Intro](#intro)",
-		configStart,
-		"numbering=true",
-		"min-level=2",
-		"max-level=4",
-		"anchor=github",
-		"toc=true",
-		"bullets=auto",
-		"state=generated",
+		"<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto",
 		endMarker,
 		"",
 		"## 1. <a id=\"intro\"></a>Intro",

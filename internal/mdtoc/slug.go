@@ -28,10 +28,10 @@ func NewGitLabSlugger() *Slugger {
 	return newSlugger(slugifyGitLabBase)
 }
 
-// NewRendererSlugger creates a fresh collision tracker for renderer-derived
-// heading IDs that remove punctuation instead of turning it into separators.
-func NewRendererSlugger() *Slugger {
-	return newSlugger(slugifyRendererBase)
+// NewCrossnoteSlugger creates a fresh collision tracker for Crossnote /
+// Markdown Preview Enhanced heading IDs.
+func NewCrossnoteSlugger() *Slugger {
+	return newSlugger(slugifyCrossnoteBase)
 }
 
 // Next returns the deterministic anchor ID for one heading.
@@ -104,39 +104,42 @@ func slugifyGitLabBase(title string) string {
 	return slug
 }
 
-// slugifyRendererBase models renderer-derived heading IDs such as those used by
-// VS Code-style Markdown previews when no explicit inline anchor is present.
-func slugifyRendererBase(title string) string {
-	title = strings.ToLower(title)
-	var b strings.Builder
-	pendingDash := false
-	hasContent := false
+// slugifyCrossnoteBase models the Crossnote / Markdown Preview Enhanced
+// heading ID pipeline.
+func slugifyCrossnoteBase(title string) string {
+	title = strings.TrimSpace(title)
+	title = strings.ReplaceAll(title, "~", "")
+	title = strings.ReplaceAll(title, "。", "")
+	var withTildes strings.Builder
 	for _, r := range title {
-		switch {
-		case unicode.IsLetter(r) || unicode.IsDigit(r):
-			if pendingDash && hasContent {
-				b.WriteByte('-')
-			}
-			b.WriteRune(r)
-			hasContent = true
-			pendingDash = false
-		case r == '_' || r == '-':
-			if hasContent {
-				pendingDash = true
-			}
-		case unicode.IsSpace(r):
-			if hasContent {
-				pendingDash = true
-			}
-		default:
-			// Punctuation and other non-word separators do not create a dash in
-			// renderer-derived heading IDs; they are simply removed.
+		if unicode.IsSpace(r) {
+			withTildes.WriteByte('~')
+			continue
 		}
+		withTildes.WriteRune(r)
 	}
-	if b.Len() == 0 {
+	slug := slugifyUSlugLike(withTildes.String())
+	slug = strings.ReplaceAll(slug, "~", "-")
+	if slug == "" {
 		return "section"
 	}
-	return b.String()
+	return slug
+}
+
+func slugifyUSlugLike(title string) string {
+	title = strings.ToLower(title)
+	var b strings.Builder
+	for _, r := range title {
+		switch {
+		case r == '-' || r == '_' || r == '~':
+			b.WriteRune(r)
+		case unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.IsMark(r):
+			b.WriteRune(r)
+		case unicode.IsSpace(r):
+			b.WriteByte(' ')
+		}
+	}
+	return collapseHyphenRuns(strings.TrimSpace(b.String()))
 }
 
 func collapseHyphenRuns(s string) string {
