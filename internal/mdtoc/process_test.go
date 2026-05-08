@@ -716,6 +716,37 @@ func TestStripKeepsContainerAndConfig(t *testing.T) {
 	}
 }
 
+// TestStripPreservesForeignTOCContent verifies that strip keeps authored
+// content in the managed ToC area instead of dropping it together with
+// generated ToC lines.
+func TestStripPreservesForeignTOCContent(t *testing.T) {
+	input := strings.Join([]string{
+		startMarker,
+		"* [1. Intro](#intro)",
+		"Keep this manual note",
+		"<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->",
+		endMarker,
+		"",
+		"# Title",
+		"",
+		"## 1. <a id=\"intro\"></a>Intro",
+	}, "\n") + "\n"
+
+	got, _, err := Strip(input)
+	if err != nil {
+		t.Fatalf("Strip error: %v", err)
+	}
+	if !strings.Contains(got, preservedCommentHeader+"\nKeep this manual note\n-->") {
+		t.Fatalf("strip did not preserve foreign ToC content:\n%s", got)
+	}
+	if strings.Contains(got, "* [1. Intro](#intro)") {
+		t.Fatalf("strip kept generated ToC content:\n%s", got)
+	}
+	if strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") {
+		t.Fatalf("strip kept managed heading artifacts:\n%s", got)
+	}
+}
+
 // TestStripRawRemovesContainerAndManagedArtifacts verifies full raw stripping behavior.
 func TestStripRawRemovesContainerAndManagedArtifacts(t *testing.T) {
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())

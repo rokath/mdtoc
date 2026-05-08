@@ -37,13 +37,21 @@ Used git range: `v0.3.0..HEAD`
 * Boolean option parsing was normalized across CLI and stored config:
   * `on|true` normalize to `true`, and `off|false` normalize to `false`
   * virtual file-based workflow tests cover both CLI values and stored config values
+* Strip now uses the same protection contract as generate and regen:
+  * authored or otherwise non-generated lines in the managed ToC area are kept inside `<!-- preserved by mdtoc -->`
+  * generated ToC entries, heading numbers, and managed inline anchors are still removed
 
-### <a id='unreleased-git-log'></a>Unreleased Git Log
+### <a id='v0.3.0-git-log'></a>v0.3.0 Git Log
 
 Used git range: `v0.2.9..HEAD`
 
 ```txt
-* baa7ee6 (HEAD -> dev, origin/dev) docs(changelog): document unreleased updates
+* 31fd3d6 fix(strip): preserve foreign toc content
+* 7f7294e repeated headings hint added
+* f22e16e EXAMPLE.md edited and moved into ./docs
+* a56d255 release: prepare v0.3.0 extension version
+* bea366c v0.3.0 prepare
+* baa7ee6 docs(changelog): document unreleased updates
 * d4aca4f feat(mdtoc): implement compact config interface
 * 4eb54a9 fix(cli): report date for local builds
 * a69435f docs(agents): require detailed Go comments

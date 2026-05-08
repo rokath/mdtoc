@@ -55,7 +55,12 @@ func Strip(input string) (string, []string, error) {
 	cfg := parsed.Container.Config
 	bodyLines, headings := removeContainerAndNormalizeHeadings(parsed)
 	bodyLines = rewriteHeadings(bodyLines, headings, Config{MinLevel: 1, MaxLevel: 0})
-	containerLines := renderContainer(cfg, parsed.Container, nil, nil)
+	// Strip removes generated ToC entries, but it must keep the same safety
+	// contract as generate/regen for any authored lines inside the managed
+	// ToC area. Passing the existing container through preserveForeignTOC
+	// avoids silently deleting notes or malformed ToC edits that mdtoc cannot
+	// prove were generated under the current config.
+	containerLines := renderContainer(cfg, parsed.Container, preserveForeignTOC(parsed.Container), nil)
 	return joinLines(placeContainer(bodyLines, containerLines, parsed.Container)), parsed.Warnings, nil
 }
 
