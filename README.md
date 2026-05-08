@@ -20,12 +20,11 @@
 
 <img src="./extension/mdtoc_mascot_1024.webp" width="600">
 
-<h2>Table of Contents</h2><!-- TABLE OF CONTENTS START -->
-
 <details markdown="1"> <!-- parse this block as markdown -->
-<summary>(click to expand)</summary>
+<summary><strong style="font-size: 1.25em;">Table of Contents</strong> <span style="font-size: 0.66em;">(click to expand)</span></summary>
 
 <!-- mdtoc -->
+
 * [1. Features](#1-features)
 * [2. Install](#2-install)
   * [2.1. Releases](#2-1-releases)
@@ -39,6 +38,7 @@
   * [6.1. Specification](#6-1-specification)
   * [6.2. Comparison](#6-2-comparison)
 * [7. Status](#7-status)
+
 <!-- numbering=true min=2 max=4 slug=github anchor=false link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
 </details>
@@ -119,7 +119,9 @@ mdtoc check EXAMPLE.md                             # fail in CI when EXAMPLE.md 
 
 ```md
 <!-- mdtoc -->
+
 * [About](#about)
+
 <!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
 ```

@@ -16,7 +16,15 @@ func TestGenerateCreatesContainerAndDerivedArtifacts(t *testing.T) {
 	if len(warnings) != 0 {
 		t.Fatalf("unexpected warnings: %v", warnings)
 	}
-	checks := []string{startMarker, "* [1. Intro](#intro)", "  * [1.1. API](#api)", `## 1. <a id="intro"></a>Intro`, `### 1.1. <a id="api"></a>API`, "bullets=auto", "anchor=true", "slug=github"}
+	checks := []string{
+		startMarker + "\n\n* [1. Intro](#intro)",
+		"  * [1.1. API](#api)\n\n<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->",
+		`## 1. <a id="intro"></a>Intro`,
+		`### 1.1. <a id="api"></a>API`,
+		"bullets=auto",
+		"anchor=true",
+		"slug=github",
+	}
 	for _, check := range checks {
 		if !strings.Contains(got, check) {
 			t.Fatalf("generated output missing %q:\n%s", check, got)
@@ -181,6 +189,12 @@ func TestGeneratePreservesForeignTOCContentAsComment(t *testing.T) {
 	}
 	if !strings.Contains(got, preservedCommentHeader+"\nSome handwritten note\n-->") {
 		t.Fatalf("foreign ToC content was not preserved:\n%s", got)
+	}
+	if !strings.Contains(got, startMarker+"\n"+preservedCommentHeader+"\nSome handwritten note\n-->\n\n* [1. Intro](#intro)") {
+		t.Fatalf("generated ToC was not surrounded by a leading blank line:\n%s", got)
+	}
+	if !strings.Contains(got, "* [1. Intro](#intro)\n\n<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->") {
+		t.Fatalf("generated ToC was not surrounded by a trailing blank line:\n%s", got)
 	}
 }
 

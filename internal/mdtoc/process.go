@@ -394,10 +394,11 @@ func renderContainer(cfg Config, existing *Container, preserved, toc []string) [
 		lines = append(lines, preserved...)
 	}
 	if len(toc) > 0 {
-		if len(preserved) > 0 {
+		if len(lines) == 1 || strings.TrimSpace(lines[len(lines)-1]) != "" {
 			lines = append(lines, "")
 		}
 		lines = append(lines, toc...)
+		lines = append(lines, "")
 	}
 	if shouldRenderConfig(cfg, existing) {
 		multiline := existing != nil && existing.ConfigPresent && existing.ConfigMultiline

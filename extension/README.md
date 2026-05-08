@@ -7,16 +7,10 @@
 
 This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc) and updates the active Markdown document in place.
 
+<details markdown="1"> <!-- parse this block as markdown -->
+<summary><strong style="font-size: 1.25em;">Table of Contents</strong> <span style="font-size: 0.66em;">(click to expand)</span></summary>
+
 <!-- mdtoc -->
-<!-- preserved by mdtoc
-  * [3.1. Behaviour](#31-behaviour) cc
--->
-<!-- preserved by mdtoc
-  * [3.1. Behaviour](#31-behaviour) aa
--->
-<!-- preserved by mdtoc
-  * [3.3. Installation Alternative](#33-installation-alternative) ff
--->
 
 * [1. Features](#1-features)
 * [2. How to Use](#2-how-to-use)
@@ -25,17 +19,11 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
   * [3.2. Configuration](#32-configuration)
   * [3.3. Installation Alternative](#33-installation-alternative)
   * [3.4. Continuous Integration](#34-continuous-integration)
-<!--
-numbering=true
-min=2
-max=4
-slug=gitlab
-anchor=false
-link=true
-toc=true
-bullets=auto
--->
+
+<!-- numbering=true min=2 max=4 slug=gitlab anchor=false link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
+
+</details>
 
 ## 1. Features
 
