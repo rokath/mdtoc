@@ -6,6 +6,18 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.3.0..HEAD`
+
+```txt
+```
+
+## <a id='v0.3.0-changes'></a>v0.3.0 Changes (2026-05-08)
+
+### <a id='v0.3.0-overview'></a>v0.3.0 Overview
+
 * VS Code extension packaging was extended further:
   * `extension/scripts/package-release.mjs` now also stages and packages a dedicated `mdtoc-vscode-win32-arm64.vsix`
   * the Marketplace publish workflow now expects six VSIX assets instead of five
@@ -31,6 +43,13 @@ This file summarizes notable repository changes in a compact, release-oriented f
 Used git range: `v0.2.9..HEAD`
 
 ```txt
+* baa7ee6 (HEAD -> dev, origin/dev) docs(changelog): document unreleased updates
+* d4aca4f feat(mdtoc): implement compact config interface
+* 4eb54a9 fix(cli): report date for local builds
+* a69435f docs(agents): require detailed Go comments
+* 2297082 Update EXAMPLE.md
+* 624a158 minor linting
+* f27580c vsix `win32-arm64` package included
 ```
 
 ## <a id='v0.2.9-changes'></a>v0.2.9 Changes (2026-05-07)
@@ -64,7 +83,27 @@ Used git range: `v0.2.9..HEAD`
 Used git range: `v0.2.8..v0.2.9`
 
 ```txt
-* <pending>
+* 6199c79 (tag: v0.2.9) Merge pull request #83 from rokath/dev
+* 23e3441 v0.2.9 prepare
+* 92ea60d Merge pull request #82 from rokath/dev
+* 573bd1a v0.2.9 release prepare
+* 99d039a Animation updated with new functionality
+* 5562dea Merge pull request #81 from rokath/dev
+* d3bb4a8 feat(anchor): accept on/true aliases for github (#78)
+* bcd4ff3 docs(agents): require issue references in commit messages
+* d24cb46 fix(parser): handle nested fenced code blocks (#77)
+* 783e491 feat(extension): support linux-arm64 VSIX packaging
+* 9d11193 Merge pull request #79 from rokath/dev
+* b2521fc clearer now
+* 03c6c6e (main) Merge pull request #76 from rokath/dev
+* fd32b27 minor corrections
+* 6be809e Docs: harden main branch workflow guardrails
+* ed39a74 Merge accidental main commits into dev
+* 941496e Layout slightly changed
+* a062a66 Docs: update extension README
+* af16fc4 Fix anchor-off ToC targets and module path
+* 3f08d29 renamed in less critical name
+* 1064395 (tag: v0.2.6) release: prepare v0.2.6 extension version
 ```
 
 ## <a id='v0.2.8-changes'></a>v0.2.8 Changes (2026-05-05)
