@@ -335,8 +335,10 @@ func parseRootInvocation(args []string) (rootInvocation, error) {
 	numberingShort := fs.String("n", "", "")
 	minLevel := fs.Int("min-level", 2, "")
 	maxLevel := fs.Int("max-level", 4, "")
-	anchor := fs.String("anchor", string(AnchorGitHub), "")
+	anchor := fs.String("anchor", "on", "")
 	anchorShort := fs.String("a", "", "")
+	slug := fs.String("slug", string(SlugGitHub), "")
+	link := fs.String("link", "on", "")
 	toc := fs.String("toc", "on", "")
 	bullets := fs.String("bullets", "auto", "")
 	bulletsShort := fs.String("b", "", "")
@@ -365,7 +367,7 @@ func parseRootInvocation(args []string) (rootInvocation, error) {
 		*bullets = *bulletsShort
 	}
 
-	options, err := buildGenerateOptions(*numbering, *minLevel, *maxLevel, *anchor, *toc, *bullets)
+	options, err := buildGenerateOptions(*numbering, *minLevel, *maxLevel, *slug, *anchor, *link, *toc, *bullets)
 	if err != nil {
 		return rootInvocation{}, err
 	}
@@ -394,8 +396,10 @@ func parseGenerateInvocation(args []string) (generateInvocation, error) {
 	numberingShort := fs.String("n", "", "")
 	minLevel := fs.Int("min-level", 2, "")
 	maxLevel := fs.Int("max-level", 4, "")
-	anchor := fs.String("anchor", string(AnchorGitHub), "")
+	anchor := fs.String("anchor", "on", "")
 	anchorShort := fs.String("a", "", "")
+	slug := fs.String("slug", string(SlugGitHub), "")
+	link := fs.String("link", "on", "")
 	toc := fs.String("toc", "on", "")
 	bullets := fs.String("bullets", "auto", "")
 	bulletsShort := fs.String("b", "", "")
@@ -423,7 +427,7 @@ func parseGenerateInvocation(args []string) (generateInvocation, error) {
 		*bullets = *bulletsShort
 	}
 
-	options, err := buildGenerateOptions(*numbering, *minLevel, *maxLevel, *anchor, *toc, *bullets)
+	options, err := buildGenerateOptions(*numbering, *minLevel, *maxLevel, *slug, *anchor, *link, *toc, *bullets)
 	if err != nil {
 		return generateInvocation{}, err
 	}
@@ -513,12 +517,20 @@ func parseStripInvocation(args []string) (stripInvocation, error) {
 
 // buildGenerateOptions converts the CLI flag strings into the validated
 // execution options consumed by Generate.
-func buildGenerateOptions(numbering string, minLevel, maxLevel int, anchor string, toc string, bullets string) (Options, error) {
+func buildGenerateOptions(numbering string, minLevel, maxLevel int, slug string, anchor string, link string, toc string, bullets string) (Options, error) {
 	numberingValue, err := parseBoolValue(numbering)
 	if err != nil {
 		return Options{}, err
 	}
-	anchorValue, err := parseAnchorMode(anchor)
+	slugValue, err := parseSlugMode(slug)
+	if err != nil {
+		return Options{}, err
+	}
+	anchorValue, err := parseBoolValue(anchor)
+	if err != nil {
+		return Options{}, err
+	}
+	linkValue, err := parseBoolValue(link)
 	if err != nil {
 		return Options{}, err
 	}
@@ -534,7 +546,11 @@ func buildGenerateOptions(numbering string, minLevel, maxLevel int, anchor strin
 		Numbering: numberingValue,
 		MinLevel:  minLevel,
 		MaxLevel:  maxLevel,
+		Slug:      slugValue,
 		Anchor:    anchorValue,
+		AnchorSet: true,
+		Link:      linkValue,
+		LinkSet:   true,
 		TOC:       tocValue,
 		Bullets:   bulletValue,
 	}, nil
@@ -748,7 +764,7 @@ func shortHelp() string {
 
 Commands:
   generate [--file <name> | <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
-  check    [--file <name> | <name>] [--verbose]            validate that the document matches its persisted state
+  check    [--file <name> | <name>] [--verbose]            validate that the document matches regenerated output
   regen    [--file <name> | <name>] [--verbose]            regenerate using persisted container config
   refresh  [--file <name> | <name>] [--verbose]            alias for regen
   strip    [--file <name> | <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
@@ -771,7 +787,7 @@ are provided, it behaves like regen. Otherwise it behaves like generate.
 
 Commands:
   generate [--file <name> | <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
-  check    [--file <name> | <name>] [--verbose]            validate that the document matches its persisted state
+  check    [--file <name> | <name>] [--verbose]            validate that the document matches regenerated output
   regen    [--file <name> | <name>] [--verbose]            regenerate using persisted container config
   refresh  [--file <name> | <name>] [--verbose]            alias for regen
   strip    [--file <name> | <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
@@ -780,7 +796,9 @@ Generate options:
   --numbering=on  heading numbers on or off
   --min-level=2   minimum heading level (valid 1 to --max-level)
   --max-level=4   maximum heading level (valid --min-level to 6)
-  --anchor=github anchor profile: github, gitlab, or off (aliases: on/true=github, false=off)
+  --slug=github   slug profile: github, gitlab, or crossnote
+  --anchor=on     inline anchors on or off
+  --link=on       ToC entries as links on or off
   --toc=on        table of contents on or off
   --bullets=auto  ToC bullets auto, *, -, or +
 
@@ -804,7 +822,9 @@ Options:
   --numbering, -n <on|off>
   --min-level <N>
   --max-level <N>
-  --anchor, -a <github|gitlab|off|on|true|false>
+  --slug <github|gitlab|crossnote>
+  --anchor, -a <on|off|true|false>
+  --link <on|off|true|false>
   --toc <on|off>
   --bullets, -b <auto|*|-|+>
   --file, -f <name>
@@ -818,7 +838,9 @@ Options:
   --numbering, -n <on|off>
   --min-level <N>
   --max-level <N>
-  --anchor, -a <github|gitlab|off|on|true|false>
+  --slug <github|gitlab|crossnote>
+  --anchor, -a <on|off|true|false>
+  --link <on|off|true|false>
   --toc <on|off>
   --bullets, -b <auto|*|-|+>
   --file, -f <name>
@@ -882,7 +904,7 @@ func checkHelp(verbose bool) string {
 	if verbose {
 		return strings.TrimSpace(`mdtoc check [--file <name> | <name>] [--verbose]
 
-Reconstruct the target document state and compare it byte-for-byte.
+Reconstruct the generated target output and compare it byte-for-byte.
 
 Options:
   --file, -f <name>

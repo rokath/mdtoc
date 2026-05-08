@@ -12,6 +12,9 @@
 * Prefer minimal, reviewable diffs over broad rewrites.
 * Do not reformat entire files unless formatting is part of the requested task.
 * Preserve file encoding and line endings where practical.
+* Newly generated Go code must be thoroughly commented.
+* For Go, comment package-level and module-local functions, variables, constants, types, and non-obvious control flow, even when identifiers are not exported.
+* Go comments must explain intent, invariants, edge cases, and repository-specific reasoning rather than merely restating the identifier name.
 
 ## Project Structure
 

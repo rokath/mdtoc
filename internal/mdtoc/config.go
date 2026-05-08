@@ -6,106 +6,77 @@ import (
 	"strings"
 )
 
-// parseConfig parses the exact fixed-order config block described by the spec.
+// parseConfig parses the compact key/value config comment.
 func parseConfig(lines []string) (Config, error) {
-	if len(lines) < 8 || len(lines) > 10 {
-		return Config{}, configBlockLengthError(lines)
-	}
-	if strings.TrimSpace(lines[0]) != configStart || strings.TrimSpace(lines[len(lines)-1]) != configEnd {
-		return Config{}, fmt.Errorf("invalid mdtoc config block delimiters")
+	content, err := configCommentContent(lines)
+	if err != nil {
+		return Config{}, err
 	}
 	cfg := DefaultConfig()
-	nextLine := 1
-	if strings.HasPrefix(strings.TrimSpace(lines[nextLine]), "container-version=") {
-		if err := parseConfigLine(lines[nextLine], "container-version", func(value string) error {
-			v, err := parseContainerVersion(value)
+	seen := map[string]bool{}
+	for _, field := range strings.Fields(content) {
+		parts := strings.SplitN(field, "=", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			return Config{}, fmt.Errorf("invalid config token %q", field)
+		}
+		key, value := parts[0], parts[1]
+		if !isKnownConfigKey(key) {
+			continue
+		}
+		if seen[key] {
+			return Config{}, fmt.Errorf("duplicate config key %q", key)
+		}
+		seen[key] = true
+		switch key {
+		case "numbering":
+			v, err := parseBoolValue(value)
 			if err != nil {
-				return err
+				return Config{}, fmt.Errorf("invalid numbering: %w", err)
 			}
-			cfg.ContainerVersion = v
-			return nil
-		}); err != nil {
-			return Config{}, err
-		}
-		nextLine++
-	} else {
-		cfg.ContainerVersion = ContainerVersionV1
-	}
-	remaining := len(lines) - nextLine - 1
-	switch remaining {
-	case 7:
-		cfg.BulletsExplicit = true
-	case 6:
-		cfg.Bullets = BulletStar
-		cfg.BulletsExplicit = false
-	default:
-		return Config{}, configBlockLengthError(lines)
-	}
-	if cfg.ContainerVersion == ContainerVersionV2 && !cfg.BulletsExplicit {
-		return Config{}, fmt.Errorf("container-version v2 requires an explicit bullets line")
-	}
-	if err := parseConfigLine(lines[nextLine], "numbering", func(value string) error {
-		v, err := parseBoolValue(value)
-		if err != nil {
-			return err
-		}
-		cfg.Numbering = v
-		return nil
-	}); err != nil {
-		return Config{}, err
-	}
-	if err := parseConfigLine(lines[nextLine+1], "min-level", func(value string) error {
-		n, err := strconv.Atoi(value)
-		if err != nil {
-			return fmt.Errorf("invalid min-level: %w", err)
-		}
-		cfg.MinLevel = n
-		return nil
-	}); err != nil {
-		return Config{}, err
-	}
-	if err := parseConfigLine(lines[nextLine+2], "max-level", func(value string) error {
-		n, err := strconv.Atoi(value)
-		if err != nil {
-			return fmt.Errorf("invalid max-level: %w", err)
-		}
-		cfg.MaxLevel = n
-		return nil
-	}); err != nil {
-		return Config{}, err
-	}
-	if err := parseAnchorConfigLine(lines[nextLine+3], &cfg); err != nil {
-		return Config{}, err
-	}
-	if err := parseConfigLine(lines[nextLine+4], "toc", func(value string) error {
-		v, err := parseBoolValue(value)
-		if err != nil {
-			return err
-		}
-		cfg.TOC = v
-		return nil
-	}); err != nil {
-		return Config{}, err
-	}
-	stateLine := nextLine + 5
-	if cfg.BulletsExplicit {
-		if err := parseConfigLine(lines[stateLine], "bullets", func(value string) error {
+			cfg.Numbering = v
+		case "min":
+			n, err := strconv.Atoi(value)
+			if err != nil {
+				return Config{}, fmt.Errorf("invalid min: %w", err)
+			}
+			cfg.MinLevel = n
+		case "max":
+			n, err := strconv.Atoi(value)
+			if err != nil {
+				return Config{}, fmt.Errorf("invalid max: %w", err)
+			}
+			cfg.MaxLevel = n
+		case "slug":
+			v, err := parseSlugMode(value)
+			if err != nil {
+				return Config{}, err
+			}
+			cfg.Slug = v
+		case "anchor":
+			v, err := parseBoolValue(value)
+			if err != nil {
+				return Config{}, fmt.Errorf("invalid anchor: %w", err)
+			}
+			cfg.Anchor = v
+		case "link":
+			v, err := parseBoolValue(value)
+			if err != nil {
+				return Config{}, fmt.Errorf("invalid link: %w", err)
+			}
+			cfg.Link = v
+		case "toc":
+			v, err := parseBoolValue(value)
+			if err != nil {
+				return Config{}, fmt.Errorf("invalid toc: %w", err)
+			}
+			cfg.TOC = v
+		case "bullets":
 			v, err := parseBulletMode(value)
 			if err != nil {
-				return err
+				return Config{}, err
 			}
 			cfg.Bullets = v
-			return nil
-		}); err != nil {
-			return Config{}, err
 		}
-		stateLine = nextLine + 6
-	}
-	if err := parseConfigLine(lines[stateLine], "state", func(value string) error {
-		cfg.State = State(value)
-		return nil
-	}); err != nil {
-		return Config{}, err
 	}
 	if err := cfg.Validate(); err != nil {
 		return Config{}, err
@@ -113,61 +84,59 @@ func parseConfig(lines []string) (Config, error) {
 	return cfg, nil
 }
 
-func configBlockLengthError(lines []string) error {
-	msg := "invalid mdtoc config block length"
-	for _, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "container-version=") {
-			return fmt.Errorf("%s; this document may have been generated by a newer mdtoc version, please update mdtoc", msg)
-		}
+func configCommentContent(lines []string) (string, error) {
+	if len(lines) == 0 {
+		return "", fmt.Errorf("empty config block")
 	}
-	return fmt.Errorf(msg)
+	if len(lines) == 1 {
+		trimmed := strings.TrimSpace(lines[0])
+		if !strings.HasPrefix(trimmed, "<!--") || !strings.HasSuffix(trimmed, "-->") {
+			return "", fmt.Errorf("invalid config block delimiters")
+		}
+		return strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(trimmed, "<!--"), "-->")), nil
+	}
+	first := strings.TrimSpace(lines[0])
+	last := strings.TrimSpace(lines[len(lines)-1])
+	if !strings.HasPrefix(first, "<!--") || !strings.HasSuffix(last, "-->") {
+		return "", fmt.Errorf("invalid config block delimiters")
+	}
+	parts := []string{strings.TrimSpace(strings.TrimPrefix(first, "<!--"))}
+	for _, line := range lines[1 : len(lines)-1] {
+		parts = append(parts, strings.TrimSpace(line))
+	}
+	parts = append(parts, strings.TrimSpace(strings.TrimSuffix(last, "-->")))
+	return strings.TrimSpace(strings.Join(parts, " ")), nil
 }
 
-func parseConfigLine(line, expectedKey string, set func(value string) error) error {
-	trimmed := strings.TrimSpace(line)
-	parts := strings.SplitN(trimmed, "=", 2)
-	if len(parts) != 2 || parts[0] != expectedKey {
-		return fmt.Errorf("invalid config line %q: expected key %q", trimmed, expectedKey)
-	}
-	return set(parts[1])
-}
-
-func parseAnchorConfigLine(line string, cfg *Config) error {
-	trimmed := strings.TrimSpace(line)
-	parts := strings.SplitN(trimmed, "=", 2)
-	if len(parts) != 2 {
-		return fmt.Errorf("invalid config line %q: expected key %q", trimmed, "anchor")
-	}
-	switch parts[0] {
-	case "anchor":
-		v, err := parseAnchorMode(parts[1])
-		if err != nil {
-			return err
-		}
-		cfg.Anchor = v
-		return nil
-	case "anchors":
-		v, err := parseLegacyAnchorValue(parts[1])
-		if err != nil {
-			return err
-		}
-		cfg.Anchor = v
-		return nil
+func isKnownConfigKey(key string) bool {
+	switch key {
+	case "numbering", "min", "max", "slug", "anchor", "link", "toc", "bullets":
+		return true
 	default:
-		return fmt.Errorf("invalid config line %q: expected key %q", trimmed, "anchor")
+		return false
 	}
 }
 
-func parseContainerVersion(s string) (ContainerVersion, error) {
-	switch ContainerVersion(s) {
-	case ContainerVersionV1, ContainerVersionV2:
-		return ContainerVersion(s), nil
-	default:
-		return "", fmt.Errorf("invalid container-version value %q", s)
+func configContentLooksLikeConfig(content string) bool {
+	fields := strings.Fields(content)
+	if len(fields) == 0 {
+		return true
 	}
+	allKeyValue := true
+	for _, field := range fields {
+		parts := strings.SplitN(field, "=", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			allKeyValue = false
+			continue
+		}
+		if isKnownConfigKey(parts[0]) {
+			return true
+		}
+	}
+	return allKeyValue
 }
 
-// parseBoolValue accepts both CLI-style on/off and canonical true/false booleans.
+// parseBoolValue accepts canonical true/false booleans and on/off aliases.
 func parseBoolValue(s string) (bool, error) {
 	switch s {
 	case "on", "true":
@@ -179,27 +148,12 @@ func parseBoolValue(s string) (bool, error) {
 	}
 }
 
-func parseAnchorMode(s string) (AnchorMode, error) {
-	switch AnchorMode(s) {
-	case AnchorGitHub, AnchorGitLab, AnchorOff:
-		return AnchorMode(s), nil
-	case "on", "true":
-		return AnchorGitHub, nil
-	case "false":
-		return AnchorOff, nil
+func parseSlugMode(s string) (SlugMode, error) {
+	switch SlugMode(s) {
+	case SlugGitHub, SlugGitLab, SlugCrossnote:
+		return SlugMode(s), nil
 	default:
-		return "", fmt.Errorf("invalid anchor value %q", s)
-	}
-}
-
-func parseLegacyAnchorValue(s string) (AnchorMode, error) {
-	switch s {
-	case "on":
-		return AnchorGitHub, nil
-	case "off", "false":
-		return AnchorOff, nil
-	default:
-		return "", fmt.Errorf("invalid on/off value %q", s)
+		return "", fmt.Errorf("invalid slug value %q", s)
 	}
 }
 
@@ -213,29 +167,48 @@ func parseBulletMode(s string) (BulletMode, error) {
 	}
 }
 
-// RenderConfig emits the exact normalized config block.
-func RenderConfig(cfg Config) []string {
-	if cfg.ContainerVersion == "" || cfg.ContainerVersion == ContainerVersionV1 {
-		cfg.ContainerVersion = ContainerVersionV2
+// RenderConfig emits the compact normalized config block.
+func RenderConfig(cfg Config, multiline bool) []string {
+	if multiline {
+		return []string{
+			"<!--",
+			fmt.Sprintf("numbering=%s", boolString(cfg.Numbering)),
+			fmt.Sprintf("min=%d", cfg.MinLevel),
+			fmt.Sprintf("max=%d", cfg.MaxLevel),
+			fmt.Sprintf("slug=%s", cfg.Slug),
+			fmt.Sprintf("anchor=%s", boolString(cfg.Anchor)),
+			fmt.Sprintf("link=%s", boolString(cfg.Link)),
+			fmt.Sprintf("toc=%s", boolString(cfg.TOC)),
+			fmt.Sprintf("bullets=%s", cfg.Bullets),
+			configEnd,
+		}
 	}
-	return []string{
-		configStart,
-		fmt.Sprintf("container-version=%s", cfg.ContainerVersion),
-		fmt.Sprintf("numbering=%s", boolString(cfg.Numbering)),
-		fmt.Sprintf("min-level=%d", cfg.MinLevel),
-		fmt.Sprintf("max-level=%d", cfg.MaxLevel),
-		fmt.Sprintf("anchor=%s", cfg.Anchor),
-		fmt.Sprintf("toc=%s", boolString(cfg.TOC)),
-		fmt.Sprintf("bullets=%s", cfg.Bullets),
-		fmt.Sprintf("state=%s", cfg.State),
-		configEnd,
-	}
+	return []string{fmt.Sprintf("<!-- numbering=%s min=%d max=%d slug=%s anchor=%s link=%s toc=%s bullets=%s -->",
+		boolString(cfg.Numbering),
+		cfg.MinLevel,
+		cfg.MaxLevel,
+		cfg.Slug,
+		boolString(cfg.Anchor),
+		boolString(cfg.Link),
+		boolString(cfg.TOC),
+		cfg.Bullets,
+	)}
 }
 
-// onOff converts a boolean back to the persisted on/off syntax.
 func boolString(v bool) string {
 	if v {
 		return "true"
 	}
 	return "false"
+}
+
+func configEquals(a, b Config) bool {
+	return a.Numbering == b.Numbering &&
+		a.MinLevel == b.MinLevel &&
+		a.MaxLevel == b.MaxLevel &&
+		a.Slug == b.Slug &&
+		a.Anchor == b.Anchor &&
+		a.Link == b.Link &&
+		a.TOC == b.TOC &&
+		a.Bullets == b.Bullets
 }

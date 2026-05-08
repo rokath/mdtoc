@@ -164,6 +164,12 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	if exitCode, err = runner.Run([]string{"generate", "--anchor", "maybe"}); err == nil || exitCode != 1 {
 		t.Fatalf("generate invalid anchor should fail, exit=%d err=%v", exitCode, err)
 	}
+	if exitCode, err = runner.Run([]string{"generate", "--slug", "unknown"}); err == nil || exitCode != 1 {
+		t.Fatalf("generate invalid slug should fail, exit=%d err=%v", exitCode, err)
+	}
+	if exitCode, err = runner.Run([]string{"generate", "--link", "maybe"}); err == nil || exitCode != 1 {
+		t.Fatalf("generate invalid link should fail, exit=%d err=%v", exitCode, err)
+	}
 	if exitCode, err = runner.Run([]string{"generate", "--numbering", "maybe"}); err == nil || exitCode != 1 {
 		t.Fatalf("generate invalid numbering should fail, exit=%d err=%v", exitCode, err)
 	}
@@ -223,71 +229,40 @@ func TestInteractiveInputDetectionBranches(t *testing.T) {
 
 // TestConfigParsingAndValidationErrors verifies config parsing success and representative error paths.
 func TestConfigParsingAndValidationErrors(t *testing.T) {
-	valid := []string{
-		configStart,
-		"container-version=v2",
-		"numbering=true",
-		"min-level=2",
-		"max-level=4",
-		"anchor=off",
-		"toc=true",
-		"bullets=auto",
-		"state=stripped",
-		configEnd,
-	}
+	valid := []string{"<!-- numbering=off min=2 max=4 slug=crossnote anchor=off link=false toc=true bullets=auto future=value -->"}
 	cfg, err := parseConfig(valid)
 	if err != nil {
 		t.Fatalf("parseConfig(valid) error: %v", err)
 	}
-	if cfg.Anchor != AnchorOff || cfg.State != StateStripped || cfg.Bullets != BulletAuto {
+	if cfg.Numbering || cfg.Anchor || cfg.Link || cfg.Slug != SlugCrossnote || cfg.Bullets != BulletAuto {
 		t.Fatalf("parseConfig(valid) returned unexpected config: %+v", cfg)
 	}
-	if cfg.ContainerVersion != ContainerVersionV2 {
-		t.Fatalf("parseConfig(valid) did not record v2 container version: %+v", cfg)
-	}
 
-	legacy := []string{
-		configStart,
-		"numbering=on",
-		"min-level=2",
-		"max-level=4",
-		"anchors=off",
-		"toc=on",
-		"state=stripped",
-		configEnd,
-	}
-	cfg, err = parseConfig(legacy)
+	cfg, err = parseConfig([]string{"<!--", "toc=off", "slug=gitlab", "anchor=true", "-->"})
 	if err != nil {
-		t.Fatalf("parseConfig(legacy) error: %v", err)
+		t.Fatalf("parseConfig(multiline) error: %v", err)
 	}
-	if cfg.Bullets != BulletStar || cfg.BulletsExplicit {
-		t.Fatalf("legacy config should default bullets=* : %+v", cfg)
-	}
-	if cfg.ContainerVersion != ContainerVersionV1 {
-		t.Fatalf("legacy config should default to implicit v1: %+v", cfg)
+	if cfg.TOC || cfg.Slug != SlugGitLab || !cfg.Anchor {
+		t.Fatalf("parseConfig(multiline) returned unexpected config: %+v", cfg)
 	}
 
 	cases := []struct {
 		name  string
 		lines []string
 	}{
-		{"badLength", valid[:8]},
-		{"badDelimiters", append([]string{"<!-- wrong -->"}, valid[1:]...)},
-		{"badKeyOrder", []string{configStart, "anchors=on", "min-level=2", "max-level=4", "numbering=on", "toc=on", "bullets=auto", "state=generated", configEnd}},
-		{"badVersion", []string{configStart, "container-version=v3", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", configEnd}},
-		{"badState", []string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=weird", configEnd}},
-		{"badMin", []string{configStart, "container-version=v2", "numbering=true", "min-level=x", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", configEnd}},
-		{"badMax", []string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=x", "anchor=github", "toc=true", "bullets=auto", "state=generated", configEnd}},
-		{"badBullets", []string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=x", "state=generated", configEnd}},
-		{"missingV2Bullets", []string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "state=generated", configEnd}},
+		{"badDelimiters", []string{"numbering=true"}},
+		{"badToken", []string{"<!-- numbering=true broken -->"}},
+		{"duplicateKnown", []string{"<!-- toc=true toc=false -->"}},
+		{"badSlug", []string{"<!-- slug=unknown -->"}},
+		{"badAnchor", []string{"<!-- anchor=github -->"}},
+		{"badMin", []string{"<!-- min=x -->"}},
+		{"badMax", []string{"<!-- max=x -->"}},
+		{"badBullets", []string{"<!-- bullets=x -->"}},
 	}
 	for _, tc := range cases {
 		if _, err := parseConfig(tc.lines); err == nil {
 			t.Fatalf("parseConfig(%s) unexpectedly succeeded", tc.name)
 		}
-	}
-	if _, err := parseConfig([]string{configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", "extra=line", configEnd}); err == nil || !strings.Contains(err.Error(), "please update mdtoc") {
-		t.Fatalf("parseConfig should hint about newer mdtoc versions for versioned length mismatches: %v", err)
 	}
 
 	if _, err := parseBoolValue("maybe"); err == nil {
@@ -299,29 +274,11 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	if v, err := parseBoolValue("true"); err != nil || !v {
 		t.Fatalf("parseBoolValue(true) = %v, %v", v, err)
 	}
-	if mode, err := parseAnchorMode("gitlab"); err != nil || mode != AnchorGitLab {
-		t.Fatalf("parseAnchorMode(gitlab) = %q, %v", mode, err)
+	if mode, err := parseSlugMode("crossnote"); err != nil || mode != SlugCrossnote {
+		t.Fatalf("parseSlugMode(crossnote) = %q, %v", mode, err)
 	}
-	if mode, err := parseAnchorMode("off"); err != nil || mode != AnchorOff {
-		t.Fatalf("parseAnchorMode(off) = %q, %v", mode, err)
-	}
-	if mode, err := parseAnchorMode("on"); err != nil || mode != AnchorGitHub {
-		t.Fatalf("parseAnchorMode(on) = %q, %v", mode, err)
-	}
-	if mode, err := parseAnchorMode("true"); err != nil || mode != AnchorGitHub {
-		t.Fatalf("parseAnchorMode(true) = %q, %v", mode, err)
-	}
-	if mode, err := parseAnchorMode("false"); err != nil || mode != AnchorOff {
-		t.Fatalf("parseAnchorMode(false) = %q, %v", mode, err)
-	}
-	if version, err := parseContainerVersion("v2"); err != nil || version != ContainerVersionV2 {
-		t.Fatalf("parseContainerVersion(v2) = %q, %v", version, err)
-	}
-	if _, err := parseContainerVersion("v3"); err == nil {
-		t.Fatalf("parseContainerVersion should reject invalid values")
-	}
-	if _, err := parseAnchorMode("maybe"); err == nil {
-		t.Fatalf("parseAnchorMode should reject invalid values")
+	if _, err := parseSlugMode("off"); err == nil {
+		t.Fatalf("parseSlugMode should reject invalid values")
 	}
 	if boolString(false) != "false" {
 		t.Fatalf("boolString(false) must return false")
@@ -334,11 +291,11 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 	}
 
 	for _, cfg := range []Config{
-		{ContainerVersion: "", MinLevel: 0, MaxLevel: 4, Bullets: BulletAuto, State: StateGenerated},
-		{ContainerVersion: ContainerVersionV2, MinLevel: 2, MaxLevel: 7, Bullets: BulletAuto, State: StateGenerated},
-		{ContainerVersion: ContainerVersionV2, MinLevel: 4, MaxLevel: 2, Bullets: BulletAuto, State: StateGenerated},
-		{ContainerVersion: ContainerVersionV2, MinLevel: 2, MaxLevel: 4, Bullets: BulletMode("x"), State: StateGenerated},
-		{ContainerVersion: ContainerVersionV2, MinLevel: 2, MaxLevel: 4, Bullets: BulletAuto, State: State("broken")},
+		{MinLevel: 0, MaxLevel: 4, Slug: SlugGitHub, Bullets: BulletAuto},
+		{MinLevel: 2, MaxLevel: 7, Slug: SlugGitHub, Bullets: BulletAuto},
+		{MinLevel: 4, MaxLevel: 2, Slug: SlugGitHub, Bullets: BulletAuto},
+		{MinLevel: 2, MaxLevel: 4, Slug: SlugMode("x"), Bullets: BulletAuto},
+		{MinLevel: 2, MaxLevel: 4, Slug: SlugGitHub, Bullets: BulletMode("x")},
 	} {
 		if err := cfg.Validate(); err == nil {
 			t.Fatalf("Validate unexpectedly succeeded for %+v", cfg)
@@ -467,82 +424,58 @@ func TestParserAndContainerHelpers(t *testing.T) {
 	if isFenceClose("``` trailing", "```") {
 		t.Fatalf("fence close should reject trailing content")
 	}
-	if end := findConfigEnd([]string{"x", configEnd}, 0); end != 1 {
-		t.Fatalf("findConfigEnd = %d, want 1", end)
-	}
-	if end := findConfigEnd([]string{"x"}, 0); end != -1 {
-		t.Fatalf("findConfigEnd missing terminator = %d, want -1", end)
-	}
-
-	lines := []string{startMarker, configStart, "container-version=v2", "numbering=true", "min-level=2", "max-level=4", "anchor=github", "toc=true", "bullets=auto", "state=generated", configEnd, endMarker}
-	if _, err := buildContainer(lines, -1, 1, -1, -1); err == nil {
+	lines := []string{startMarker, "<!-- numbering=true min=2 max=4 slug=github anchor=true toc=true bullets=auto -->", endMarker}
+	if _, err := buildContainer(lines, -1, 1); err == nil {
 		t.Fatalf("buildContainer should reject incomplete container")
 	}
-	if _, err := buildContainer(lines, 3, 1, 1, 9); err == nil {
+	if _, err := buildContainer(lines, 3, 1); err == nil {
 		t.Fatalf("buildContainer should reject reversed markers")
 	}
-	if _, err := buildContainer(lines, 0, 10, -1, -1); err == nil {
-		t.Fatalf("buildContainer should reject missing config")
+	container, err := buildContainer([]string{startMarker, endMarker}, 0, 1)
+	if err != nil {
+		t.Fatalf("buildContainer should accept a config-less container: %v", err)
 	}
-	if _, err := buildContainer(lines, 0, 10, 0, 9); err == nil {
-		t.Fatalf("buildContainer should reject config outside managed area")
+	if container.ConfigPresent {
+		t.Fatalf("config-less container unexpectedly reported a config block")
 	}
-	if _, err := buildContainer(lines, 0, 10, 1, 8); err == nil {
-		t.Fatalf("buildContainer should reject misplaced config end")
+	container, err = buildContainer(lines, 0, 2)
+	if err != nil {
+		t.Fatalf("buildContainer should accept compact config: %v", err)
+	}
+	if !container.ConfigPresent || container.ConfigMultiline {
+		t.Fatalf("container did not record compact single-line config: %+v", container)
 	}
 
 	if _, err := ParseDocument(strings.Join([]string{startMarker, startMarker, endMarker}, "\n")); err == nil {
 		t.Fatalf("ParseDocument should reject duplicate start marker")
 	}
-	if _, err := ParseDocument(strings.Join([]string{startMarker, endMarker}, "\n")); err == nil {
-		t.Fatalf("ParseDocument should reject missing config block")
+	if parsed, err := ParseDocument(strings.Join([]string{startMarker, endMarker}, "\n")); err != nil || parsed.Container == nil {
+		t.Fatalf("ParseDocument should accept config-less containers: %+v %v", parsed, err)
 	}
 }
 
-// TestProcessHelperBranches covers lower-level process helpers and state-specific check behavior.
+// TestProcessHelperBranches covers lower-level process helpers and generated-target check behavior.
 func TestProcessHelperBranches(t *testing.T) {
-	strippedInput := strings.Join([]string{
-		startMarker,
-		configStart,
-		"container-version=v2",
-		"numbering=true",
-		"min-level=2",
-		"max-level=4",
-		"anchor=github",
-		"toc=true",
-		"bullets=auto",
-		"state=stripped",
-		configEnd,
-		endMarker,
-		"",
-		"## Intro",
-	}, "\n") + "\n"
+	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	strippedInput, _, err := Strip(generated)
+	if err != nil {
+		t.Fatalf("Strip error: %v", err)
+	}
 	ok, _, err := Check(strippedInput)
-	if err != nil || !ok {
+	if err != nil || ok {
 		t.Fatalf("Check(stripped) = %v, %v", ok, err)
 	}
 	if ok, _, err = Check("# Title\n"); err == nil || ok {
 		t.Fatalf("Check without config should fail, got ok=%v err=%v", ok, err)
 	}
 
-	unsupported := strings.Replace(strippedInput, "state=stripped", "state=broken", 1)
-	if _, _, err := Check(unsupported); err == nil {
-		t.Fatalf("Check should reject unsupported state")
-	}
-
 	generatedStateInput := strings.Join([]string{
 		startMarker,
 		"* [1. Intro](#intro)",
-		configStart,
-		"container-version=v2",
-		"numbering=true",
-		"min-level=2",
-		"max-level=4",
-		"anchor=github",
-		"toc=true",
-		"bullets=auto",
-		"state=generated",
-		configEnd,
+		"<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->",
 		endMarker,
 		"",
 		"## 1. <a id=\"intro\"></a>Intro",
@@ -585,8 +518,13 @@ func TestProcessHelperBranches(t *testing.T) {
 		t.Fatalf("preserveForeignTOC did not keep expected chunks: %s", gotPreserved)
 	}
 
-	if !isGeneratedTOCLine("") || isGeneratedTOCLine("plain text") {
+	if !isGeneratedTOCLine("", DefaultConfig()) || isGeneratedTOCLine("plain text", DefaultConfig()) {
 		t.Fatalf("isGeneratedTOCLine returned unexpected result")
+	}
+	linkless := DefaultConfig()
+	linkless.Link = false
+	if !isGeneratedTOCLine("* 1. Intro", linkless) {
+		t.Fatalf("isGeneratedTOCLine should accept plain generated entries when link=false")
 	}
 	if wrapPreservedComment([]string{"", ""}) != nil {
 		t.Fatalf("wrapPreservedComment should drop empty chunks")

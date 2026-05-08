@@ -6,16 +6,50 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+
+### <a id='unreleased-git-log'></a>Unreleased Git Log
+
+Used git range: `v0.3.0..HEAD`
+
+```txt
+```
+
+## <a id='v0.3.0-changes'></a>v0.3.0 Changes (2026-05-08)
+
+### <a id='v0.3.0-overview'></a>v0.3.0 Overview
+
 * VS Code extension packaging was extended further:
   * `extension/scripts/package-release.mjs` now also stages and packages a dedicated `mdtoc-vscode-win32-arm64.vsix`
   * the Marketplace publish workflow now expects six VSIX assets instead of five
   * the release footer examples now list the new `win32-arm64` package
+* Local builds now report a concrete build date:
+  * when `date` is not injected by GoReleaser, `mdtoc --version` falls back to the installed executable's modification time instead of printing `date: unknown`
+  * the fallback is normalized to UTC RFC3339 and covered by a command-level regression test
+* The managed config interface was redesigned around compact `key=value` HTML comments:
+  * the stored config is now optional; deleting it makes `regen` and `check` use defaults
+  * `anchor` is now a Boolean (`true|false|on|off`) and `slug=github|gitlab|crossnote` selects the slug algorithm independently
+  * `link=true|false` now controls whether ToC entries are rendered as Markdown links or plain text
+  * obsolete `state`, `container-version`, and legacy `mdtoc-config` compatibility were removed
+* `anchor=false` ToC targets now use the active slug profile and the rendered heading text:
+  * default `slug=github` keeps number separators, for example `1.1. API` -> `#1-1-api`
+  * `slug=crossnote` covers Markdown Preview Enhanced / Crossnote behavior, including ATX closing hash markers such as `## An ATX title with closing hash markers  ####` -> `#an-atx-title-with-closing-hash-markers--`
+  * dedicated unit and CLI workflow tests cover renderer-style targets, Unicode retention, and collision handling for numbered headings
+* Boolean option parsing was normalized across CLI and stored config:
+  * `on|true` normalize to `true`, and `off|false` normalize to `false`
+  * virtual file-based workflow tests cover both CLI values and stored config values
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.2.8..HEAD`
+Used git range: `v0.2.9..HEAD`
 
 ```txt
+* baa7ee6 (HEAD -> dev, origin/dev) docs(changelog): document unreleased updates
+* d4aca4f feat(mdtoc): implement compact config interface
+* 4eb54a9 fix(cli): report date for local builds
+* a69435f docs(agents): require detailed Go comments
+* 2297082 Update EXAMPLE.md
+* 624a158 minor linting
+* f27580c vsix `win32-arm64` package included
 ```
 
 ## <a id='v0.2.9-changes'></a>v0.2.9 Changes (2026-05-07)
@@ -49,7 +83,27 @@ Used git range: `v0.2.8..HEAD`
 Used git range: `v0.2.8..v0.2.9`
 
 ```txt
-* <pending>
+* 6199c79 (tag: v0.2.9) Merge pull request #83 from rokath/dev
+* 23e3441 v0.2.9 prepare
+* 92ea60d Merge pull request #82 from rokath/dev
+* 573bd1a v0.2.9 release prepare
+* 99d039a Animation updated with new functionality
+* 5562dea Merge pull request #81 from rokath/dev
+* d3bb4a8 feat(anchor): accept on/true aliases for github (#78)
+* bcd4ff3 docs(agents): require issue references in commit messages
+* d24cb46 fix(parser): handle nested fenced code blocks (#77)
+* 783e491 feat(extension): support linux-arm64 VSIX packaging
+* 9d11193 Merge pull request #79 from rokath/dev
+* b2521fc clearer now
+* 03c6c6e (main) Merge pull request #76 from rokath/dev
+* fd32b27 minor corrections
+* 6be809e Docs: harden main branch workflow guardrails
+* ed39a74 Merge accidental main commits into dev
+* 941496e Layout slightly changed
+* a062a66 Docs: update extension README
+* af16fc4 Fix anchor-off ToC targets and module path
+* 3f08d29 renamed in less critical name
+* 1064395 (tag: v0.2.6) release: prepare v0.2.6 extension version
 ```
 
 ## <a id='v0.2.8-changes'></a>v0.2.8 Changes (2026-05-05)

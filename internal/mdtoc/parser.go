@@ -11,6 +11,7 @@ var (
 	headingStartRE  = regexp.MustCompile(`^(#{1,6}) `)
 	managedNumberRE = regexp.MustCompile(`^(\d+(?:\.\d+)*)\. `)
 	managedAnchorRE = regexp.MustCompile(`^<a id="([^"]+)"></a>`)
+	closingATXRE    = regexp.MustCompile(`[ \t]+#+[ \t]*$`)
 )
 
 // ParseDocument performs the line-oriented structural parse required by the
@@ -21,7 +22,6 @@ func ParseDocument(input string) (*ParsedDocument, error) {
 	parsed.Lines = splitLines(input)
 
 	startLine, endLine := -1, -1
-	configStartLine, configEndLine := -1, -1
 
 	inFence := false
 	fenceMarker := ""
@@ -60,18 +60,6 @@ func ParseDocument(input string) (*ParsedDocument, error) {
 			endLine = i
 			continue
 		}
-		if trimmed == configStart {
-			if configStartLine != -1 {
-				return nil, errors.New("duplicate mdtoc config block")
-			}
-			configStartLine = i
-			configEndLine = findConfigEnd(parsed.Lines, i+1)
-			if configEndLine == -1 {
-				return nil, errors.New("unterminated mdtoc config block")
-			}
-			i = configEndLine
-			continue
-		}
 		if startsGenericHTMLComment(trimmed) {
 			if !strings.Contains(trimmed, "-->") {
 				inGenericComment = true
@@ -79,7 +67,7 @@ func ParseDocument(input string) (*ParsedDocument, error) {
 		}
 	}
 
-	container, err := buildContainer(parsed.Lines, startLine, endLine, configStartLine, configEndLine)
+	container, err := buildContainer(parsed.Lines, startLine, endLine)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +96,7 @@ func startsGenericHTMLComment(trimmed string) bool {
 	if !strings.HasPrefix(trimmed, "<!--") {
 		return false
 	}
-	return trimmed != startMarker && trimmed != endMarker && trimmed != offMarker && trimmed != onMarker && trimmed != configStart
+	return trimmed != startMarker && trimmed != endMarker && trimmed != offMarker && trimmed != onMarker
 }
 
 // fenceOpen reports the full supported fence run that starts on the given line.
@@ -147,19 +135,9 @@ func leadingFenceRun(trimmed string) string {
 	return trimmed[:i]
 }
 
-// findConfigEnd searches for the terminating line of the config block.
-func findConfigEnd(lines []string, start int) int {
-	for i := start; i < len(lines); i++ {
-		if strings.TrimSpace(lines[i]) == configEnd {
-			return i
-		}
-	}
-	return -1
-}
-
 // buildContainer validates and materializes the parsed managed container metadata.
-func buildContainer(lines []string, startLine, endLine, configStartLine, configEndLine int) (*Container, error) {
-	if startLine == -1 && endLine == -1 && configStartLine == -1 {
+func buildContainer(lines []string, startLine, endLine int) (*Container, error) {
+	if startLine == -1 && endLine == -1 {
 		return nil, nil
 	}
 	if startLine == -1 || endLine == -1 {
@@ -168,18 +146,24 @@ func buildContainer(lines []string, startLine, endLine, configStartLine, configE
 	if startLine > endLine {
 		return nil, errors.New("mdtoc start marker appears after end marker")
 	}
-	if configStartLine == -1 || configEndLine == -1 {
-		return nil, errors.New("missing mdtoc config block")
-	}
-	if configStartLine <= startLine || configEndLine >= endLine {
-		return nil, errors.New("mdtoc config block must be inside the container")
-	}
-	if configEndLine+1 != endLine {
-		return nil, errors.New("mdtoc config block must appear immediately before the end marker")
-	}
-	cfg, err := parseConfig(lines[configStartLine : configEndLine+1])
-	if err != nil {
-		return nil, err
+	cfg := DefaultConfig()
+	configStartLine, configEndLine := -1, -1
+	configPresent, configMultiline := false, false
+	tocEnd := endLine
+	if startLine+1 < endLine {
+		start, end, multiline, ok, err := findTrailingConfigBlock(lines, startLine+1, endLine-1)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			cfg, err = parseConfig(lines[start : end+1])
+			if err != nil {
+				return nil, err
+			}
+			configStartLine, configEndLine = start, end
+			configPresent, configMultiline = true, multiline
+			tocEnd = start
+		}
 	}
 	return &Container{
 		StartLine:       startLine,
@@ -187,8 +171,43 @@ func buildContainer(lines []string, startLine, endLine, configStartLine, configE
 		ConfigEndLine:   configEndLine,
 		EndLine:         endLine,
 		Config:          cfg,
-		TOCArea:         append([]string(nil), lines[startLine+1:configStartLine]...),
+		ConfigPresent:   configPresent,
+		ConfigMultiline: configMultiline,
+		TOCArea:         append([]string(nil), lines[startLine+1:tocEnd]...),
 	}, nil
+}
+
+func findTrailingConfigBlock(lines []string, first, last int) (int, int, bool, bool, error) {
+	if last < first {
+		return 0, 0, false, false, nil
+	}
+	trimmedLast := strings.TrimSpace(lines[last])
+	if strings.HasPrefix(trimmedLast, "<!--") && strings.HasSuffix(trimmedLast, "-->") {
+		content, err := configCommentContent([]string{lines[last]})
+		if err != nil {
+			return 0, 0, false, false, err
+		}
+		if configContentLooksLikeConfig(content) {
+			return last, last, false, true, nil
+		}
+		return 0, 0, false, false, nil
+	}
+	if !strings.HasSuffix(trimmedLast, "-->") {
+		return 0, 0, false, false, nil
+	}
+	for i := last - 1; i >= first; i-- {
+		if strings.HasPrefix(strings.TrimSpace(lines[i]), "<!--") {
+			content, err := configCommentContent(lines[i : last+1])
+			if err != nil {
+				return 0, 0, false, false, err
+			}
+			if configContentLooksLikeConfig(content) {
+				return i, last, true, true, nil
+			}
+			return 0, 0, false, false, nil
+		}
+	}
+	return 0, 0, false, false, fmt.Errorf("unterminated trailing config block")
 }
 
 // parseHeadings scans the document for managed heading candidates and warnings.
@@ -266,7 +285,7 @@ func parseHeadingLine(line string, lineIndex int) (Heading, string, bool, error)
 	} else if strings.HasPrefix(rest, "<a id=") {
 		warning := fmt.Sprintf("warning: heading line %d contains a non-managed inline anchor; raw stripping will leave it unchanged", lineIndex+1)
 		h.TitleMarkup = rest
-		text, err := ExtractPlainText(rest)
+		text, err := ExtractPlainText(stripClosingATX(rest))
 		if err != nil {
 			return Heading{}, "", false, err
 		}
@@ -277,10 +296,14 @@ func parseHeadingLine(line string, lineIndex int) (Heading, string, bool, error)
 		return Heading{}, "", false, nil
 	}
 	h.TitleMarkup = rest
-	text, err := ExtractPlainText(rest)
+	text, err := ExtractPlainText(stripClosingATX(rest))
 	if err != nil {
 		return Heading{}, "", false, err
 	}
 	h.TitleText = text
 	return h, "", true, nil
+}
+
+func stripClosingATX(title string) string {
+	return closingATXRE.ReplaceAllString(title, "")
 }

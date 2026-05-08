@@ -92,7 +92,7 @@ func TestRunnerSubcommandVerboseWithoutHelpPrintsLongHelp(t *testing.T) {
 		{args: []string{"regen", "--verbose"}, want: "Regenerate using the persisted config from an existing managed container."},
 		{args: []string{"refresh", "--verbose"}, want: "Regenerate using the persisted config from an existing managed container."},
 		{args: []string{"strip", "--verbose"}, want: "Remove managed artifacts and optionally the entire managed container."},
-		{args: []string{"check", "--verbose"}, want: "Reconstruct the target document state and compare it byte-for-byte."},
+		{args: []string{"check", "--verbose"}, want: "Reconstruct the generated target output and compare it byte-for-byte."},
 	}
 
 	for _, tc := range tests {
@@ -154,7 +154,8 @@ func TestRunnerRootConvenienceRegenFromStdin(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorOff,
+		Anchor:    false,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -216,7 +217,8 @@ func TestRunnerRegenFromStdin(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorOff,
+		Anchor:    false,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -244,7 +246,8 @@ func TestRunnerRefreshAliasFromStdin(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorOff,
+		Anchor:    false,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -401,7 +404,8 @@ func TestRunnerRegenWithFileDoesNotRequireStdin(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorOff,
+		Anchor:    false,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -439,7 +443,8 @@ func TestRunnerRejectsMixedFileAndStdinRegen(t *testing.T) {
 		Numbering: false,
 		MinLevel:  2,
 		MaxLevel:  4,
-		Anchor:    AnchorOff,
+		Anchor:    false,
+		AnchorSet: true,
 		TOC:       true,
 	})
 	if err != nil {
@@ -570,7 +575,7 @@ func TestRunnerGenerateThenCheckWithFixtureFile(t *testing.T) {
 
 // TestRunnerCheckExitCodeOnMismatch verifies the special mismatch exit code from check.
 func TestRunnerCheckExitCodeOnMismatch(t *testing.T) {
-	stdin := strings.NewReader(strings.Join([]string{startMarker, "* [1. Wrong](#wrong)", configStart, "numbering=on", "min-level=2", "max-level=4", "anchor=github", "toc=on", "state=generated", configEnd, endMarker, "", "## Intro"}, "\n") + "\n")
+	stdin := strings.NewReader(strings.Join([]string{startMarker, "* [1. Wrong](#wrong)", "<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->", endMarker, "", "## Intro"}, "\n") + "\n")
 	var stdout, stderr strings.Builder
 	runner := NewRunner(stdin, &stdout, &stderr)
 	exitCode, err := runner.Run([]string{"check"})
