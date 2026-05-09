@@ -6,13 +6,28 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
-* GitHub-compatible slug generation now removes punctuation instead of turning it into hyphens, and preserves literal repeated spaces and hyphens as separate slug characters.
-
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v0.3.0..HEAD`
+Used git range: `v0.3.2..HEAD`
 
 ```txt
+```
+
+## <a id='v0.3.2-changes'></a>v0.3.2 Changes (2026-05-09)
+
+### <a id='v0.3.2-overview'></a>v0.3.2 Overview
+
+* GitHub-compatible slug generation now removes punctuation instead of turning it into hyphens, and preserves literal repeated spaces and hyphens as separate slug characters:
+  * punctuation such as `.` and `+` is removed before slug characters are emitted
+  * literal spaces become literal hyphens, so repeated spaces remain visible in the slug
+  * `-` and `_` stay intact, and duplicate anchors continue to get `-1`, `-2`, ...
+
+### <a id='v0.3.2-git-log'></a>v0.3.2 Git Log
+
+Used git range: `v0.3.1..HEAD`
+
+```txt
+* f197dad fix(slug): correct github punctuation handling
 ```
 
 ## <a id='v0.3.1-changes'></a>v0.3.1 Changes (2026-05-08)
@@ -28,7 +43,7 @@ Used git range: `v0.3.0..HEAD`
 
 ### <a id='v0.3.1-git-log'></a>v0.3.1 Git Log
 
-Used git range: `v0.3.0..HEAD`
+Used git range: `v0.3.0..v0.3.1`
 
 ```txt
 * 31fd3d6 fix(strip): preserve foreign toc content
