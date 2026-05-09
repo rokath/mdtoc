@@ -47,34 +47,26 @@ func (s *Slugger) Next(title string) string {
 
 // slugifyGitHubBase implements the GitHub-compatible slug/anchor rules.
 func slugifyGitHubBase(title string) string {
+	title = strings.TrimSpace(title)
 	title = strings.ToLower(title)
 	var b strings.Builder
 	hasContent := false
-	pendingDash := false
 	for _, r := range title {
 		switch {
 		case unicode.IsLetter(r) || unicode.IsDigit(r):
-			if pendingDash && hasContent {
-				b.WriteByte('-')
-			}
 			b.WriteRune(r)
 			hasContent = true
-			pendingDash = false
+		case r == '-' || r == '_':
+			b.WriteRune(r)
+			hasContent = true
+		case r == ' ':
+			if hasContent {
+				b.WriteByte('-')
+			}
 		case unicode.IsSpace(r):
-			if hasContent {
-				pendingDash = true
-			}
-		case unicode.IsPunct(r):
-			if isInWordPunctuation(r) {
-				continue
-			}
-			if hasContent {
-				pendingDash = true
-			}
+			continue
 		default:
-			if hasContent {
-				pendingDash = true
-			}
+			continue
 		}
 	}
 	if b.Len() == 0 {
@@ -161,11 +153,3 @@ func collapseHyphenRuns(s string) string {
 }
 
 // isInWordPunctuation reports whether the rune may stay inside a slugged word.
-func isInWordPunctuation(r rune) bool {
-	switch r {
-	case '\'', '’', '"', '“', '”':
-		return true
-	default:
-		return false
-	}
-}

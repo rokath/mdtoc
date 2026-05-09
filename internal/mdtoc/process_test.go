@@ -322,7 +322,7 @@ func TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *testing.T) {
 
 	checks := []string{
 		"* [1. Intro](#1-intro)",
-		"  * [1.1. API](#1-1-api)",
+		"  * [1.1. API](#11-api)",
 		"## 1. Intro",
 		"### 1.1. API",
 	}
@@ -382,7 +382,7 @@ func TestGenerateAnchorOffNumberingPreservesTitleNumberBoundary(t *testing.T) {
 
 	checks := []string{
 		"* [1. Intro](#1-intro)",
-		"  * [1.1. 2025 Roadmap](#1-1-2025-roadmap)",
+		"  * [1.1. 2025 Roadmap](#11-2025-roadmap)",
 		"### 1.1. 2025 Roadmap",
 	}
 	for _, check := range checks {

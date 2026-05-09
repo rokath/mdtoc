@@ -7,10 +7,18 @@ func TestGitHubSluggerExamplesFromSpec(t *testing.T) {
 	slugger := NewSlugger()
 	cases := []struct{ input, want string }{
 		{"Open source", "open-source"},
+		{"Version 3.5", "version-35"},
+		{"A+B", "ab"},
+		{"foo  bar", "foo--bar"},
+		{"foo---bar", "foo---bar"},
+		{"foo_bar", "foo_bar"},
+		{"Über Привет 中文!", "über-привет-中文"},
 		{"This'll be a Helpful Section About the Greek Letter Θ!", "thisll-be-a-helpful-section-about-the-greek-letter-θ"},
-		{"Übergrößenträger & naïve façade – déjà vu!", "übergrößenträger-naïve-façade-déjà-vu"},
+		{"Übergrößenträger & naïve façade – déjà vu!", "übergrößenträger--naïve-façade--déjà-vu"},
 		{"中文 русский عربى", "中文-русский-عربى"},
 		{"🚀 !!!", "section"},
+		{"Same heading", "same-heading"},
+		{"Same heading", "same-heading-1"},
 		{"API", "api"},
 		{"API", "api-1"},
 	}
@@ -45,9 +53,9 @@ func TestSluggerProfilesDiffer(t *testing.T) {
 		input       string
 		github, lab string
 	}{
-		{input: "Version 3.5", github: "version-3-5", lab: "version-35"},
-		{input: "A+B", github: "a-b", lab: "ab"},
-		{input: "foo_bar baz", github: "foo-bar-baz", lab: "foo_bar-baz"},
+		{input: "foo  bar", github: "foo--bar", lab: "foo-bar"},
+		{input: "foo---bar", github: "foo---bar", lab: "foo-bar"},
+		{input: "foo_bar baz", github: "foo_bar-baz", lab: "foo_bar-baz"},
 	}
 
 	for _, tc := range cases {

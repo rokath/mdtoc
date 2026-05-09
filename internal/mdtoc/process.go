@@ -231,8 +231,13 @@ func assignDerivedArtifacts(headings []Heading, cfg Config) {
 }
 
 func anchorSlugSource(h Heading, cfg Config) string {
-	if cfg.Slug == SlugCrossnote {
+	switch cfg.Slug {
+	case SlugCrossnote:
 		return h.TitleMarkup
+	case SlugGitHub:
+		if text, err := ExtractPlainTextPreservingWhitespace(h.TitleMarkup); err == nil {
+			return text
+		}
 	}
 	return h.TitleText
 }
@@ -242,8 +247,13 @@ func tocSlugSource(h Heading, cfg Config) string {
 		return anchorSlugSource(h, cfg)
 	}
 	source := h.TitleText
-	if cfg.Slug == SlugCrossnote {
+	switch cfg.Slug {
+	case SlugCrossnote:
 		source = h.TitleMarkup
+	case SlugGitHub:
+		if text, err := ExtractPlainTextPreservingWhitespace(h.TitleMarkup); err == nil {
+			source = text
+		}
 	}
 	if h.ManagedNumber != "" {
 		source = h.ManagedNumber + " " + source
