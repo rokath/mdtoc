@@ -642,7 +642,8 @@ Behavior of `slug`:
 * `slug=github` uses the GitHub-compatible rules in section 11.3
 * `slug=gitlab` uses the GitLab rules in section 11.7
 * `slug=crossnote` uses the Crossnote / Markdown Preview Enhanced rules in section 11.8
-* For `slug=github` and `slug=gitlab`, `title_source` is `title_text`.
+* For `slug=github`, `title_source` is the plain heading text after inline-markup removal but before whitespace collapsing.
+* For `slug=gitlab`, `title_source` is `title_text`.
 * For `slug=crossnote`, `title_source` is `title_markup`.
 * ATX closing hash markers are stripped from `title_text`, but remain visible to the Crossnote `title_markup` slug path. Therefore `## An ATX title with closing hash markers  ####` targets `#an-atx-title-with-closing-hash-markers--` when `slug=crossnote`, `anchor=false`, and `link=true`.
 
@@ -677,7 +678,8 @@ The generated values should be:
 For every managed heading, the following applies:
 
 ```text
-slug_source := title_text     // github, gitlab
+slug_source := title_text                               // gitlab
+slug_source := title_markup without inline markup       // github
 slug_source := title_markup   // crossnote
 anchor_id   := slugify(slug_source)
 ```
@@ -694,6 +696,7 @@ The following also applies:
   * HTML tags are removed
   * inline formatting markers `*`, `_`, and `~` are removed
   * whitespace is collapsed to single spaces and trimmed at the ends
+* For `slug=github`, `mdtoc` derives a second whitespace-preserving plain-text form from `title_markup` so repeated spaces remain visible to the slugger while the rendered `title_text` stays normalized for display.
 
 _Explanation:_
 
@@ -704,13 +707,16 @@ _Explanation:_
 
 The function `slugify` MUST perform at least these steps:
 
-1. Input is `title_text`.
+1. Input is the GitHub slug source from section 11.2, meaning the inline-markup-stripped heading text with literal whitespace runs preserved.
 2. Letters are converted to lowercase using Unicode lowercasing.
 3. Markdown formatting characters and inline markup do not contribute literal characters to the slug; only their visible text content counts.
 4. Unicode letters and Unicode decimal digits are preserved.
-5. Runs of whitespace and punctuation **between** preserved text parts are normalized to exactly one `-`.
-6. Leading and trailing runs of whitespace or punctuation do **not** create a leading or trailing `-`.
-7. If the resulting slug already exists in the same document, `-1`, `-2`, `-3`, ... is appended.
+5. Literal U+0020 space characters are converted to `-`.
+6. Other whitespace and punctuation characters are removed.
+7. Existing `-` and `_` characters are preserved.
+8. Repeated spaces therefore produce repeated `-` characters, and repeated existing hyphens are not collapsed.
+9. Leading and trailing whitespace are removed before the character scan.
+10. If the resulting slug already exists in the same document, `-1`, `-2`, `-3`, ... is appended.
 
 _Interpretation:_
 
@@ -721,8 +727,7 @@ _Interpretation:_
 
 Additionally, the following applies in `mdtoc` v1:
 
-* Symbols, emojis, and other non-letter/non-digit characters are removed.
-* Runs of whitespace/punctuation are not rendered as multiple `--`, `---`, etc., but collapsed to exactly one `-`.
+* Symbols, emojis, and other non-letter/non-digit characters are removed unless they are preserved `-` or `_` characters.
 * Collision resolution starts at the **second** occurrence with `-1`.
 * If the normalized slug becomes empty, `mdtoc` uses the fallback `section`.
 * Further collisions on this fallback are resolved as `section-1`, `section-2`, ...
@@ -845,24 +850,21 @@ For `mdtoc`, the GitLab profile is interpreted as follows:
 
 The GitLab profile therefore differs from the GitHub-compatible profile in important edge cases:
 
-* `3.5` becomes `35` in GitLab mode, but `3-5` in GitHub mode.
-* `A+B` becomes `ab` in GitLab mode, but `a-b` in GitHub mode.
-* `foo_bar` stays `foo_bar` in GitLab mode, but becomes `foo-bar` in GitHub mode.
+* `foo  bar` becomes `foo-bar` in GitLab mode, but `foo--bar` in GitHub mode.
+* `foo---bar` becomes `foo-bar` in GitLab mode, but stays `foo---bar` in GitHub mode.
 
 Examples:
 
 ```md
-## Version 3.5
-## A+B
-## foo_bar baz
+## foo  bar
+## foo---bar
 ```
 
 In GitLab mode, these headings yield:
 
 ```text
-version-35
-ab
-foo_bar-baz
+foo-bar
+foo-bar
 ```
 
 ### 11.8. <a id="crossnote-slug-profile"></a>Crossnote / Markdown Preview Enhanced slug profile

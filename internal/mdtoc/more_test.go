@@ -305,17 +305,20 @@ func TestConfigParsingAndValidationErrors(t *testing.T) {
 
 // TestMarkdownHelpersAndHeadingParserBranches covers helper parsing branches for inline Markdown and headings.
 func TestMarkdownHelpersAndHeadingParserBranches(t *testing.T) {
-	if got := extractInlineText("![alt *x*](img.png) and [link](x) <b>tag</b> `code`"); got != "alt x and link tag code" {
+	if got := extractInlineText("![alt *x*](img.png) and [link](x) <b>tag</b> `code`", true); got != "alt x and link tag code" {
 		t.Fatalf("extractInlineText returned %q", got)
 	}
-	if label, consumed, ok := parseBracketLinkLike("[link](target)"); !ok || label != "link" || consumed == 0 {
+	if label, consumed, ok := parseBracketLinkLike("[link](target)", true); !ok || label != "link" || consumed == 0 {
 		t.Fatalf("parseBracketLinkLike valid case failed: %q %d %v", label, consumed, ok)
 	}
-	if _, _, ok := parseBracketLinkLike("nope"); ok {
+	if _, _, ok := parseBracketLinkLike("nope", true); ok {
 		t.Fatalf("parseBracketLinkLike should reject non-links")
 	}
-	if _, _, ok := parseBracketLinkLike("[broken](target"); ok {
+	if _, _, ok := parseBracketLinkLike("[broken](target", true); ok {
 		t.Fatalf("parseBracketLinkLike should reject unterminated target")
+	}
+	if got := extractInlineText("foo  [bar](x) baz", false); got != "foo  bar baz" {
+		t.Fatalf("extractInlineText(preserve spaces) returned %q", got)
 	}
 
 	h, warning, ok, err := parseHeadingLine("## <a id=\"broken\">Intro", 4)

@@ -36,7 +36,7 @@
 * [5. Limits](#5-limits)
 * [6. Documentation](#6-documentation)
   * [6.1. Specification](#6-1-specification)
-  * [6.2. Comparison](#6-2-comparison)
+  * [6.2. Comparison](#62-comparison)
 * [7. Status](#7-status)
 
 <!-- numbering=true min=2 max=4 slug=github anchor=false link=true toc=true bullets=auto -->
@@ -50,10 +50,11 @@
 * **configurable**: CLI or edit generated `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->`
   * `on|off` for **numbering**, **anchor**, **link**, **toc**
   * targets ATX headings (**min** `#` to **max** `######`)
-  * **slug** profiles: `github`, `gitlab`, `crossnote`
+  * **slug** profiles: `github`, `gitlab`, `crossnote` (see also [#94](https://github.com/rokath/mdtoc/issues/94))
   * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
 * **move** the generated ToC with its container to any place - it will be re-generated there
 * **protects** non-generated content inside ToC area
+  * generated content stays clearly separated from authored content
 * works with **files** and Unix **pipes**
 * **repeated headings** support
 * **ignores** headings:
@@ -61,7 +62,6 @@
   * inside **fenced code blocks**
   * inside **HTML comments**: `<!-- ... ## Example -->`
   * between **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
-* generated content stays clearly separated from authored content
 * deterministic and idempotent output
 
 ## 2. Install
@@ -144,7 +144,7 @@ This means:
 
 * repeated-heading links depend on occurrence order ([issue #8](https://github.com/rokath/mdtoc/issues/8))
   * Workaround: [example](./docs/EXAMPLE.md#chapter-a-about)
-* The per default with `anchor=true` generated ToC links guaranty to work in any environment, but reduce the readability of the raw Markdown document. With `anchor=off numbering=off slug=crossnote` a good working setting is possible. But switching `numbering=on` breaks the link stability promise then. There is no generally best setting - you have to choose.
+* The per default with `anchor=true` generated ToC links guaranty to work in any environment, but reduce the readability of the raw Markdown document. With `anchor=off numbering=off slug=crossnote` a good working setting is possible. But switching `numbering=on` breaks the link stability promise then. There is no generally best setting - you have to choose. See also [#94](https://github.com/rokath/mdtoc/issues/94).
 * not a site generator
 * not a Markdown formatter
 

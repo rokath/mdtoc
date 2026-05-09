@@ -542,7 +542,7 @@ func TestRunnerFileWorkflowAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *te
 		"anchor=false",
 		"numbering=true",
 		"* [1. Intro](#1-intro)",
-		"  * [1.1. API](#1-1-api)",
+		"  * [1.1. API](#11-api)",
 		"## 1. Intro",
 		"### 1.1. API",
 	}
@@ -572,7 +572,7 @@ func TestRunnerFileWorkflowAnchorOffNumberingKeepsTitleDigitsSeparated(t *testin
 
 	runFileCommand(t, fs, "generate", "-f", path, "--min-level=2", "--max-level=3", "--anchor=off", "--numbering=on")
 	got := fs.fileString(path)
-	if !strings.Contains(got, "  * [1.1. 2025 Roadmap](#1-1-2025-roadmap)") {
+	if !strings.Contains(got, "  * [1.1. 2025 Roadmap](#11-2025-roadmap)") {
 		t.Fatalf("generate did not render the expected ToC target:\n%s", got)
 	}
 	if strings.Contains(got, "  * [1.1. 2025 Roadmap](#112025-roadmap)") {
@@ -621,27 +621,27 @@ func TestRunnerFileWorkflowPersistsExplicitSlugProfile(t *testing.T) {
 func TestRunnerFileWorkflowGitLabAnchorProfileDiffersFromGitHub(t *testing.T) {
 	const path = "doc.md"
 	gitlabFS := newMemoryFileSystem(map[string]string{
-		path: "# Title\n\n## Version 3.5\n",
+		path: "# Title\n\n## foo  bar\n",
 	})
 	githubFS := newMemoryFileSystem(map[string]string{
-		path: "# Title\n\n## Version 3.5\n",
+		path: "# Title\n\n## foo  bar\n",
 	})
 
 	runFileCommand(t, gitlabFS, "generate", "-f", path, "--slug", "gitlab")
 	gotGitLab := gitlabFS.fileString(path)
-	if !strings.Contains(gotGitLab, "slug=gitlab") || !strings.Contains(gotGitLab, `<a id="version-35"></a>`) {
+	if !strings.Contains(gotGitLab, "slug=gitlab") || !strings.Contains(gotGitLab, `<a id="foo-bar"></a>`) {
 		t.Fatalf("generate did not render the GitLab-specific anchor ID:\n%s", gotGitLab)
 	}
-	if !strings.Contains(gotGitLab, "* [1. Version 3.5](#version-35)") {
+	if !strings.Contains(gotGitLab, "* [1. foo bar](#foo-bar)") {
 		t.Fatalf("generate did not render the GitLab-specific ToC target:\n%s", gotGitLab)
 	}
 
 	runFileCommand(t, githubFS, "generate", "-f", path, "--slug", "github")
 	gotGitHub := githubFS.fileString(path)
-	if !strings.Contains(gotGitHub, `<a id="version-3-5"></a>`) {
+	if !strings.Contains(gotGitHub, `<a id="foo--bar"></a>`) {
 		t.Fatalf("generate did not render the GitHub-specific anchor ID:\n%s", gotGitHub)
 	}
-	if strings.Contains(gotGitHub, `<a id="version-35"></a>`) {
+	if strings.Contains(gotGitHub, `<a id="foo-bar"></a>`) {
 		t.Fatalf("generate unexpectedly rendered the GitLab anchor ID under the GitHub profile:\n%s", gotGitHub)
 	}
 }

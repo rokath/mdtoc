@@ -32,12 +32,12 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
 * **configurable**: edit the generated `mdtoc` config block values directly to match your needs
   * `on|off` for **numbering**, **anchor**, **link**, **toc**
   * targets ATX headings (**min** `#` to **max** `######`)
-  * **slug** profiles: `github`, `gitlab`, `crossnote`
+  * **slug** profiles: `github`, `gitlab`, `crossnote` (see also [#94](https://github.com/rokath/mdtoc/issues/94))
   * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
   * **delete** line `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->` for **defaults** only
-* **protects** non-generated content inside ToC area
 * **repeated headings** support
-* generated content stays clearly separated from authored content
+* **protects** non-generated content inside ToC area
+  * generated content stays clearly separated from authored content
 * deterministic and idempotent output
 * keep the VS Code **workflow aligned** with the same [mdtoc CLI binary](https://github.com/rokath/mdtoc/releases) in local scripts and CI
 * **Intentionally ignored headings**:
@@ -154,7 +154,7 @@ There is no automatic `PATH` lookup in the current extension.
 
 Install the extension from a packaged `.vsix` file:
 
-1. Download the `.vsix` that matches your platform.
+1. [Download](https://github.com/rokath/mdtoc/releases) the `.vsix` that matches your platform.
 2. In VS Code, run `Extensions: Install from VSIX...`.
 3. Select the downloaded `.vsix` file.
 

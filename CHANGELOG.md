@@ -6,6 +6,7 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* GitHub-compatible slug generation now removes punctuation instead of turning it into hyphens, and preserves literal repeated spaces and hyphens as separate slug characters.
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
