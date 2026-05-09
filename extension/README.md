@@ -32,7 +32,7 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
 * **configurable**: edit the generated `mdtoc` config block values directly to match your needs
   * `on|off` for **numbering**, **anchor**, **link**, **toc**
   * targets ATX headings (**min** `#` to **max** `######`)
-  * **slug** profiles: `github`, `gitlab`, `crossnote` (see also [#94](https://github.com/rokath/mdtoc/issues/94))
+  * **slug** profiles: `github`, `gitlab`, `crossnote`, [#94](https://github.com/rokath/mdtoc/issues/94)
   * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
   * **delete** line `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->` for **defaults** only
 * **repeated headings** support
@@ -96,7 +96,7 @@ Open a Markdown file in VS Code, then use one of these entry points:
 
 The table of contents is initially created at the beginning of the document. You can then move the managed block to another place in the file and `mdtoc: Generate ToC` will update it there.
 
-<img src="https://raw.githubusercontent.com/rokath/mdtoc/main/extension/Animation.gif" width="420" alt="Animated demo of generating and stripping a table of contents">
+<img src="https://raw.githubusercontent.com/rokath/mdtoc/main/extension/Animation.gif" alt="Animated demo of generating and stripping a table of contents">
 
 ## 3. Additional Information
 
