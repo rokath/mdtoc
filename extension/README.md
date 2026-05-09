@@ -32,7 +32,7 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
 * **configurable**: edit the generated `mdtoc` config block values directly to match your needs
   * `on|off` for **numbering**, **anchor**, **link**, **toc**
   * targets ATX headings (**min** `#` to **max** `######`)
-  * **slug** profiles: `github`, `gitlab`, `crossnote`
+  * **slug** profiles: `github`, `gitlab`, `crossnote` (see also [#94](https://github.com/rokath/mdtoc/issues/94))
   * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
   * **delete** line `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->` for **defaults** only
 * **repeated headings** support
