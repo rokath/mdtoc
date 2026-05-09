@@ -54,6 +54,7 @@
   * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
 * **move** the generated ToC with its container to any place - it will be re-generated there
 * **protects** non-generated content inside ToC area
+  * generated content stays clearly separated from authored content
 * works with **files** and Unix **pipes**
 * **repeated headings** support
 * **ignores** headings:
@@ -61,7 +62,6 @@
   * inside **fenced code blocks**
   * inside **HTML comments**: `<!-- ... ## Example -->`
   * between **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
-* generated content stays clearly separated from authored content
 * deterministic and idempotent output
 
 ## 2. Install
