@@ -50,7 +50,7 @@
 * **configurable**: CLI or edit generated `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->`
   * `on|off` for **numbering**, **anchor**, **link**, **toc**
   * targets ATX headings (**min** `#` to **max** `######`)
-  * **slug** profiles: `github`, `gitlab`, `crossnote`, [#94](https://github.com/rokath/mdtoc/issues/94)
+  * **slug** profiles: `github`, `gitlab`, `crossnote`
   * auto or explicit (`*`, `-`, `+`) ToC **bullets** style
 * **move** the generated ToC with its container to any place - it will be re-generated there
 * **protects** non-generated content inside ToC area
@@ -144,7 +144,8 @@ This means:
 
 * repeated-heading links depend on occurrence order ([#8](https://github.com/rokath/mdtoc/issues/8))
   * Workaround: [example](./docs/EXAMPLE.md#chapter-a-about)
-* The per default with `anchor=true` generated ToC links guaranty to work in any environment, but reduce the readability of the raw Markdown document. With `anchor=off numbering=off slug=crossnote` a good working setting is possible. But switching `numbering=on` breaks the link stability promise then. There is no generally best setting - you have to choose.
+* The `check` command does not detect duplicate link anchors. See [#97](https://github.com/rokath/mdtoc/issues/97).
+* The per default with `anchor=true` generated ToC links guaranty to work in any environment, but reduce the readability of the raw Markdown document. With `anchor=off numbering=off slug=crossnote` a good working setting is possible. But switching `numbering=on` breaks the link stability promise then. There is no generally best setting - you have to choose. See also [#94](https://github.com/rokath/mdtoc/issues/94).
 * not a site generator
 * not a Markdown formatter
 
