@@ -144,8 +144,8 @@ This means:
 
 * repeated-heading links depend on occurrence order ([#8](https://github.com/rokath/mdtoc/issues/8))
   * Workaround: [example](./docs/EXAMPLE.md#chapter-a-about)
-* The per default with `anchor=true` generated ToC links guaranty to work in any environment, but reduce the readability of the raw Markdown document. With `anchor=off numbering=off slug=crossnote` a good working setting is possible. But switching `numbering=on` breaks the link stability promise then. There is no generally best setting - you have to choose. See also [#94](https://github.com/rokath/mdtoc/issues/94).
 * The `check` command does not detect duplicate link anchors. See [#97](https://github.com/rokath/mdtoc/issues/97).
+* The per default with `anchor=true` generated ToC links guaranty to work in any environment, but reduce the readability of the raw Markdown document. With `anchor=off numbering=off slug=crossnote` a good working setting is possible. But switching `numbering=on` breaks the link stability promise then. There is no generally best setting - you have to choose. See also [#94](https://github.com/rokath/mdtoc/issues/94).
 * not a site generator
 * not a Markdown formatter
 
