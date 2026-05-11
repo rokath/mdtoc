@@ -40,8 +40,8 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
   * generated content stays clearly separated from authored content
 * deterministic and idempotent output
 * keep the VS Code **workflow aligned** with the same [mdtoc CLI binary](https://github.com/rokath/mdtoc/releases) in local scripts and CI
-* **Intentionally ignored headings**:
-  * as **Setext headings**:
+* Intentionally **ignored**:
+  * **Setext headings**:
   
     ```md
     IGNORED Heading 1
@@ -51,7 +51,7 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
     ---------
     ```
 
-  * in **fenced code blocks**:
+  * **fenced code blocks**:
 
     ````md
     ``` 
@@ -59,7 +59,7 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
     ```
     ````
 
-  * in **HTML comments**:
+  * **HTML comments**:
   
     ```md
     <!-- 
@@ -67,13 +67,13 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
     -->
     ```
 
-  * as **HTML syntax**:
+  * **HTML syntax**:
   
     ```md
     <h4>IGNORED Heading 5</h4>
     ```
 
-  * between **exclusion regions**:
+  * **exclusion regions**:
   
     ```md
     <!-- mdtoc off -->
@@ -81,10 +81,10 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
     <!-- mdtoc on -->
     ```
 
-  * with **starting space(s)**:
+  * **starting space**:
 
     ```md
-     ## IGNORED Heading 7
+    ␠## IGNORED Heading 7
     ```
 
 ## 2. How to Use
