@@ -1,12 +1,14 @@
-# mdtoc VS Code Extension MVP (Minimum Viable Product)
+# mdtoc VS Code Extension
 
-This document defines the MVP (Minimum Viable Product) for a first `mdtoc` extension for Visual Studio Code Desktop.
+This document defines the `mdtoc` extension for Visual Studio Code Desktop.
+
+<img src="./VS-Code-Extension.png" width="960">
 
 ## Core rule
 
 The Go CLI remains the canonical implementation. The extension is only a thin VS Code adapter around the `mdtoc` binary.
 
-## MVP scope
+## Scope
 
 Included:
 
@@ -19,11 +21,13 @@ Included:
 Excluded:
 
 * `vscode.dev` and `github.dev`
-* `formatOnSave`
+  The extension targets VS Code Desktop only. Browser-based VS Code environments
+  and the web extension runtime are not supported in the MVP.
 * workspace-wide batch processing
+  The extension only operates on the active Markdown document. It does not scan
+  or modify multiple Markdown files across the workspace or repository.
 * live diagnostics while typing
-* auto-update logic for external custom binaries
-* automatic `PATH` lookup
+* `formatOnSave`
 
 ## Command model
 
@@ -53,19 +57,20 @@ Resolution rules:
 * If `customPath` is set, use that exact path.
 * If `customPath` is invalid, fail clearly and do not fall back.
 * If `customPath` is empty, use the bundled binary for the current platform.
-* Do not search `mdtoc` in `PATH` in the MVP.
+* Do not search `mdtoc` in `PATH` in the extension.
 
 Before normal execution, the extension validates the chosen binary via `mdtoc --version`.
 
 ## Initial target platforms
 
-The MVP packages separate VSIX files for:
+The extension packages separate VSIX files for:
 
 * `darwin-arm64`
 * `darwin-x64`
 * `linux-arm64`
 * `linux-x64`
 * `win32-x64`
+* `win32-arm64`
 
 Each VSIX contains:
 
@@ -93,8 +98,7 @@ For normal in-editor discovery and automatic updates, the extension also needs t
 
 ## Later work
 
-Likely follow-up work after the MVP:
+Likely follow-up work:
 
 * more target platforms
-* optional `formatOnSave`
 * a separate architecture for browser or web environments

@@ -27,26 +27,28 @@
 
 * [1. Features](#1-features)
 * [2. Install](#2-install)
-  * [2.1. Releases](#2-1-releases)
-  * [2.2. Build from source](#2-2-build-from-source)
+  * [2.1. VS Code extension](#21-vs-code-extension)
+  * [2.2. Release Binaries (Linux, MacOS, Windows)](#22-release-binaries-linux-macos-windows)
+  * [2.3. Darwin Setup](#23-darwin-setup)
+  * [2.4. Build from source](#24-build-from-source)
 * [3. Usage](#3-usage)
-  * [3.1. Inspect the CLI](#3-1-inspect-the-cli)
-  * [3.2. Use EXAMPLE.md as play ground](#3-2-use-example-md-as-play-ground)
+  * [3.1. Inspect the CLI](#31-inspect-the-cli)
+  * [3.2. Use .docs/EXAMPLE.md as play ground](#32-use-docsexamplemd-as-play-ground)
 * [4. Managed Structure](#4-managed-structure)
 * [5. Limits](#5-limits)
 * [6. Documentation](#6-documentation)
-  * [6.1. Specification](#6-1-specification)
+  * [6.1. Specification](#61-specification)
   * [6.2. Comparison](#62-comparison)
 * [7. Status](#7-status)
 
 <!-- numbering=true min=2 max=4 slug=github anchor=false link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
+
 </details>
 
 ## 1. Features
 
-* **easy** to use: `mdtoc MY.md`
-* single binary, also as **vsCode** extension
+* **easy** to use: `mdtoc MY.md`, single binary, also as **vsCode** [extension](https://marketplace.visualstudio.com/items?itemName=rokath.mdtoc)
 * **configurable**: CLI or edit generated `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->`
   * `on|off` for **numbering**, **anchor**, **link**, **toc**
   * targets ATX headings (**min** `#` to **max** `######`)
@@ -57,18 +59,27 @@
   * generated content stays clearly separated from authored content
 * works with **files** and Unix **pipes**
 * **repeated headings** support
-* **ignores** headings:
+* intentionally **ignores** headings:
   * in **Setext** stype
   * inside **fenced code blocks**
   * inside **HTML comments**: `<!-- ... ## Example -->`
   * between **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
+  * with a **starting space**
 * deterministic and idempotent output
 
 ## 2. Install
 
-### 2.1. Releases
+### 2.1. VS Code extension
+
+* Open VS Code, click Extensions, enter `mdtoc`: 
+<img src="./docs/VS-Code-Extension.png" width="960">
+* or CLI install: `code --install-extension rokath.mdtoc`
+
+### 2.2. Release Binaries (Linux, MacOS, Windows)
 
 Download a prebuilt binary from [GitHub Releases](https://github.com/rokath/mdtoc/releases).
+
+### 2.3. Darwin Setup
 
 Homebrew tap install:
 
@@ -76,7 +87,7 @@ Homebrew tap install:
 brew install rokath/tap/mdtoc
 ```
 
-### 2.2. Build from source
+### 2.4. Build from source
 
 ```bash
 go build ./cmd/mdtoc
@@ -129,7 +140,7 @@ This means:
 
 * the stored config is persisted generator input
 * `check` validates against regenerated output
-* changing generation settings must go through generate, not through manual config edits
+* changing generation can go through generate, or manual config edits
 
 </details>
 
