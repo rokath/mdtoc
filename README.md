@@ -69,11 +69,11 @@
 
 ## 2. Install
 
-### 2.1. VS Code extension
+### 2.1. VS Code Extension
 
-* Open VS Code, click Extensions, enter `mdtoc`: 
+ CLI install: `code --install-extension rokath.mdtoc` **or** open _VS Code_, click _Extensions_, enter `mdtoc`: 
+
 <img src="./docs/VS-Code-Extension.png" width="960">
-* or CLI install: `code --install-extension rokath.mdtoc`
 
 ### 2.2. Release Binaries (Linux, MacOS, Windows)
 
