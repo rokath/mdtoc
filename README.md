@@ -16,7 +16,7 @@
 
 >`mdtoc`: Markdown Table of Contents ☰ with numbering and stable anchor links
 >
->`generate`, `strip`, `regen`/`refresh`, `check` without turning your Markdown into a moving target.
+>**`generate`**, **`strip`** and **`check`** without turning your Markdown into a moving target.
 
 <img src="./extension/mdtoc_mascot_1024.webp" width="600">
 
@@ -92,22 +92,17 @@ mdtoc --verbose     # show extended root help with command details
 mdtoc <command> -v  # show the long help for one command
 ```
 
-### 3.2. Use [EXAMPLE.md](./docs/EXAMPLE.md) as play ground
+### 3.2. Use `.docs/EXAMPLE.md` as play ground
 
 ```bash
-mdtoc EXAMPLE.md                                   # root mode: regen if managed, otherwise generate
-cat EXAMPLE.md | mdtoc -n off -a off               # root mode on stdin: generate a dry-run ToC-only view
-mdtoc EXAMPLE.md -a off --toc off                  # root mode: explicit generate because flags override regen
-mdtoc generate EXAMPLE.md --slug gitlab            # explicit command with positional file input
-cat EXAMPLE.md | mdtoc strip > EXAMPLE.stripped.md # remove managed artifacts via Unix pipe and write to a different file
-mdtoc regen EXAMPLE.md                             # rebuild generated output from the stored container config
-mdtoc refresh EXAMPLE.md                           # alias for regen
-mdtoc generate EXAMPLE.md                          # generate with current CLI flags or defaults and rewrite the config block
-mdtoc check EXAMPLE.md                             # fail in CI when EXAMPLE.md differs from the reconstructed target state
+mdtoc EXAMPLE.md                    # new ToC, use config block or defaults, root mode use
+mdtoc generate EXAMPLE.md -a off    # new ToC, use CLI or defaults, rewrite the config block
+mdtoc check EXAMPLE.md              # fail in CI when ToC differs from the reconstructed ToC
+cat EXAMPLE.md | mdtoc              # dry-run
+cat EXAMPLE.md | mdtoc strip > s.md # clear via Unix pipe and write to a different file
 ```
 
-* `gitlab` follows GitLab heading IDs; punctuation-heavy titles can therefore differ from `github` (for example `3.5` -> `35`). See [GitLab slug profile](docs/spec.md#gitlab-slug-profile).
-* Exactly one input source is allowed per invocation: positional file, `--file/-f`, or piped `stdin`.
+* Exactly one input source is allowed: piped `stdin` or file i/o (with or without `--file/-f`).
 * Small CLI note: the Go-style one-dash long form such as `-toc off` is currently tolerated, but `--toc off` remains the documented form.
 
 ## 4. Managed Structure
@@ -128,13 +123,11 @@ mdtoc check EXAMPLE.md                             # fail in CI when EXAMPLE.md 
 
 The heading title stays the source of truth. Numbers, inline anchors, and ToC entries are derived from it. With `anchor=false`, the ToC target follows the rendered heading text because no managed inline anchor exists. Use `slug=github|gitlab|crossnote` to control the link type generation.
 
-The optional config block records the settings used for regeneration. `generate` uses current CLI flags or defaults and then rewrites that block when settings need to be persisted. `regen` reuses the stored container config, or defaults if the config block was deleted. `refresh` is a command alias for `regen`.
+The optional config block records the settings used for regeneration. `generate` uses current CLI flags or defaults and then rewrites that block when settings need to be persisted.
 
 This means:
 
 * the stored config is persisted generator input
-* `regen` rebuilds generated output from that config
-* `refresh` is an alias for `regen`
 * `check` validates against regenerated output
 * changing generation settings must go through generate, not through manual config edits
 
