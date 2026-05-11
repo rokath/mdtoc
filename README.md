@@ -158,11 +158,12 @@ This means:
 ### 6.1. Specification
 
 * [mdtoc spec](./docs/spec.md)
+* [mdtoc VS Code extension](./docs/VS-Code-Extension.md)
+* [EXAMPLE.md](./docs/EXAMPLE.md)
 
 ### 6.2. Comparison
 
 * [mdtoc alternatives](./docs/alternatives.md)
-* [mdtoc VS Code extension MVP](./docs/vscode-extension-mvp.md)
 
 ## 7. Status
 
