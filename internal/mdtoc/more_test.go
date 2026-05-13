@@ -126,8 +126,11 @@ func TestRunnerRootVerboseHelpAndSubcommandErrorPaths(t *testing.T) {
 	if got := stdout.String(); !strings.Contains(got, "check    [--file <name> | <name>] [--verbose]") {
 		t.Fatalf("verbose root help missing reordered check usage:\n%s", got)
 	}
-	if got := stdout.String(); !strings.Contains(got, "refresh  [--file <name> | <name>] [--verbose]") {
-		t.Fatalf("verbose root help missing refresh alias usage:\n%s", got)
+	if got := stdout.String(); strings.Contains(got, "regen    [--file <name> | <name>] [--verbose]") {
+		t.Fatalf("verbose root help should hide regen usage:\n%s", got)
+	}
+	if got := stdout.String(); strings.Contains(got, "refresh  [--file <name> | <name>] [--verbose]") {
+		t.Fatalf("verbose root help should hide refresh alias usage:\n%s", got)
 	}
 
 	stdout.Reset()

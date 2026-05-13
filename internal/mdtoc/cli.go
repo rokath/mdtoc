@@ -765,8 +765,6 @@ func shortHelp() string {
 Commands:
   generate [--file <name> | <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
   check    [--file <name> | <name>] [--verbose]            validate that the document matches regenerated output
-  regen    [--file <name> | <name>] [--verbose]            regenerate using persisted container config
-  refresh  [--file <name> | <name>] [--verbose]            alias for regen
   strip    [--file <name> | <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
 
 Details: mdtoc -v   short for mdtoc --help --verbose
@@ -781,15 +779,13 @@ Usage: mdtoc <command>
        mdtoc [--file <name> | <name>] [GENERATE OPTIONS]
        mdtoc [GENERATE OPTIONS] < INPUT.md
 
-Without a subcommand, mdtoc chooses between regen and generate.
-If the input already contains a valid managed container and no generate options
-are provided, it behaves like regen. Otherwise it behaves like generate.
+Without a subcommand, mdtoc updates an existing managed container or creates a
+new one when none exists. Explicit generate options still override persisted
+container settings.
 
 Commands:
   generate [--file <name> | <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
   check    [--file <name> | <name>] [--verbose]            validate that the document matches regenerated output
-  regen    [--file <name> | <name>] [--verbose]            regenerate using persisted container config
-  refresh  [--file <name> | <name>] [--verbose]            alias for regen
   strip    [--file <name> | <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
 
 Generate options:
