@@ -49,7 +49,12 @@
 ## 1. Features
 
 * **easy** to use: `mdtoc MY.md`, single binary, also as **vsCode** [extension](https://marketplace.visualstudio.com/items?itemName=rokath.mdtoc)
-* **configurable**: CLI or edit generated `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->`
+* **configurable**: CLI or edit generated config:
+
+   ```txr
+   `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->
+   ```
+
   * `on|off` for **numbering**, **anchor**, **link**, **toc**
   * targets ATX headings (**min** `#` to **max** `######`)
   * **slug** profiles: `github`, `gitlab`, `crossnote`
