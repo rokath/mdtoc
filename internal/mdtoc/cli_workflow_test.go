@@ -86,8 +86,8 @@ func runCommandWithFS(t *testing.T, fs *memoryFileSystem, stdin io.Reader, stdin
 	return stdout.String(), stderr.String(), exitCode, err
 }
 
-// TestRunnerFileWorkflowGenerateStripRegenCheck verifies the full file-based state cycle.
-func TestRunnerFileWorkflowGenerateStripRegenCheck(t *testing.T) {
+// TestRunnerFileWorkflowGenerateStripRootRestoreCheck verifies the full file-based state cycle.
+func TestRunnerFileWorkflowGenerateStripRootRestoreCheck(t *testing.T) {
 	const path = "README.md"
 	fs := newMemoryFileSystem(map[string]string{
 		path: "# Title\n\n## Intro\n",
@@ -105,33 +105,14 @@ func TestRunnerFileWorkflowGenerateStripRegenCheck(t *testing.T) {
 		t.Fatalf("strip did not produce stripped state:\n%s", stripped)
 	}
 
-	runFileCommand(t, fs, "regen", "-f", path)
+	runFileCommand(t, fs, "-f", path)
 	regenerated := fs.fileString(path)
 	if !strings.Contains(regenerated, "anchor=true") || !strings.Contains(regenerated, "<a id=\"title\"></a>") {
-		t.Fatalf("regen did not restore generated state:\n%s", regenerated)
+		t.Fatalf("root restore did not restore generated state:\n%s", regenerated)
 	}
 
 	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
-		t.Fatalf("check unexpectedly failed after regen: %v", err)
-	}
-}
-
-// TestRunnerFileWorkflowRefreshAlias verifies that refresh works as a file-based alias for regen.
-func TestRunnerFileWorkflowRefreshAlias(t *testing.T) {
-	const path = "README.md"
-	fs := newMemoryFileSystem(map[string]string{
-		path: "# Title\n\n## Intro\n",
-	})
-
-	runFileCommand(t, fs, "generate", "-f", path, "--min-level=1")
-	generated := fs.fileString(path)
-	broken := strings.Replace(generated, "* [1. Intro](#intro)", "* [BROKEN](#intro)", 1)
-	fs.files[path] = []byte(broken)
-
-	runFileCommand(t, fs, "refresh", "-f", path)
-	regenerated := fs.fileString(path)
-	if !strings.Contains(regenerated, "anchor=true") || !strings.Contains(regenerated, "<a id=\"title\"></a>") || strings.Contains(regenerated, "* [BROKEN](#intro)") {
-		t.Fatalf("refresh alias did not restore generated state:\n%s", regenerated)
+		t.Fatalf("check unexpectedly failed after root restore: %v", err)
 	}
 }
 
@@ -178,9 +159,9 @@ func TestRunnerRootFileWorkflowGenerateFromPositional(t *testing.T) {
 	}
 }
 
-// TestRunnerRootFileWorkflowRegenFromPositional verifies root-mode regen
+// TestRunnerRootFileWorkflowRestoreFromPositional verifies root-mode restore
 // dispatch for already managed files passed positionally.
-func TestRunnerRootFileWorkflowRegenFromPositional(t *testing.T) {
+func TestRunnerRootFileWorkflowRestoreFromPositional(t *testing.T) {
 	const path = "doc.md"
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
 	if err != nil {
@@ -194,7 +175,7 @@ func TestRunnerRootFileWorkflowRegenFromPositional(t *testing.T) {
 	runFileCommand(t, fs, path)
 	got := fs.fileString(path)
 	if !strings.Contains(got, "* [1. Intro](#intro)") || strings.Contains(got, "* [BROKEN](#intro)") {
-		t.Fatalf("root regen did not rebuild the managed state:\n%s", got)
+		t.Fatalf("root restore did not rebuild the managed state:\n%s", got)
 	}
 }
 
@@ -222,7 +203,7 @@ func TestRunnerRootFileWorkflowGenerateOverridesForceGenerate(t *testing.T) {
 
 // TestRunnerRootFileWorkflowSingleDashGenerateOverrides verifies that the
 // tolerated one-dash long generate-control flags all force root mode to run
-// generate instead of regen.
+// generate instead of the persisted-config restore path.
 func TestRunnerRootFileWorkflowSingleDashGenerateOverrides(t *testing.T) {
 	const path = "doc.md"
 	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
@@ -396,26 +377,6 @@ func TestRunnerGenerateSubcommandAcceptsPositionalFile(t *testing.T) {
 	}
 }
 
-// TestRunnerRegenSubcommandAcceptsPositionalFile verifies that the explicit
-// regen command accepts the file path without --file.
-func TestRunnerRegenSubcommandAcceptsPositionalFile(t *testing.T) {
-	const path = "doc.md"
-	generated, _, err := Generate("# Title\n\n## Intro\n", DefaultOptions())
-	if err != nil {
-		t.Fatalf("Generate error: %v", err)
-	}
-	broken := strings.Replace(generated, "* [1. Intro](#intro)", "* [BROKEN](#intro)", 1)
-	fs := newMemoryFileSystem(map[string]string{
-		path: broken,
-	})
-
-	runFileCommand(t, fs, "regen", path)
-	got := fs.fileString(path)
-	if strings.Contains(got, "* [BROKEN](#intro)") || !strings.Contains(got, "* [1. Intro](#intro)") {
-		t.Fatalf("regen positional file did not rebuild the managed state:\n%s", got)
-	}
-}
-
 // TestRunnerStripSubcommandAcceptsPositionalFile verifies that the explicit
 // strip command accepts the file path without --file.
 func TestRunnerStripSubcommandAcceptsPositionalFile(t *testing.T) {
@@ -503,8 +464,8 @@ func TestRunnerRootRejectsMultiplePositionalFiles(t *testing.T) {
 	}
 }
 
-// TestRunnerFileWorkflowRegenRestoresStoredFlags verifies regen after stripped input with non-default stored config.
-func TestRunnerFileWorkflowRegenRestoresStoredFlags(t *testing.T) {
+// TestRunnerFileWorkflowRootRestoreRestoresStoredFlags verifies root restore after stripped input with non-default stored config.
+func TestRunnerFileWorkflowRootRestoreRestoresStoredFlags(t *testing.T) {
 	const path = "doc.md"
 	fs := newMemoryFileSystem(map[string]string{
 		path: "# Title\n\n## Intro\n\n### API\n",
@@ -512,20 +473,20 @@ func TestRunnerFileWorkflowRegenRestoresStoredFlags(t *testing.T) {
 
 	runFileCommand(t, fs, "generate", "-f", path, "--min-level=2", "--max-level=3", "--anchor=false", "--numbering=off")
 	runFileCommand(t, fs, "strip", "-f", path)
-	runFileCommand(t, fs, "regen", "-f", path)
+	runFileCommand(t, fs, "-f", path)
 
 	got := fs.fileString(path)
 	if !strings.Contains(got, "anchor=false") {
-		t.Fatalf("regen did not restore generated state:\n%s", got)
+		t.Fatalf("root restore did not restore generated state:\n%s", got)
 	}
 	if strings.Contains(got, "<a id=") || strings.Contains(got, "## 1. ") || strings.Contains(got, "### 1.1. ") {
-		t.Fatalf("regen ignored stored disabled flags:\n%s", got)
+		t.Fatalf("root restore ignored stored disabled flags:\n%s", got)
 	}
 	if !strings.Contains(got, "* [Intro](#intro)") || !strings.Contains(got, "* [API](#api)") {
-		t.Fatalf("regen did not rebuild ToC using stored config:\n%s", got)
+		t.Fatalf("root restore did not rebuild ToC using stored config:\n%s", got)
 	}
 	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
-		t.Fatalf("check unexpectedly failed after custom-config regen: %v", err)
+		t.Fatalf("check unexpectedly failed after custom-config root restore: %v", err)
 	}
 }
 
@@ -709,16 +670,16 @@ func TestRunnerFileWorkflowNormalizesStoredAnchorOnLikeValues(t *testing.T) {
 				}, "\n") + "\n",
 			})
 
-			runFileCommand(t, fs, "regen", "-f", path)
+			runFileCommand(t, fs, "-f", path)
 			got := fs.fileString(path)
 			if !strings.Contains(got, "anchor=true") {
-				t.Fatalf("regen did not normalize stored anchor=%s to true:\n%s", stored, got)
+				t.Fatalf("root restore did not normalize stored anchor=%s to true:\n%s", stored, got)
 			}
 			if strings.Contains(got, "anchor=on") {
-				t.Fatalf("regen left non-canonical anchor=%s in the config block:\n%s", stored, got)
+				t.Fatalf("root restore left non-canonical anchor=%s in the config block:\n%s", stored, got)
 			}
 			if !strings.Contains(got, `<a id="intro"></a>`) || !strings.Contains(got, "* [1. Intro](#intro)") {
-				t.Fatalf("regen did not rebuild github-style anchor artifacts from anchor=%s:\n%s", stored, got)
+				t.Fatalf("root restore did not rebuild github-style anchor artifacts from anchor=%s:\n%s", stored, got)
 			}
 			if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
 				t.Fatalf("check unexpectedly failed after anchor=%s normalization: %v", stored, err)
@@ -805,7 +766,7 @@ func TestRunnerFileWorkflowConfiguredStarBulletsPreserved(t *testing.T) {
 		}, "\n") + "\n",
 	})
 
-	runFileCommand(t, fs, "regen", "-f", path)
+	runFileCommand(t, fs, "-f", path)
 	got := fs.fileString(path)
 	if !strings.Contains(got, "bullets=*") {
 		t.Fatalf("configured star bullets were not preserved:\n%s", got)
@@ -818,13 +779,13 @@ func TestRunnerFileWorkflowConfiguredStarBulletsPreserved(t *testing.T) {
 	}
 
 	runFileCommand(t, fs, "strip", "-f", path)
-	runFileCommand(t, fs, "regen", "-f", path)
+	runFileCommand(t, fs, "-f", path)
 	got = fs.fileString(path)
 	if !strings.Contains(got, "bullets=*") || !strings.Contains(got, "* [1. Intro](#intro)") {
-		t.Fatalf("regen did not preserve configured star bullets:\n%s", got)
+		t.Fatalf("root restore did not preserve configured star bullets:\n%s", got)
 	}
 	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
-		t.Fatalf("check unexpectedly failed after configured star regen: %v", err)
+		t.Fatalf("check unexpectedly failed after configured star root restore: %v", err)
 	}
 }
 
@@ -841,14 +802,15 @@ func TestRunnerFileWorkflowStripCheckThenRegenCheck(t *testing.T) {
 		t.Fatalf("check unexpectedly succeeded for stripped output")
 	}
 
-	runFileCommand(t, fs, "regen", "-f", path)
+	runFileCommand(t, fs, "-f", path)
 	if err := runFileCommandExpect(t, fs, 0, "check", "-f", path); err != nil {
-		t.Fatalf("check unexpectedly failed after regen from stripped state: %v", err)
+		t.Fatalf("check unexpectedly failed after root restore from stripped state: %v", err)
 	}
 }
 
-// TestRunnerFileWorkflowRawStripRejectsRegen verifies that raw stripping removes the data regen requires.
-func TestRunnerFileWorkflowRawStripRejectsRegen(t *testing.T) {
+// TestRunnerFileWorkflowRawStripFallsBackToGenerate verifies that root mode
+// creates a fresh container again after raw stripping removed all managed state.
+func TestRunnerFileWorkflowRawStripFallsBackToGenerate(t *testing.T) {
 	const path = "doc.md"
 	fs := newMemoryFileSystem(map[string]string{
 		path: "# Title\n\n## Intro\n",
@@ -857,9 +819,10 @@ func TestRunnerFileWorkflowRawStripRejectsRegen(t *testing.T) {
 	runFileCommand(t, fs, "generate", "-f", path)
 	runFileCommand(t, fs, "strip", "--raw", "-f", path)
 
-	err := runFileCommandExpect(t, fs, 1, "regen", "-f", path)
-	if err == nil || !strings.Contains(err.Error(), "valid mdtoc container") {
-		t.Fatalf("regen after raw strip returned unexpected error: %v", err)
+	runFileCommand(t, fs, "-f", path)
+	got := fs.fileString(path)
+	if !strings.Contains(got, startMarker) || !strings.Contains(got, "* [1. Intro](#intro)") {
+		t.Fatalf("root mode did not regenerate managed state after raw strip:\n%s", got)
 	}
 }
 
