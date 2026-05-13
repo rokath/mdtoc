@@ -70,22 +70,6 @@ func generateCommandArgSpec() argumentSpec {
 	}
 }
 
-// regenCommandArgSpec returns the accepted flag shape for `regen`.
-func regenCommandArgSpec() argumentSpec {
-	return argumentSpec{
-		valueFlags: map[string]bool{
-			"--file": true,
-			"-f":     true,
-		},
-		boolFlags: map[string]bool{
-			"--verbose": true,
-			"-v":        true,
-			"--help":    true,
-			"-h":        true,
-		},
-	}
-}
-
 // stripCommandArgSpec returns the accepted flag shape for `strip`.
 func stripCommandArgSpec() argumentSpec {
 	return argumentSpec{

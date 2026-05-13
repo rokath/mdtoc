@@ -8,9 +8,48 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
+Used git range: `v0.3.3..HEAD`
+
+```txt
+```
+
+## <a id='v0.3.3-changes'></a>v0.3.3 Changes (2026-05-13)
+
+### <a id='v0.3.3-overview'></a>v0.3.3 Overview
+
+* The CLI UX now consistently centers on `generate`, `check`, and `strip`:
+  * explicit `regen` and `refresh` subcommands were removed from the public interface
+  * root-mode `mdtoc FILE.md` still keeps its existing behavior and updates an existing managed container or creates a new one
+  * direct legacy calls now fail with a clear hint to use `mdtoc generate ...`
+* Repository documentation and examples were tightened further:
+  * the root and extension READMEs now explain the current config and command model more clearly
+  * `docs/EXAMPLE.md` was expanded, broken links were corrected, and the VS Code extension documentation is now surfaced more explicitly
+  * wording around duplicate ToC links, configurable options, and current CLI usage was clarified across the docs
+
+### <a id='v0.3.3-git-log'></a>v0.3.3 Git Log
+
 Used git range: `v0.3.2..HEAD`
 
 ```txt
+* 04032df Update README.md limits
+* 62e5623 Update README.md limits
+* 086af3a Duplicate ToC links explanation in README
+* 8e425ea Merge pull request #98 from rokath/dev
+* 2549f0b EXAMPLE.md enriched
+* 6593dd4 Merge pull request #99 from rokath/dev
+* 1f44736 Focussed on generrate only
+* ea42a86 Merge pull request #100 from rokath/dev
+* 3221766 README.md shows vsXode install explicit
+* e380954 Merge pull request #101 from rokath/dev
+* eef40d3 README.md linted
+* 15baa40 Linted extension/README.md
+* 4f92505 Broken Link fixed, EXAMPLE.md as link
+* 70f2ea2 Clarify configurable options in README
+* 13b555a Merge branch 'main' into dev
+* 39e8dfd Layout sightly improved
+* 2e95a73 documented UX now without regen/refresh
+* 74b8324 Legacy code for regen/renew removed
+* 175b93c minor textual improvements
 ```
 
 ## <a id='v0.3.2-changes'></a>v0.3.2 Changes (2026-05-09)
@@ -21,13 +60,28 @@ Used git range: `v0.3.2..HEAD`
   * punctuation such as `.` and `+` is removed before slug characters are emitted
   * literal spaces become literal hyphens, so repeated spaces remain visible in the slug
   * `-` and `_` stay intact, and duplicate anchors continue to get `-1`, `-2`, ...
+* The surrounding docs and extension setup were refreshed around the slug fix:
+  * the extension dev dependency `fast-uri` was bumped from `3.1.0` to `3.1.2`
+  * the README comparison-table numbering and slug explanations were corrected
+  * the project animation asset was updated
 
 ### <a id='v0.3.2-git-log'></a>v0.3.2 Git Log
 
-Used git range: `v0.3.1..HEAD`
+Used git range: `v0.3.1..v0.3.2`
 
 ```txt
+* 8103f7d Fix table of contents numbering for comparison section
+* 7654321 build(deps-dev): bump fast-uri from 3.1.0 to 3.1.2 in /extension
+* 4d167a8 Update README.md
+* 28b809d Update README.md
+* 496c98c Merge pull request #92 from rokath/dependabot/npm_and_yarn/extension/fast-uri-3.1.2
 * f197dad fix(slug): correct github punctuation handling
+* bef6dec docs(slug): align github rules with issue 93
+* 8c7ecb0 Merge pull request #95 from rokath/dev
+* 6dd4ff8 Animation updated
+* 0346232 docs(changelog): prepare v0.3.2
+* 37f91e3 release: prepare v0.3.2 extension version
+* 4490b98 Merge pull request #96 from rokath/dev
 ```
 
 ## <a id='v0.3.1-changes'></a>v0.3.1 Changes (2026-05-08)
@@ -40,13 +94,24 @@ Used git range: `v0.3.1..HEAD`
 * Strip now uses the same protection contract as generate and regen:
   * authored or otherwise non-generated lines in the managed ToC area are kept inside `<!-- preserved by mdtoc -->`
   * generated ToC entries, heading numbers, and managed inline anchors are still removed
+* The example and docs set around the workflow was refreshed:
+  * `docs/EXAMPLE.md` was moved into `./docs` and expanded further
+  * the docs now include explicit guidance for repeated headings
 
 ### <a id='v0.3.1-git-log'></a>v0.3.1 Git Log
 
 Used git range: `v0.3.0..v0.3.1`
 
 ```txt
+* f22e16e EXAMPLE.md edited and moved into ./docs
+* 7f7294e repeated headings hint added
 * 31fd3d6 fix(strip): preserve foreign toc content
+* 30f688e docs(changelog): include strip protection in v0.3.0
+* 8dc2218 Merge pull request #90 from rokath/dev
+* cf8dffc fix(mdtoc): surround generated toc with blank lines
+* 00f39a7 docs(changelog): prepare v0.3.1 notes
+* 22a3b2c release: prepare v0.3.1 extension version
+* 8957841 Merge pull request #91 from rokath/dev
 ```
 
 ## <a id='v0.3.0-changes'></a>v0.3.0 Changes (2026-05-08)

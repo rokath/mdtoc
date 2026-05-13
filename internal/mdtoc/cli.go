@@ -62,7 +62,7 @@ type generateInvocation struct {
 	verboseOnly bool
 }
 
-// simpleInvocation captures one normalized `regen` or `check` request.
+// simpleInvocation captures one normalized `check` request.
 type simpleInvocation struct {
 	input       inputSource
 	verbose     bool
@@ -81,7 +81,7 @@ type stripInvocation struct {
 }
 
 // rootInvocation captures the richer root-command mode, where help/version and
-// smart `generate`/`regen` dispatch coexist.
+// smart root-command dispatch coexist.
 type rootInvocation struct {
 	input             inputSource
 	options           Options
@@ -145,14 +145,15 @@ func (r *Runner) Run(args []string) (int, error) {
 		}
 		return r.runRoot(args)
 	}
+	if isRemovedSubcommand(args[0]) {
+		return 1, removedSubcommandError(args[0])
+	}
 	if !isSubcommand(args[0]) {
 		return r.runRoot(args)
 	}
 	switch args[0] {
 	case "generate":
 		return r.runGenerate(args[1:])
-	case "regen", "refresh":
-		return r.runRegen(args[1:])
 	case "strip":
 		return r.runStrip(args[1:])
 	case "check":
@@ -163,7 +164,7 @@ func (r *Runner) Run(args []string) (int, error) {
 }
 
 // runRoot handles help/version requests and the root convenience mode that
-// auto-dispatches to `generate` or `regen`.
+// creates or updates managed documents without an explicit subcommand.
 func (r *Runner) runRoot(args []string) (int, error) {
 	inv, err := parseRootInvocation(args)
 	if err != nil {
@@ -233,35 +234,6 @@ func (r *Runner) runGenerate(args []string) (int, error) {
 	return r.executeGenerate(source, input, inv.options, inv.verbose)
 }
 
-// runRegen parses and executes the explicit `regen` subcommand.
-func (r *Runner) runRegen(args []string) (int, error) {
-	inv, err := parseRegenInvocation(args)
-	if err != nil {
-		return 1, err
-	}
-	if inv.help {
-		fmt.Fprint(r.stdout, regenHelp(inv.verbose))
-		return 0, nil
-	}
-	source, err := r.resolveRequestedInput(inv.input)
-	if err != nil {
-		return 1, err
-	}
-	if source.kind == inputSourceNone {
-		if inv.verboseOnly {
-			fmt.Fprint(r.stdout, regenHelp(true))
-			return 0, nil
-		}
-		return 1, r.missingInputError()
-	}
-
-	input, err := r.readInput(source)
-	if err != nil {
-		return 1, err
-	}
-	return r.executeRegen(source, input, inv.verbose)
-}
-
 // runStrip parses and executes the explicit `strip` subcommand.
 func (r *Runner) runStrip(args []string) (int, error) {
 	inv, err := parseStripInvocation(args)
@@ -322,7 +294,7 @@ func (r *Runner) runCheck(args []string) (int, error) {
 
 // parseRootInvocation parses the top-level invocation. It intentionally accepts
 // both file selection and generate control flags because root mode may need to
-// dispatch to either `generate` or `regen`.
+// dispatch to either a fresh generate path or the persisted-config restore path.
 func parseRootInvocation(args []string) (rootInvocation, error) {
 	normalized, err := normalizeCLIArgs(args, rootCommandArgSpec())
 	if err != nil {
@@ -438,11 +410,6 @@ func parseGenerateInvocation(args []string) (generateInvocation, error) {
 		help:        *help,
 		verboseOnly: isVerboseOnlyInvocation(normalized.parseArgs),
 	}, nil
-}
-
-// parseRegenInvocation parses the explicit `regen` subcommand.
-func parseRegenInvocation(args []string) (simpleInvocation, error) {
-	return parseSimpleInvocation("regen", args, regenCommandArgSpec())
 }
 
 // parseCheckInvocation parses the explicit `check` subcommand.
@@ -589,7 +556,7 @@ func (r *Runner) missingInputError() error {
 
 // shouldUseGenerateInRootMode applies the issue #53 dispatch rule. Explicit
 // generate-shaping flags always force `generate`; otherwise only a valid managed
-// container selects `regen`.
+// an existing valid container selects the persisted-config regeneration path.
 func shouldUseGenerateInRootMode(input string, generateOverrides bool) bool {
 	if generateOverrides {
 		return true
@@ -612,7 +579,7 @@ func (r *Runner) executeGenerate(source inputSource, input string, opts Options,
 	return 0, nil
 }
 
-// executeRegen runs the already-decided regen workflow against document text
+// executeRegen runs the already-decided persisted-config restore workflow against document text
 // that was read by the caller from the resolved input source.
 func (r *Runner) executeRegen(source inputSource, input string, verbose bool) (int, error) {
 	result, warnings, err := Regen(input)
@@ -736,7 +703,16 @@ func (r *Runner) writeVersion(verbose bool) {
 // subcommand. Everything else is now handled by root convenience mode.
 func isSubcommand(arg string) bool {
 	switch arg {
-	case "generate", "regen", "refresh", "strip", "check":
+	case "generate", "strip", "check":
+		return true
+	default:
+		return false
+	}
+}
+
+func isRemovedSubcommand(arg string) bool {
+	switch arg {
+	case "regen", "refresh":
 		return true
 	default:
 		return false
@@ -765,8 +741,6 @@ func shortHelp() string {
 Commands:
   generate [--file <name> | <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
   check    [--file <name> | <name>] [--verbose]            validate that the document matches regenerated output
-  regen    [--file <name> | <name>] [--verbose]            regenerate using persisted container config
-  refresh  [--file <name> | <name>] [--verbose]            alias for regen
   strip    [--file <name> | <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
 
 Details: mdtoc -v   short for mdtoc --help --verbose
@@ -781,15 +755,13 @@ Usage: mdtoc <command>
        mdtoc [--file <name> | <name>] [GENERATE OPTIONS]
        mdtoc [GENERATE OPTIONS] < INPUT.md
 
-Without a subcommand, mdtoc chooses between regen and generate.
-If the input already contains a valid managed container and no generate options
-are provided, it behaves like regen. Otherwise it behaves like generate.
+Without a subcommand, mdtoc updates an existing managed container or creates a
+new one when none exists. Explicit generate options still override persisted
+container settings.
 
 Commands:
   generate [--file <name> | <name>] [--verbose] [OPTIONS]  generate or update ToC, numbers, and anchors
   check    [--file <name> | <name>] [--verbose]            validate that the document matches regenerated output
-  regen    [--file <name> | <name>] [--verbose]            regenerate using persisted container config
-  refresh  [--file <name> | <name>] [--verbose]            alias for regen
   strip    [--file <name> | <name>] [--verbose] [--raw]    remove managed artifacts and keep the container
 
 Generate options:
@@ -849,32 +821,6 @@ Options:
 `) + "\n"
 }
 
-// regenHelp returns the regen/refresh subcommand help text.
-func regenHelp(verbose bool) string {
-	if verbose {
-		return strings.TrimSpace(`mdtoc regen [--file <name> | <name>] [--verbose]
-
-Regenerate using the persisted config from an existing managed container.
-
-Alias: mdtoc refresh
-
-Options:
-  --file, -f <name>
-  --verbose, -v
-  --help, -h
-`) + "\n"
-	}
-	return strings.TrimSpace(`mdtoc regen [--file <name> | <name>] [--verbose]
-
-Alias: mdtoc refresh
-
-Options:
-  --file, -f <name>
-  --verbose, -v
-  --help, -h
-`) + "\n"
-}
-
 // stripHelp returns the strip subcommand help text.
 func stripHelp(verbose bool) string {
 	if verbose {
@@ -922,7 +868,7 @@ Options:
 }
 
 // enhanceFlagParseError adds a focused hint when a known subcommand was passed
-// in flag position such as `--regen` instead of `regen`.
+// in flag position such as `--refresh` instead of a supported subcommand.
 func enhanceFlagParseError(err error) error {
 	msg := err.Error()
 	const prefix = "flag provided but not defined: "
@@ -933,9 +879,16 @@ func enhanceFlagParseError(err error) error {
 	flagToken := strings.TrimSpace(strings.TrimPrefix(msg, prefix))
 	flagToken = strings.Trim(strings.SplitN(flagToken, "=", 2)[0], "\"")
 	command := strings.TrimLeft(flagToken, "-")
+	if isRemovedSubcommand(command) {
+		return removedSubcommandError(command)
+	}
 	if !isSubcommand(command) {
 		return err
 	}
 
 	return fmt.Errorf("%s\nhint: `%s` is a subcommand, not a flag; use `mdtoc %s <file>`", msg, command, command)
+}
+
+func removedSubcommandError(command string) error {
+	return fmt.Errorf("unknown command %q\nhint: use `mdtoc generate ...`; explicit `%s` is no longer needed", command, command)
 }

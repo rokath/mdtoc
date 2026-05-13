@@ -89,8 +89,6 @@ func TestRunnerSubcommandVerboseWithoutHelpPrintsLongHelp(t *testing.T) {
 		want string
 	}{
 		{args: []string{"generate", "--verbose"}, want: "Generate or update ToC, heading numbers, and anchors."},
-		{args: []string{"regen", "--verbose"}, want: "Regenerate using the persisted config from an existing managed container."},
-		{args: []string{"refresh", "--verbose"}, want: "Regenerate using the persisted config from an existing managed container."},
 		{args: []string{"strip", "--verbose"}, want: "Remove managed artifacts and optionally the entire managed container."},
 		{args: []string{"check", "--verbose"}, want: "Reconstruct the generated target output and compare it byte-for-byte."},
 	}
@@ -147,9 +145,9 @@ func TestRunnerRootConvenienceGenerateFromStdinWithFlags(t *testing.T) {
 	}
 }
 
-// TestRunnerRootConvenienceRegenFromStdin verifies root-mode regen dispatch for
+// TestRunnerRootConvenienceRestoreFromStdin verifies root-mode restoration for
 // already managed stdin input without override flags.
-func TestRunnerRootConvenienceRegenFromStdin(t *testing.T) {
+func TestRunnerRootConvenienceRestoreFromStdin(t *testing.T) {
 	input, _, err := Generate("# Title\n\n## Intro\n", Options{
 		Numbering: false,
 		MinLevel:  2,
@@ -173,7 +171,7 @@ func TestRunnerRootConvenienceRegenFromStdin(t *testing.T) {
 		t.Fatalf("exit code = %d, want 0", exitCode)
 	}
 	if got := stdout.String(); !strings.Contains(got, "* [Intro](#intro)") || strings.Contains(got, "* [BROKEN](#intro)") {
-		t.Fatalf("root stdin regen did not rebuild the managed output:\n%s", got)
+		t.Fatalf("root stdin restore did not rebuild the managed output:\n%s", got)
 	}
 }
 
@@ -211,64 +209,6 @@ func TestRunnerGenerateAcceptsBulletsOverride(t *testing.T) {
 	}
 }
 
-// TestRunnerRegenFromStdin verifies that regen reuses persisted container config from stdin.
-func TestRunnerRegenFromStdin(t *testing.T) {
-	input, _, err := Generate("# Title\n\n## Intro\n", Options{
-		Numbering: false,
-		MinLevel:  2,
-		MaxLevel:  4,
-		Anchor:    false,
-		AnchorSet: true,
-		TOC:       true,
-	})
-	if err != nil {
-		t.Fatalf("Generate error: %v", err)
-	}
-	input = strings.Replace(input, "* [Intro](#intro)", "* [BROKEN](#intro)", 1)
-
-	var stdout, stderr strings.Builder
-	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
-	exitCode, err := runner.Run([]string{"regen"})
-	if err != nil {
-		t.Fatalf("Run error: %v", err)
-	}
-	if exitCode != 0 {
-		t.Fatalf("exit code = %d, want 0", exitCode)
-	}
-	if got := stdout.String(); !strings.Contains(got, "* [Intro](#intro)") || strings.Contains(got, "<a id=") {
-		t.Fatalf("stdout does not contain regen output honoring stored config:\n%s", got)
-	}
-}
-
-// TestRunnerRefreshAliasFromStdin verifies that refresh behaves exactly like regen on stdin input.
-func TestRunnerRefreshAliasFromStdin(t *testing.T) {
-	input, _, err := Generate("# Title\n\n## Intro\n", Options{
-		Numbering: false,
-		MinLevel:  2,
-		MaxLevel:  4,
-		Anchor:    false,
-		AnchorSet: true,
-		TOC:       true,
-	})
-	if err != nil {
-		t.Fatalf("Generate error: %v", err)
-	}
-	input = strings.Replace(input, "* [Intro](#intro)", "* [BROKEN](#intro)", 1)
-
-	var stdout, stderr strings.Builder
-	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
-	exitCode, err := runner.Run([]string{"refresh"})
-	if err != nil {
-		t.Fatalf("Run error: %v", err)
-	}
-	if exitCode != 0 {
-		t.Fatalf("exit code = %d, want 0", exitCode)
-	}
-	if got := stdout.String(); !strings.Contains(got, "* [Intro](#intro)") || strings.Contains(got, "<a id=") {
-		t.Fatalf("stdout does not contain refresh alias output honoring stored config:\n%s", got)
-	}
-}
-
 // TestRunnerGenerateFailsFastOnInteractiveStdinWithoutFile verifies issue #4 behavior for generate.
 func TestRunnerGenerateFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
 	var stdout, stderr strings.Builder
@@ -282,19 +222,6 @@ func TestRunnerGenerateFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
 	}
 	if got := err.Error(); !strings.Contains(got, "no input provided") {
 		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-// TestRunnerRegenFailsFastOnInteractiveStdinWithoutFile verifies issue #4 behavior for regen.
-func TestRunnerRegenFailsFastOnInteractiveStdinWithoutFile(t *testing.T) {
-	var stdout, stderr strings.Builder
-	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
-	exitCode, err := runner.Run([]string{"regen"})
-	if err == nil {
-		t.Fatalf("Run returned nil error")
-	}
-	if exitCode != 1 {
-		t.Fatalf("exit code = %d, want 1", exitCode)
 	}
 }
 
@@ -396,75 +323,23 @@ func TestRunnerRejectsMixedPositionalFileAndStdinGenerate(t *testing.T) {
 	}
 }
 
-// TestRunnerRegenWithFileDoesNotRequireStdin verifies that regen honors -f input files.
-func TestRunnerRegenWithFileDoesNotRequireStdin(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "doc.md")
-	input, _, err := Generate("# Title\n\n## Intro\n", Options{
-		Numbering: false,
-		MinLevel:  2,
-		MaxLevel:  4,
-		Anchor:    false,
-		AnchorSet: true,
-		TOC:       true,
-	})
-	if err != nil {
-		t.Fatalf("Generate error: %v", err)
-	}
-	input = strings.Replace(input, "* [Intro](#intro)", "* [BROKEN](#intro)", 1)
-	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
-		t.Fatalf("WriteFile error: %v", err)
-	}
-
-	var stdout, stderr strings.Builder
-	runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
-	exitCode, err := runner.Run([]string{"regen", "-f", path})
-	if err != nil {
-		t.Fatalf("Run error: %v", err)
-	}
-	if exitCode != 0 {
-		t.Fatalf("exit code = %d, want 0", exitCode)
-	}
-
-	got, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("ReadFile error: %v", err)
-	}
-	if s := string(got); !strings.Contains(s, "* [Intro](#intro)") || strings.Contains(s, "<a id=") {
-		t.Fatalf("regen file output does not honor stored config:\n%s", s)
-	}
-}
-
-// TestRunnerRejectsMixedFileAndStdinRegen verifies that regen rejects simultaneous file and stdin input.
-func TestRunnerRejectsMixedFileAndStdinRegen(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "doc.md")
-	input, _, err := Generate("# Title\n\n## Intro\n", Options{
-		Numbering: false,
-		MinLevel:  2,
-		MaxLevel:  4,
-		Anchor:    false,
-		AnchorSet: true,
-		TOC:       true,
-	})
-	if err != nil {
-		t.Fatalf("Generate error: %v", err)
-	}
-	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
-		t.Fatalf("WriteFile error: %v", err)
-	}
-
-	var stdout, stderr strings.Builder
-	runner := NewRunner(strings.NewReader(input), &stdout, &stderr)
-	exitCode, err := runner.Run([]string{"regen", "-f", path})
-	if err == nil {
-		t.Fatalf("Run returned nil error")
-	}
-	if exitCode != 1 {
-		t.Fatalf("exit code = %d, want 1", exitCode)
-	}
-	if got := err.Error(); !strings.Contains(got, "cannot use --file together with piped stdin") {
-		t.Fatalf("unexpected error: %v", err)
+// TestRunnerRemovedSubcommandsFail verifies that explicit regen/refresh are no longer public CLI commands.
+func TestRunnerRemovedSubcommandsFail(t *testing.T) {
+	for _, command := range []string{"regen", "refresh"} {
+		t.Run(command, func(t *testing.T) {
+			var stdout, stderr strings.Builder
+			runner := newRunner(strings.NewReader(""), &stdout, &stderr, BuildInfo{}, true)
+			exitCode, err := runner.Run([]string{command})
+			if err == nil {
+				t.Fatalf("Run(%q) returned nil error", command)
+			}
+			if exitCode != 1 {
+				t.Fatalf("Run(%q) exit code = %d, want 1", command, exitCode)
+			}
+			if got := err.Error(); !strings.Contains(got, "use `mdtoc generate ...`") {
+				t.Fatalf("Run(%q) returned unexpected error: %v", command, err)
+			}
+		})
 	}
 }
 

@@ -27,6 +27,7 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
 
 ## 1. Features
 
+* same [binary](https://github.com/rokath/mdtoc/releases) in **scripts**, **CI** and as VS Code extension keeps **workflow aligned**
 * **easy** to use with editor context menu:
   * right-click inside an open Markdown editor and choose `mdtoc: Generate ToC`
 * **configurable**: edit the generated `mdtoc` config block values directly to match your needs
@@ -38,8 +39,7 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
 * **repeated headings** support
 * **protects** non-generated content inside ToC area
   * generated content stays clearly separated from authored content
-* deterministic and idempotent output
-* keep the VS Code **workflow aligned** with the same [mdtoc CLI binary](https://github.com/rokath/mdtoc/releases) in local scripts and CI
+* deterministic and idempotent: **updates existing ToC**
 * Intentionally **ignored**:
   * **Setext headings**:
   
@@ -107,8 +107,8 @@ The table of contents is initially created at the beginning of the document. You
 * if the document has no managed container yet, `mdtoc` creates one with its default settings (generate):
   * `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->`
 * if the document already has a valid managed container, `mdtoc` regenerates it from the stored container config
-  * If the defaults ok for you can delete the config block line
-  * break this config block line and you get re-generated:
+  * If the defaults are fine for you, you can delete the config block line.
+  * You may also rewrite that single-line config block as a valid multi-line config block:
 
   ```md
   <!--
@@ -128,11 +128,11 @@ The table of contents is initially created at the beginning of the document. You
   * the managed container is invalid
 * if a managed container is broken beyond repair, you can delete it and run `mdtoc: Generate ToC` again to create a fresh one
 
-`Strip ToC` runs the explicit `strip` subcommand and is implicit executed on each re-generate. If the CLI reports an error, the document stays unchanged. If inside the ToC area non-generated lines found according to the current config block rules, these are saved inside aditional regions (**protection**).
+`Strip ToC` runs the explicit `strip` subcommand and removes the generated ToC. If the CLI reports an error, the document stays unchanged. If non-generated lines are found inside the ToC area according to the current config block rules, they are preserved inside additional regions (**protection**). The same protection also applies to `Generate ToC`.
 
 ```md
 <!-- preserved by mdtoc
-  * [3.1. Behaviour](#31-behaviour) accidently entered text here
+  * [3.1. Behaviour](#31-behaviour) accidentally entered text here
 -->
 ```
 

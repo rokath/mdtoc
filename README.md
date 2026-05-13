@@ -33,7 +33,7 @@
   * [2.4. Build from source](#24-build-from-source)
 * [3. Usage](#3-usage)
   * [3.1. Inspect the CLI](#31-inspect-the-cli)
-  * [3.2. Use .docs/EXAMPLE.md as play ground](#32-use-docsexamplemd-as-play-ground)
+  * [3.2. Use .docs/EXAMPLE.md as a playground](#32-use-docsexamplemd-as-a-playground)
 * [4. Managed Structure](#4-managed-structure)
 * [5. Limits](#5-limits)
 * [6. Documentation](#6-documentation)
@@ -48,8 +48,14 @@
 
 ## 1. Features
 
-* **easy** to use: `mdtoc MY.md`, single binary, also as **vsCode** [extension](https://marketplace.visualstudio.com/items?itemName=rokath.mdtoc)
-* **configurable**: CLI or edit generated `<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->`
+* **easy** to use: `mdtoc MY.md`, single binary, also as **VS Code** [extension](https://marketplace.visualstudio.com/items?itemName=rokath.mdtoc)
+  * same [binary](https://github.com/rokath/mdtoc/releases) in **scripts**, **CI** and as VS Code extension keeps **workflow aligned**
+* **configurable**: CLI or edit generated config:
+
+   ```txt
+   <!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->
+   ```
+
   * `on|off` for **numbering**, **anchor**, **link**, **toc**
   * targets ATX headings (**min** `#` to **max** `######`)
   * **slug** profiles: `github`, `gitlab`, `crossnote`
@@ -59,13 +65,13 @@
   * generated content stays clearly separated from authored content
 * works with **files** and Unix **pipes**
 * **repeated headings** support
-* intentionally **ignores** headings:
-  * in **Setext** stype
-  * inside **fenced code blocks**
-  * inside **HTML comments**: `<!-- ... ## Example -->`
-  * between **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
-  * with a **starting space**
-* deterministic and idempotent output
+* Intentionally **ignored**:
+  * **Setext**: `IGNORED Title` underlined with `===` or `---`
+  * **fenced code blocks**: ```` ```txt ## IGNORED Title ``` ````
+  * **HTML comments**: `<!-- ## IGNORED Title -->`
+  * **exclusion regions**: `<!-- mdtoc off -->` ## IGNORED Title `<!-- mdtoc on -->`
+  * **starting space**: `␠## IGNORED Title`
+* deterministic and idempotent: **updates existing ToC**
 
 ## 2. Install
 
@@ -103,11 +109,11 @@ mdtoc --verbose     # show extended root help with command details
 mdtoc <command> -v  # show the long help for one command
 ```
 
-### 3.2. Use `.docs/EXAMPLE.md` as play ground
+### 3.2. Use `.docs/EXAMPLE.md` as a playground
 
 ```bash
-mdtoc EXAMPLE.md                    # new ToC, use config block or defaults, root mode use
-mdtoc generate EXAMPLE.md -a off    # new ToC, use CLI or defaults, rewrite the config block
+mdtoc EXAMPLE.md                    # root mode: update an existing managed container or create a new one
+mdtoc generate EXAMPLE.md -a false  # new ToC, use CLI or defaults, rewrite the config block
 mdtoc check EXAMPLE.md              # fail in CI when ToC differs from the reconstructed ToC
 cat EXAMPLE.md | mdtoc              # dry-run
 cat EXAMPLE.md | mdtoc strip > s.md # clear via Unix pipe and write to a different file
@@ -132,7 +138,7 @@ cat EXAMPLE.md | mdtoc strip > s.md # clear via Unix pipe and write to a differe
 <!-- /mdtoc -->
 ```
 
-The heading title stays the source of truth. Numbers, inline anchors, and ToC entries are derived from it. With `anchor=false`, the ToC target follows the rendered heading text because no managed inline anchor exists. Use `slug=github|gitlab|crossnote` to control the link type generation.
+The heading title stays the source of truth. Numbers, inline anchors, and ToC entries are derived from it. With `anchor=false`, the ToC target follows the rendered heading text because no managed inline anchor exists. Use `slug=github|gitlab|crossnote` to control the renderer/profile-dependent link type generation.
 
 The optional config block records the settings used for regeneration. `generate` uses current CLI flags or defaults and then rewrites that block when settings need to be persisted.
 
@@ -149,7 +155,7 @@ This means:
 * repeated-heading links depend on occurrence order ([#8](https://github.com/rokath/mdtoc/issues/8))
   * Workaround: [example](./docs/EXAMPLE.md#chapter-a-about)
 * The `check` command does not detect duplicate link anchors. See [#97](https://github.com/rokath/mdtoc/issues/97).
-* The per default with `anchor=true` generated ToC links guaranty to work in any environment, but reduce the readability of the raw Markdown document. With `anchor=off numbering=off slug=crossnote` a good working setting is possible. But switching `numbering=on` breaks the link stability promise then. There is no generally best setting - you have to choose. See also [#94](https://github.com/rokath/mdtoc/issues/94).
+* By default, `anchor=true` generates ToC links that reliably work in any environment, but this reduces the readability of the raw Markdown document. A setting like `anchor=false numbering=false slug=crossnote` can work well in some renderers. Switching `numbering=on` there breaks the link stability promise, though. There is no universally best setting; you have to choose. See also [#94](https://github.com/rokath/mdtoc/issues/94).
 * not a site generator
 * not a Markdown formatter
 
