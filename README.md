@@ -64,13 +64,13 @@
   * generated content stays clearly separated from authored content
 * works with **files** and Unix **pipes**
 * **repeated headings** support
-* intentionally **ignores** headings:
-  * in **Setext** stype
-  * inside **fenced code blocks**
-  * inside **HTML comments**: `<!-- ... ## Example -->`
-  * between **exclusion regions**: `<!-- mdtoc off -->` ... `<!-- mdtoc on -->`
-  * with a **starting space**
-* deterministic and idempotent output
+* Intentionally **ignored**:
+  * **Setext**: `IGNORED Title` underlined with `===` or `---`
+  * **fenced code blocks**: ```` ```txt ## IGNORED Title ``` ````
+  * **HTML comments**: `<!-- ## IGNORED Title -->`
+  * **exclusion regions**: `<!-- mdtoc off -->` ## IGNORED Title `<!-- mdtoc on -->`
+  * **starting space**: `␠## IGNORED Title`
+* deterministic and idempotent: **updates existing ToC**
 
 ## 2. Install
 

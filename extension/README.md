@@ -38,7 +38,7 @@ This is a thin VS Code extension around [mdtoc](https://github.com/rokath/mdtoc)
 * **repeated headings** support
 * **protects** non-generated content inside ToC area
   * generated content stays clearly separated from authored content
-* deterministic and idempotent output
+* deterministic and idempotent: **updates existing ToC**
 * keep the VS Code **workflow aligned** with the same [mdtoc CLI binary](https://github.com/rokath/mdtoc/releases) in local scripts and CI
 * Intentionally **ignored**:
   * **Setext headings**:
