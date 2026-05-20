@@ -112,6 +112,45 @@ jobs:
           echo "Found ${#files[@]} VSIX file(s) to publish:"
           printf ' - %s\n' "${files[@]}"
 
+          publish_with_retry() {
+            local file="$1"
+            local max_attempts=3
+            local attempt=1
+            local status=0
+            local log
+
+            while [ "$attempt" -le "$max_attempts" ]; do
+              log="$(mktemp)"
+              echo "Publish attempt $attempt/$max_attempts for $file"
+
+              set +e
+              vsce publish --packagePath "$file" -p "$VSCE_PAT" 2>&1 | tee "$log"
+              status="${PIPESTATUS[0]}"
+              set -e
+
+              if [ "$status" -eq 0 ]; then
+                rm -f "$log"
+                return 0
+              fi
+
+              if grep -Eiq 'already (been )?published|already exists|Version .*already' "$log"; then
+                echo "$file appears to be already published; continuing."
+                rm -f "$log"
+                return 0
+              fi
+
+              if [ "$attempt" -eq "$max_attempts" ]; then
+                rm -f "$log"
+                return "$status"
+              fi
+
+              echo "Publish failed with status $status; retrying in 30 seconds..."
+              rm -f "$log"
+              sleep 30
+              attempt=$((attempt + 1))
+            done
+          }
+
           for file in "${files[@]}"; do
             echo "::group::Inspect $file"
             ls -lh "$file"
@@ -137,13 +176,14 @@ jobs:
             echo "::endgroup::"
 
             echo "::group::Publish $file"
-            vsce publish --packagePath "$file" -p "$VSCE_PAT" || {
+            if publish_with_retry "$file"; then
+              echo "::endgroup::"
+            else
               status=$?
               echo "::endgroup::"
               echo "Failed to publish $file"
               echo "Exit status: $status"
               echo "The VSIX was valid as a ZIP, so check the vsce output above for Marketplace/API, duplicate version, target, or validation errors."
               exit "$status"
-            }
-            echo "::endgroup::"
+            fi
           done
