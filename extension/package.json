@@ -2,7 +2,7 @@
   "name": "mdtoc",
   "displayName": "mdtoc - Markdown ToC with section numbering and stable links",
   "description": "Generate, strip and configure a Markdown table of contents. Toggle ToC, numbering and links; choose heading levels, bullet style and slug method.",
-  "version": "0.3.3",
+  "version": "1.0.0",
   "publisher": "rokath",
   "license": "MIT",
   "icon": "mdtoc_icon_128.png",
@@ -33,33 +33,53 @@
   "activationEvents": [
     "onLanguage:markdown",
     "onCommand:mdtoc.generate",
-    "onCommand:mdtoc.strip"
+    "onCommand:mdtoc.strip",
+    "onCommand:mdtoc.generate.context",
+    "onCommand:mdtoc.strip.context"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "mdtoc.generate",
-        "title": "mdtoc: Generate ToC",
+        "title": "Generate ToC",
         "category": "mdtoc"
       },
       {
         "command": "mdtoc.strip",
-        "title": "mdtoc: Strip ToC",
+        "title": "Strip ToC",
         "category": "mdtoc"
+      },
+      {
+        "command": "mdtoc.generate.context",
+        "title": "mdtoc: Generate ToC"
+      },
+      {
+        "command": "mdtoc.strip.context",
+        "title": "mdtoc: Strip ToC"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "mdtoc.generate",
+          "command": "mdtoc.generate.context",
           "when": "editorLangId == markdown",
           "group": "navigation"
         },
         {
-          "command": "mdtoc.strip",
+          "command": "mdtoc.strip.context",
           "when": "editorLangId == markdown",
           "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mdtoc.generate.context",
+          "when": "false"
+        },
+        {
+          "command": "mdtoc.strip.context",
+          "when": "false"
         }
       ]
     },
