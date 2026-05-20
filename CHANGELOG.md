@@ -8,9 +8,24 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
+Used git range: `v1.0.0..HEAD`
+
+```txt
+```
+
+## <a id='v1.0.0-changes'></a>v1.0.0 Changes (2026-05-20)
+
+### <a id='1.0.0-overview'></a>v1.0.0 Overview
+
+* The VS Code command menue now shows "mdtoc: Generate" instead of  "mdtoc: mdtoc: Generate"
+
+### <a id='v1.0.0-git-log'></a>v1.0.0 Git Log
+
 Used git range: `v0.3.3..HEAD`
 
 ```txt
+* 9f7a1bc VS Code extension command palette now without doubled "mdtoc:"
+* c56c32a Merge branch 'main' into dev
 ```
 
 ## <a id='v0.3.3-changes'></a>v0.3.3 Changes (2026-05-13)
