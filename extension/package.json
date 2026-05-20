@@ -33,33 +33,53 @@
   "activationEvents": [
     "onLanguage:markdown",
     "onCommand:mdtoc.generate",
-    "onCommand:mdtoc.strip"
+    "onCommand:mdtoc.strip",
+    "onCommand:mdtoc.generate.context",
+    "onCommand:mdtoc.strip.context"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "mdtoc.generate",
-        "title": "mdtoc: Generate ToC",
+        "title": "Generate ToC",
         "category": "mdtoc"
       },
       {
         "command": "mdtoc.strip",
-        "title": "mdtoc: Strip ToC",
+        "title": "Strip ToC",
         "category": "mdtoc"
+      },
+      {
+        "command": "mdtoc.generate.context",
+        "title": "mdtoc: Generate ToC"
+      },
+      {
+        "command": "mdtoc.strip.context",
+        "title": "mdtoc: Strip ToC"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "mdtoc.generate",
+          "command": "mdtoc.generate.context",
           "when": "editorLangId == markdown",
           "group": "navigation"
         },
         {
-          "command": "mdtoc.strip",
+          "command": "mdtoc.strip.context",
           "when": "editorLangId == markdown",
           "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mdtoc.generate.context",
+          "when": "false"
+        },
+        {
+          "command": "mdtoc.strip.context",
+          "when": "false"
         }
       ]
     },

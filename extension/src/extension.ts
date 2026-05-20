@@ -21,9 +21,15 @@ interface CommandResult {
 
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(output);
+
+  const generate = () => runMutatingCommand(context, "generate");
+  const strip = () => runMutatingCommand(context, "strip");
+
   context.subscriptions.push(
-    vscode.commands.registerCommand("mdtoc.generate", () => runMutatingCommand(context, "generate")),
-    vscode.commands.registerCommand("mdtoc.strip", () => runMutatingCommand(context, "strip")),
+    vscode.commands.registerCommand("mdtoc.generate", generate),
+    vscode.commands.registerCommand("mdtoc.strip", strip),
+    vscode.commands.registerCommand("mdtoc.generate.context", generate),
+    vscode.commands.registerCommand("mdtoc.strip.context", strip),
   );
 }
 
