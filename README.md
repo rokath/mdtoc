@@ -27,7 +27,7 @@
 
 * [1. Features](#1-features)
 * [2. Install](#2-install)
-  * [2.1. VS Code extension](#21-vs-code-extension)
+  * [2.1. VS Code Extension](#21-vs-code-extension)
   * [2.2. Release Binaries (Linux, MacOS, Windows)](#22-release-binaries-linux-macos-windows)
   * [2.3. Darwin Setup](#23-darwin-setup)
   * [2.4. Build from source](#24-build-from-source)
