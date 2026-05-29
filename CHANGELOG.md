@@ -8,9 +8,38 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
+Used git range: `v1.0.1..HEAD`
+
+```txt
+```
+
+## <a id='v1.0.1-changes'></a>v1.0.1 Changes (2026-05-30)
+
+### <a id='v1.0.1-overview'></a>v1.0.1 Overview
+
+* Generated ToC links now reuse explicit managed anchor IDs when `anchor=true`:
+  * `numbering=true` still affects ToC labels and heading display text
+  * link targets stay tied to the generated unnumbered `<a id="..."></a>` values
+  * duplicate headings keep matching ToC and anchor suffixes such as `summary` and `summary-1`
+* VS Code Marketplace publishing is more robust:
+  * VSIX publishing now retries transient `vsce publish` failures
+  * already-published package responses are treated as non-fatal after the VSIX assets have been validated
+* Extension development dependency lockfile updates:
+  * `qs` was updated from `6.15.1` to `6.15.2`
+  * `tmp` was updated from `0.2.5` to `0.2.7`
+
+### <a id='v1.0.1-git-log'></a>v1.0.1 Git Log
+
 Used git range: `v1.0.0..HEAD`
 
 ```txt
+* 838007c Issue #109 fixed
+* 7a37122 Merge pull request #108 from rokath/dependabot/npm_and_yarn/extension/tmp-0.2.7
+* afcaafb Merge pull request #107 from rokath/dependabot/npm_and_yarn/extension/qs-6.15.2
+* 57f2cc9 build(deps-dev): bump tmp from 0.2.5 to 0.2.7 in /extension
+* c4aae24 build(deps-dev): bump qs from 6.15.1 to 6.15.2 in /extension
+* e173126 Merge pull request #106 from rokath/dev
+* b9c11fa retry logic added for poblishing
 ```
 
 ## <a id='v1.0.0-changes'></a>v1.0.0 Changes (2026-05-20)
