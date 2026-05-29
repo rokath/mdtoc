@@ -304,6 +304,143 @@ func TestGenerateLinkFalseRendersPlainTOC(t *testing.T) {
 	}
 }
 
+// TestGenerateTOCTargetsFollowAnchorOwnershipMatrix verifies the issue #109
+// invariant across the persisted config flags that decide whether mdtoc owns
+// heading IDs or delegates them to the selected renderer slug profile.
+func TestGenerateTOCTargetsFollowAnchorOwnershipMatrix(t *testing.T) {
+	input := "# Title\n\n## Foo  Bar\n## Foo  Bar\n"
+	slugCases := []struct {
+		slug            SlugMode
+		anchorTargets   [2]string
+		plainTargets    [2]string
+		numberedTargets [2]string
+	}{
+		{
+			slug:            SlugGitHub,
+			anchorTargets:   [2]string{"foo--bar", "foo--bar-1"},
+			plainTargets:    [2]string{"foo--bar", "foo--bar-1"},
+			numberedTargets: [2]string{"1-foo--bar", "2-foo--bar"},
+		},
+		{
+			slug:            SlugGitLab,
+			anchorTargets:   [2]string{"foo-bar", "foo-bar-1"},
+			plainTargets:    [2]string{"foo-bar", "foo-bar-1"},
+			numberedTargets: [2]string{"1-foo-bar", "2-foo-bar"},
+		},
+		{
+			slug:            SlugCrossnote,
+			anchorTargets:   [2]string{"foo--bar", "foo--bar-1"},
+			plainTargets:    [2]string{"foo--bar", "foo--bar-1"},
+			numberedTargets: [2]string{"1-foo--bar", "2-foo--bar"},
+		},
+	}
+
+	for _, sc := range slugCases {
+		for _, numbering := range []bool{false, true} {
+			for _, anchor := range []bool{false, true} {
+				for _, link := range []bool{false, true} {
+					for _, toc := range []bool{false, true} {
+						name := fmt.Sprintf("slug=%s/numbering=%t/anchor=%t/link=%t/toc=%t", sc.slug, numbering, anchor, link, toc)
+						t.Run(name, func(t *testing.T) {
+							got, _, err := Generate(input, Options{
+								Numbering: numbering,
+								MinLevel:  2,
+								MaxLevel:  2,
+								Slug:      sc.slug,
+								Anchor:    anchor,
+								AnchorSet: true,
+								Link:      link,
+								LinkSet:   true,
+								TOC:       toc,
+								Bullets:   BulletStar,
+							})
+							if err != nil {
+								t.Fatalf("Generate error: %v", err)
+							}
+
+							firstLabel := "Foo Bar"
+							secondLabel := "Foo Bar"
+							if numbering {
+								firstLabel = "1. " + firstLabel
+								secondLabel = "2. " + secondLabel
+							}
+
+							firstHeading := "## "
+							secondHeading := "## "
+							if numbering {
+								firstHeading += "1. "
+								secondHeading += "2. "
+							}
+							if anchor {
+								firstHeading += fmt.Sprintf(`<a id="%s"></a>`, sc.anchorTargets[0])
+								secondHeading += fmt.Sprintf(`<a id="%s"></a>`, sc.anchorTargets[1])
+							}
+							firstHeading += "Foo  Bar"
+							secondHeading += "Foo  Bar"
+
+							for _, want := range []string{firstHeading, secondHeading} {
+								if !strings.Contains(got, want) {
+									t.Fatalf("generated output missing heading %q:\n%s", want, got)
+								}
+							}
+							if !anchor && strings.Contains(got, "<a id=") {
+								t.Fatalf("anchor=false unexpectedly rendered inline anchors:\n%s", got)
+							}
+
+							targets := sc.plainTargets
+							if numbering {
+								targets = sc.numberedTargets
+							}
+							if anchor {
+								targets = sc.anchorTargets
+							}
+
+							if toc {
+								if link {
+									for _, want := range []string{
+										fmt.Sprintf("* [%s](#%s)", firstLabel, targets[0]),
+										fmt.Sprintf("* [%s](#%s)", secondLabel, targets[1]),
+									} {
+										if !strings.Contains(got, want) {
+											t.Fatalf("generated output missing linked ToC entry %q:\n%s", want, got)
+										}
+									}
+									if anchor && numbering {
+										for _, forbidden := range sc.numberedTargets {
+											if strings.Contains(got, fmt.Sprintf("](#%s)", forbidden)) {
+												t.Fatalf("anchor=true ToC used numbered renderer target %q:\n%s", forbidden, got)
+											}
+										}
+									}
+								} else {
+									for _, want := range []string{
+										"* " + firstLabel,
+										"* " + secondLabel,
+									} {
+										if !strings.Contains(got, want) {
+											t.Fatalf("generated output missing plain ToC entry %q:\n%s", want, got)
+										}
+									}
+									if strings.Contains(got, "](#") {
+										t.Fatalf("link=false rendered linked ToC entries:\n%s", got)
+									}
+								}
+							} else if strings.Contains(got, "* [") || strings.Contains(got, "* Foo Bar") || strings.Contains(got, "* 1. Foo Bar") || strings.Contains(got, "* 2. Foo Bar") {
+								t.Fatalf("toc=false rendered ToC entries:\n%s", got)
+							}
+
+							ok, _, err := Check(got)
+							if err != nil || !ok {
+								t.Fatalf("Check(generated) = %v, %v\n%s", ok, err, got)
+							}
+						})
+					}
+				}
+			}
+		}
+	}
+}
+
 // TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC verifies issue #75.
 func TestGenerateAnchorOffNumberingUsesRenderedHeadingSlugForTOC(t *testing.T) {
 	input := "# Title\n\n## Intro\n\n### API\n"

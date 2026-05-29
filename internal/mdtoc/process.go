@@ -226,6 +226,13 @@ func assignDerivedArtifacts(headings []Heading, cfg Config) {
 			h.ManagedNumber = ""
 		}
 
+		// Explicit managed anchors own the document target identity. Reusing
+		// anchorID keeps ToC hrefs tied to the exact ID rendered into headings
+		// instead of independently deriving a renderer-style slug.
+		if cfg.Anchor {
+			h.ManagedTOCTarget = anchorID
+			continue
+		}
 		h.ManagedTOCTarget = tocSlugger.Next(tocSlugSource(*h, cfg))
 	}
 }
@@ -243,9 +250,6 @@ func anchorSlugSource(h Heading, cfg Config) string {
 }
 
 func tocSlugSource(h Heading, cfg Config) string {
-	if cfg.Anchor {
-		return anchorSlugSource(h, cfg)
-	}
 	source := h.TitleText
 	switch cfg.Slug {
 	case SlugCrossnote:
