@@ -25,28 +25,28 @@
 
 <!-- mdtoc -->
 
-* [1. Features](#1-features)
-* [2. Install](#2-install)
-  * [2.1. VS Code Extension](#21-vs-code-extension)
-  * [2.2. Release Binaries (Linux, MacOS, Windows)](#22-release-binaries-linux-macos-windows)
-  * [2.3. Darwin Setup](#23-darwin-setup)
-  * [2.4. Build from source](#24-build-from-source)
-* [3. Usage](#3-usage)
-  * [3.1. Inspect the CLI](#31-inspect-the-cli)
-  * [3.2. Use .docs/EXAMPLE.md as a playground](#32-use-docsexamplemd-as-a-playground)
-* [4. Managed Structure](#4-managed-structure)
-* [5. Limits](#5-limits)
-* [6. Documentation](#6-documentation)
-  * [6.1. Specification](#61-specification)
-  * [6.2. Comparison](#62-comparison)
-* [7. Status](#7-status)
+* [1. Features](#features)
+* [2. Install](#install)
+  * [2.1. VS Code Extension](#vs-code-extension)
+  * [2.2. Release Binaries (Linux, MacOS, Windows)](#release-binaries-linux-macos-windows)
+  * [2.3. Darwin Setup](#darwin-setup)
+  * [2.4. Build from source](#build-from-source)
+* [3. Usage](#usage)
+  * [3.1. Inspect the CLI](#inspect-the-cli)
+  * [3.2. Use .docs/EXAMPLE.md as a playground](#use-docsexamplemd-as-a-playground)
+* [4. Managed Structure](#managed-structure)
+* [5. Limits](#limits)
+* [6. Documentation](#documentation)
+  * [6.1. Specification](#specification)
+  * [6.2. Comparison](#comparison)
+* [7. Status](#status)
 
-<!-- numbering=true min=2 max=4 slug=github anchor=false link=true toc=true bullets=auto -->
+<!-- numbering=true min=2 max=4 slug=github anchor=true link=true toc=true bullets=auto -->
 <!-- /mdtoc -->
 
 </details>
 
-## 1. Features
+## 1. <a id="features"></a>Features
 
 * **easy** to use: `mdtoc MY.md`, single binary, also as **VS Code** [extension](https://marketplace.visualstudio.com/items?itemName=rokath.mdtoc)
   * same [binary](https://github.com/rokath/mdtoc/releases) in **scripts**, **CI** and as VS Code extension keeps **workflow aligned**
@@ -73,19 +73,19 @@
   * **starting space**: `␠## IGNORED Title`
 * deterministic and idempotent: **updates existing ToC**
 
-## 2. Install
+## 2. <a id="install"></a>Install
 
-### 2.1. VS Code Extension
+### 2.1. <a id="vs-code-extension"></a>VS Code Extension
 
  CLI install: `code --install-extension rokath.mdtoc` **or** open _VS Code_, click _Extensions_, enter `mdtoc`: 
 
 <img src="./docs/VS-Code-Extension.png" width="960">
 
-### 2.2. Release Binaries (Linux, MacOS, Windows)
+### 2.2. <a id="release-binaries-linux-macos-windows"></a>Release Binaries (Linux, MacOS, Windows)
 
 Download a prebuilt binary from [GitHub Releases](https://github.com/rokath/mdtoc/releases).
 
-### 2.3. Darwin Setup
+### 2.3. <a id="darwin-setup"></a>Darwin Setup
 
 Homebrew tap install:
 
@@ -93,15 +93,15 @@ Homebrew tap install:
 brew install rokath/tap/mdtoc
 ```
 
-### 2.4. Build from source
+### 2.4. <a id="build-from-source"></a>Build from source
 
 ```bash
 go build ./cmd/mdtoc
 ```
 
-## 3. Usage
+## 3. <a id="usage"></a>Usage
 
-### 3.1. Inspect the CLI
+### 3.1. <a id="inspect-the-cli"></a>Inspect the CLI
 
 ```bash
 mdtoc --help        # show compact CLI usage and commands
@@ -109,7 +109,7 @@ mdtoc --verbose     # show extended root help with command details
 mdtoc <command> -v  # show the long help for one command
 ```
 
-### 3.2. Use `.docs/EXAMPLE.md` as a playground
+### 3.2. <a id="use-docsexamplemd-as-a-playground"></a>Use `.docs/EXAMPLE.md` as a playground
 
 ```bash
 mdtoc EXAMPLE.md                    # root mode: update an existing managed container or create a new one
@@ -122,7 +122,7 @@ cat EXAMPLE.md | mdtoc strip > s.md # clear via Unix pipe and write to a differe
 * Exactly one input source is allowed: piped `stdin` or file i/o (with or without `--file/-f`).
 * Small CLI note: the Go-style one-dash long form such as `-toc off` is currently tolerated, but `--toc off` remains the documented form.
 
-## 4. Managed Structure
+## 4. <a id="managed-structure"></a>Managed Structure
 
 `mdtoc` uses an explicit container so generated content is easy to spot and safe to regenerate.
 
@@ -150,7 +150,7 @@ This means:
 
 </details>
 
-## 5. Limits
+## 5. <a id="limits"></a>Limits
 
 * repeated-heading links depend on occurrence order ([#8](https://github.com/rokath/mdtoc/issues/8))
   * Workaround: [example](./docs/EXAMPLE.md#chapter-a-about)
@@ -159,19 +159,19 @@ This means:
 * not a site generator
 * not a Markdown formatter
 
-## 6. Documentation
+## 6. <a id="documentation"></a>Documentation
 
-### 6.1. Specification
+### 6.1. <a id="specification"></a>Specification
 
 * [mdtoc spec](./docs/spec.md)
 * [mdtoc VS Code extension](./docs/VS-Code-Extension.md)
 * [EXAMPLE.md](./docs/EXAMPLE.md)
 
-### 6.2. Comparison
+### 6.2. <a id="comparison"></a>Comparison
 
 * [mdtoc alternatives](./docs/alternatives.md)
 
-## 7. Status
+## 7. <a id="status"></a>Status
 
 ```diff
 + READY TO USE +
