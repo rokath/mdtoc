@@ -8,9 +8,21 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v1.0.1..HEAD`
+Used git range: `v1.0.2..HEAD`
 
 ```txt
+```
+
+## <a id='v1.0.2-changes'></a>v1.0.2 Changes (2026-05-31)
+
+### <a id='v1.0.1-overview'></a>v1.0.2 Overview
+
+Trouble Shooting Chapter added to ./extension/README.md
+
+### <a id='v1.0.1-git-log'></a>v1.0.2 Git Log
+
+```txt
+80f7fc5 Trouble Shooting Chapter added
 ```
 
 ## <a id='v1.0.1-changes'></a>v1.0.1 Changes (2026-05-30)
