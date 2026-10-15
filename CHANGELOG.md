@@ -8,9 +8,38 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
-Used git range: `v1.0.2..HEAD`
+Used git range: `v1.0.3..HEAD`
 
 ```txt
+```
+
+## <a id='v1.0.3-changes'></a>v1.0.3 Changes (2026-10-15)
+
+### <a id='v1.0.3-overview'></a>v1.0.3 Overview
+
+* Fix [#123](https://github.com/rokath/mdtoc/issues/123): ToC labels preserve literal underscores, inline code, emphasis, escapes, entities, and authored whitespace. Brackets are safely escaped and nested link destinations are omitted.
+* Anchor generation preserves literal and escaped identifier characters and decodes HTML entities outside code, with regression coverage for all slug profiles and file-based generate/strip/check workflows.
+* CLI binaries and the six platform-specific VS Code extension packages share release version `1.0.3`.
+* Include the extension dependency updates merged since v1.0.2: `@vscode/vsce`, `brace-expansion`, `fast-uri`, `form-data`, `js-yaml`, `linkify-it`, `markdown-it`, and `undici`.
+
+### <a id='v1.0.3-git-log'></a>v1.0.3 Git Log
+
+Used git range: `v1.0.2..v1.0.3`
+
+```txt
+* ff52cd5 fix: preserve heading markup and identifier anchors (#123)
+* f15097d build(deps-dev): bump markdown-it from 14.2.0 to 14.3.2 in /extension
+* 594e29a build(deps-dev): bump undici from 7.29.0 to 7.30.0 in /extension
+* 3b60488 build(deps-dev): bump js-yaml from 4.3.1 to 4.3.2 in /extension
+* e985ed7 build(deps-dev): bump fast-uri from 3.1.5 to 3.1.7 in /extension
+* 60238a6 build(deps-dev): bump js-yaml from 4.3.0 to 4.3.1 in /extension
+* bc412d6 build(deps-dev): bump fast-uri from 3.1.2 to 3.1.5 in /extension
+* a30ed1b build(deps-dev): bump undici from 7.25.0 to 7.29.0 in /extension
+* ce64936 build(deps-dev): bump linkify-it from 5.0.0 to 5.0.2 in /extension
+* a91b41b build(deps): bump brace-expansion and @vscode/vsce in /extension
+* 53a8f32 build(deps-dev): bump js-yaml from 4.1.1 to 4.3.0 in /extension
+* e92684f build(deps-dev): bump form-data from 4.0.5 to 4.0.6 in /extension
+* d2509b1 build(deps-dev): bump markdown-it from 14.1.1 to 14.2.0 in /extension
 ```
 
 ## <a id='v1.0.2-changes'></a>v1.0.2 Changes (2026-05-31)

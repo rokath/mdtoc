@@ -137,7 +137,8 @@ type Heading struct {
 	Hashes string
 	// TitleMarkup is the heading content as parsed from the Markdown line.
 	TitleMarkup string
-	// TitleText is the normalized plain-text title used for slugging and ToC text.
+	// TitleText is semantic plain text for slugging; ToC labels use TitleMarkup
+	// so code spans, escapes, and literal punctuation retain their appearance.
 	TitleText string
 	// ManagedNumber is the computed numbering prefix, or empty when numbering is off/out of range.
 	ManagedNumber string

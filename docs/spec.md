@@ -240,7 +240,7 @@ ManagedHeading
 - line_index
 - level
 - title_markup  // Title area as it appears in the document, but without managed numbering and without the managed inline anchor
-- title_text    // Plain-text interpretation of title_markup; source for ToC link text and anchor ID
+- title_text    // Plain-text interpretation of title_markup; source for semantic anchor IDs
 - number        // derived or empty
 - anchor_id     // derived or empty
 ```
@@ -601,7 +601,7 @@ Render rules:
 * Each additional level relative to `min` is indented by two spaces.
 * Every entry is a Markdown list item.
 * If `link=true`, the list item text is a Markdown link.
-* If `link=false`, the list item contains plain text only.
+* If `link=false`, the list item contains the formatted title without a wrapping link.
 * The list marker is chosen according to `bullets`.
 
 Example:
@@ -624,6 +624,15 @@ Displayed in the link text:
 * with `numbering=true`: `number + title`
 * with `numbering=false`: title only
 
+The title is derived from `title_markup`, preserving literal underscores, inline
+code delimiters, emphasis, escapes, entities, and whitespace. Closing ATX hash
+markers are omitted. Existing inline links and images contribute their label or
+alt text with its inline formatting; HTML tags are omitted to avoid copying
+anchors into the ToC. Literal square brackets outside code are escaped so they
+cannot break the surrounding link. These label transformations do not supply the
+slug input. For example, ``Missing `__COUNTER__` `` keeps its code span in the ToC
+label and uses semantic text `Missing __COUNTER__` for GitHub/GitLab slugs.
+
 Link target when `link=true`:
 
 * with `anchor=true`: `#` + `anchor_id`
@@ -644,7 +653,7 @@ Behavior of `slug`:
 * `slug=crossnote` uses the Crossnote / Markdown Preview Enhanced rules in section 11.8
 * For `slug=github`, `title_source` is the plain heading text after inline-markup removal but before whitespace collapsing.
 * For `slug=gitlab`, `title_source` is `title_text`.
-* For `slug=crossnote`, `title_source` is `title_markup`.
+* For `slug=crossnote`, `title_source` is `title_markup` with HTML entities decoded outside code spans and escaped ampersands.
 * ATX closing hash markers are stripped from `title_text`, but remain visible to the Crossnote `title_markup` slug path. Therefore `## An ATX title with closing hash markers  ####` targets `#an-atx-title-with-closing-hash-markers--` when `slug=crossnote`, `anchor=false`, and `link=true`.
 
 _Explanation:_
@@ -680,7 +689,7 @@ For every managed heading, the following applies:
 ```text
 slug_source := title_text                               // gitlab
 slug_source := title_markup without inline markup       // github
-slug_source := title_markup   // crossnote
+slug_source := title_markup with entities decoded outside code/escapes // crossnote
 anchor_id   := slugify(slug_source)
 ```
 
@@ -694,14 +703,16 @@ The following also applies:
   * backtick code spans contribute only their visible content
   * Markdown links and images contribute only their visible label or alt text
   * HTML tags are removed
-  * inline formatting markers `*`, `_`, and `~` are removed
+  * paired inline formatting markers `*`, `_`, and `~` are removed; intraword underscores and unmatched markers remain literal
+  * backslash-escaped ASCII punctuation contributes the escaped character
+  * HTML entities are decoded once, except inside code spans or after an escaped ampersand
   * whitespace is collapsed to single spaces and trimmed at the ends
-* For `slug=github`, `mdtoc` derives a second whitespace-preserving plain-text form from `title_markup` so repeated spaces remain visible to the slugger while the rendered `title_text` stays normalized for display.
+* For `slug=github`, `mdtoc` derives a second whitespace-preserving plain-text form from `title_markup` so repeated spaces remain visible to the slugger. ToC labels independently retain the authored title markup.
 
 _Explanation:_
 
 * The current implementation intentionally keeps this extraction logic small and self-contained.
-* Only this keeps slug/anchor generation, ToC link text, and profile behavior consistent.
+* Semantic extraction serves slug/anchor generation; preserving authored ToC markup avoids changing how identifiers and inline code render.
 
 ### 11.3 GitHub-compatible basic rules
 

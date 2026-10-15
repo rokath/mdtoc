@@ -116,6 +116,42 @@ func TestRunnerFileWorkflowGenerateStripRootRestoreCheck(t *testing.T) {
 	}
 }
 
+// TestRunnerFileWorkflowPreservesHeadingIdentifiers exercises #123 through real
+// command dispatch and the virtual filesystem used by both CLI and extension
+// workflows. Equivalent literal spellings must share collision handling without
+// losing their distinct authored labels during generate, strip, and restoration.
+func TestRunnerFileWorkflowPreservesHeadingIdentifiers(t *testing.T) {
+	const path = "identifiers.md"
+	input := "# Guide\n\n## Xxxx_Yyyy\n## Missing `__COUNTER__`\n## Missing \\_\\_COUNTER\\_\\_\n## Missing &#95;&#95;COUNTER&#95;&#95;\n"
+	fs := newMemoryFileSystem(map[string]string{path: input})
+	runFileCommand(t, fs, "generate", "--file", path)
+	generated := fs.fileString(path)
+	for _, entry := range []string{
+		"* [1. Xxxx_Yyyy](#xxxx_yyyy)",
+		"* [2. Missing `__COUNTER__`](#missing-__counter__)",
+		`* [3. Missing \_\_COUNTER\_\_](#missing-__counter__-1)`,
+		"* [4. Missing &#95;&#95;COUNTER&#95;&#95;](#missing-__counter__-2)",
+	} {
+		if !strings.Contains(generated, entry+"\n") {
+			t.Fatalf("file workflow is missing %q:\n%s", entry, generated)
+		}
+	}
+	runFileCommand(t, fs, "check", "--file", path)
+	runFileCommand(t, fs, "--file", path)
+	if fs.fileString(path) != generated {
+		t.Fatal("root regeneration changed identifier labels or targets")
+	}
+	runFileCommand(t, fs, "strip", "--file", path)
+	if !strings.Contains(fs.fileString(path), input) {
+		t.Fatalf("strip changed authored heading markup:\n%s", fs.fileString(path))
+	}
+	runFileCommand(t, fs, "--file", path)
+	if fs.fileString(path) != generated {
+		t.Fatalf("restoring stripped identifiers changed output:\n%s", fs.fileString(path))
+	}
+	runFileCommand(t, fs, "check", "--file", path)
+}
+
 // TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin verifies that file
 // workflows still run when CI provides non-interactive stdin that is already at EOF.
 func TestRunnerFileWorkflowGenerateWithEmptyRedirectedStdin(t *testing.T) {
@@ -593,7 +629,7 @@ func TestRunnerFileWorkflowGitLabAnchorProfileDiffersFromGitHub(t *testing.T) {
 	if !strings.Contains(gotGitLab, "slug=gitlab") || !strings.Contains(gotGitLab, `<a id="foo-bar"></a>`) {
 		t.Fatalf("generate did not render the GitLab-specific anchor ID:\n%s", gotGitLab)
 	}
-	if !strings.Contains(gotGitLab, "* [1. foo bar](#foo-bar)") {
+	if !strings.Contains(gotGitLab, "* [1. foo  bar](#foo-bar)") {
 		t.Fatalf("generate did not render the GitLab-specific ToC target:\n%s", gotGitLab)
 	}
 
