@@ -32,6 +32,118 @@ func TestGenerateCreatesContainerAndDerivedArtifacts(t *testing.T) {
 	}
 }
 
+// TestGeneratePreservesHeadingMarkup separates authored ToC labels from semantic
+// slug text, including safe bracket escaping and removal of nested link targets.
+// Both linked and unlinked lists must retain code spans and literal punctuation.
+func TestGeneratePreservesHeadingMarkup(t *testing.T) {
+	cases := []struct {
+		markup string
+		label  string
+		slug   string
+	}{
+		{"Xxxx_Yyyy", "Xxxx_Yyyy", "xxxx_yyyy"},
+		{"foo_bar_baz", "foo_bar_baz", "foo_bar_baz"},
+		{"Missing `__COUNTER__`", "Missing `__COUNTER__`", "missing-__counter__"},
+		{`Missing \_\_COUNTER\_\_`, `Missing \_\_COUNTER\_\_`, "missing-__counter__"},
+		{"Missing &#95;&#95;COUNTER&#95;&#95;", "Missing &#95;&#95;COUNTER&#95;&#95;", "missing-__counter__"},
+		{"Missing &lowbar;&lowbar;LINE&lowbar;&lowbar;", "Missing &lowbar;&lowbar;LINE&lowbar;&lowbar;", "missing-__line__"},
+		{"`&#95;`", "`&#95;`", "95"},
+		{"`` `__FILE__` ``", "`` `__FILE__` ``", "__file__"},
+		{"**Bold** _italic_ ~~old~~", "**Bold** _italic_ ~~old~~", "bold-italic-old"},
+		{"See [API _guide_](https://example.com/a_(b))", "See API _guide_", "see-api-guide"},
+		{"![alt _text_](image.png)", "alt _text_", "alt-text"},
+		{"Read [notes] and `[x]`", "Read \\[notes\\] and `[x]`", "read-notes-and-x"},
+		{`Read \[notes\]`, `Read \[notes\]`, "read-notes"},
+		{"<b>Bold</b> and `__LINE__`", "Bold and `__LINE__`", "bold-and-__line__"},
+		{"Closing `code`  ####", "Closing `code`", "closing-code--"},
+		{"Keep  two spaces", "Keep  two spaces", "keep--two-spaces"},
+	}
+	for _, tc := range cases {
+		for _, anchor := range []bool{false, true} {
+			for _, link := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%s/anchor=%t/link=%t", tc.markup, anchor, link), func(t *testing.T) {
+					opts := DefaultOptions()
+					opts.Numbering = false
+					opts.Anchor, opts.AnchorSet = anchor, true
+					opts.Link, opts.LinkSet = link, true
+					got, _, err := Generate("# Title\n\n## "+tc.markup+"\n", opts)
+					if err != nil {
+						t.Fatalf("Generate error: %v", err)
+					}
+					want := "* " + tc.label
+					if link {
+						want = "* [" + tc.label + "](#" + tc.slug + ")"
+					}
+					if !strings.Contains(got, "\n"+want+"\n") {
+						t.Fatalf("missing ToC entry %q:\n%s", want, got)
+					}
+					if anchor && !strings.Contains(got, `<a id="`+tc.slug+`"></a>`+tc.markup) {
+						t.Fatalf("heading anchor or authored markup changed:\n%s", got)
+					}
+					regenerated, _, err := Regen(got)
+					if err != nil || regenerated != got {
+						t.Fatalf("regeneration changed generated markup: %v\n%s", err, regenerated)
+					}
+					ok, _, err := Check(got)
+					if err != nil || !ok {
+						t.Fatalf("Check rejected generated markup: %v", err)
+					}
+				})
+			}
+		}
+	}
+}
+
+// TestGenerateIdentifierAnchorsAcrossProfiles keeps equivalent visible
+// identifiers on the same slug/collision path for all supported renderers.
+// Numbered renderer targets differ from unnumbered managed anchors by design.
+func TestGenerateIdentifierAnchorsAcrossProfiles(t *testing.T) {
+	labels := []string{
+		"Missing `__COUNTER__`",
+		`Missing \_\_COUNTER\_\_`,
+		"Missing &#95;&#95;COUNTER&#95;&#95;",
+		"Missing &lowbar;&lowbar;COUNTER&lowbar;&lowbar;",
+	}
+	input := "# Guide\n\n## " + strings.Join(labels, "\n## ") + "\n"
+	for _, slug := range []SlugMode{SlugGitHub, SlugGitLab, SlugCrossnote} {
+		for _, anchor := range []bool{false, true} {
+			for _, numbering := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%s/anchor=%t/numbering=%t", slug, anchor, numbering), func(t *testing.T) {
+					opts := DefaultOptions()
+					opts.Slug, opts.Numbering = slug, numbering
+					opts.Anchor, opts.AnchorSet = anchor, true
+					got, _, err := Generate(input, opts)
+					if err != nil {
+						t.Fatalf("Generate error: %v", err)
+					}
+					for i, label := range labels {
+						target := "missing-__counter__"
+						if i > 0 {
+							target += fmt.Sprintf("-%d", i)
+						}
+						if anchor && !strings.Contains(got, `<a id="`+target+`"></a>`+label) {
+							t.Fatalf("missing semantic identifier anchor %q:\n%s", target, got)
+						}
+						if numbering {
+							label = fmt.Sprintf("%d. %s", i+1, label)
+							if !anchor {
+								target = fmt.Sprintf("%d-missing-__counter__", i+1)
+							}
+						}
+						if want := "* [" + label + "](#" + target + ")"; !strings.Contains(got, want+"\n") {
+							t.Fatalf("missing matching ToC entry %q:\n%s", want, got)
+						}
+					}
+					regenerated, _, err := Regen(got)
+					if err != nil || regenerated != got {
+						t.Fatalf("identifier anchors changed on regeneration: %v\n%s", err, regenerated)
+					}
+				})
+			}
+		}
+	}
+}
+
 // TestGenerateIsIdempotent verifies that repeated generation does not change the document again.
 func TestGenerateIsIdempotent(t *testing.T) {
 	input := "# Title\n\n## Intro\n"
@@ -358,8 +470,8 @@ func TestGenerateTOCTargetsFollowAnchorOwnershipMatrix(t *testing.T) {
 								t.Fatalf("Generate error: %v", err)
 							}
 
-							firstLabel := "Foo Bar"
-							secondLabel := "Foo Bar"
+							firstLabel := "Foo  Bar"
+							secondLabel := "Foo  Bar"
 							if numbering {
 								firstLabel = "1. " + firstLabel
 								secondLabel = "2. " + secondLabel
@@ -425,7 +537,7 @@ func TestGenerateTOCTargetsFollowAnchorOwnershipMatrix(t *testing.T) {
 										t.Fatalf("link=false rendered linked ToC entries:\n%s", got)
 									}
 								}
-							} else if strings.Contains(got, "* [") || strings.Contains(got, "* Foo Bar") || strings.Contains(got, "* 1. Foo Bar") || strings.Contains(got, "* 2. Foo Bar") {
+							} else if strings.Contains(got, "* [") || strings.Contains(got, "* Foo  Bar") || strings.Contains(got, "* 1. Foo  Bar") || strings.Contains(got, "* 2. Foo  Bar") {
 								t.Fatalf("toc=false rendered ToC entries:\n%s", got)
 							}
 

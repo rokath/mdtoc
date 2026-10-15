@@ -6,6 +6,10 @@ This file summarizes notable repository changes in a compact, release-oriented f
 
 ### <a id='unreleased-overview'></a>Unreleased Overview
 
+* Fix [#123](https://github.com/rokath/mdtoc/issues/123): ToC labels preserve literal underscores, inline code, emphasis, escapes, entities, and authored whitespace. Brackets are safely escaped and nested link destinations are omitted.
+* Anchor generation preserves literal and escaped identifier characters and decodes HTML entities outside code, with regression coverage for all slug profiles and file-based generate/strip/check workflows.
+* Include the extension dependency updates merged since v1.0.2: `@vscode/vsce`, `brace-expansion`, `fast-uri`, `form-data`, `js-yaml`, `linkify-it`, `markdown-it`, and `undici`.
+
 ### <a id='unreleased-git-log'></a>Unreleased Git Log
 
 Used git range: `v1.0.2..HEAD`

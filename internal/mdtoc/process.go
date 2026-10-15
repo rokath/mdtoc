@@ -240,7 +240,7 @@ func assignDerivedArtifacts(headings []Heading, cfg Config) {
 func anchorSlugSource(h Heading, cfg Config) string {
 	switch cfg.Slug {
 	case SlugCrossnote:
-		return h.TitleMarkup
+		return decodeHeadingEntities(h.TitleMarkup)
 	case SlugGitHub:
 		if text, err := ExtractPlainTextPreservingWhitespace(h.TitleMarkup); err == nil {
 			return text
@@ -253,7 +253,7 @@ func tocSlugSource(h Heading, cfg Config) string {
 	source := h.TitleText
 	switch cfg.Slug {
 	case SlugCrossnote:
-		source = h.TitleMarkup
+		source = decodeHeadingEntities(h.TitleMarkup)
 	case SlugGitHub:
 		if text, err := ExtractPlainTextPreservingWhitespace(h.TitleMarkup); err == nil {
 			source = text
@@ -306,7 +306,7 @@ func renderTOC(headings []Heading, bodyLines []string, cfg Config) []string {
 		if !h.InManagedRange(cfg) {
 			continue
 		}
-		text := h.TitleText
+		text := renderTOCLabel(h.TitleMarkup)
 		if cfg.Numbering && h.ManagedNumber != "" {
 			text = h.ManagedNumber + " " + text
 		}
